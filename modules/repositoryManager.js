@@ -9,7 +9,7 @@ const implements = require("./implements");
 const Property = implements.Property;
 
 var interface = {
-    save: new Property("function", 2),
+    save: new Property("function", 4),
     getPreviousPendingResCount: new Property("function", 3),
     getPreviousPendingRes: new Property("function", 3),
     getReservationsFromDateToDate: new Property("function", 3),

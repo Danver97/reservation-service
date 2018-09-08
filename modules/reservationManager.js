@@ -1,14 +1,14 @@
 const ENV = require("../src/env");
 const Reservation = require("../models/reservation");
 const Table = require("../models/table");
-const dbmanager = require('./repositoryManager');
+const repo = require('./repositoryManager');
 
 function addReservation(reservation, cb) {
     return new Promise(async (resolve, reject) => {
         const err = null;
         reservation.pending();
         try {
-            await dbmanager.save(reservation, cb);
+            await repo.reservationPending(reservation.restaurantId, reservation, cb);
         } catch(e) {
             err = e;
         }
@@ -21,9 +21,9 @@ function addReservation(reservation, cb) {
 }
 
 function acceptReservation(reservation, cb) {
-    /*let reservations = getReservationsPerTable(reservation.restaurantId, reservation.date, dbmanager);
-    let tables = getTables(reservation, reservations, dbmanager, reservation.people);
-    let pendingPerTablePeople = getPreviousPendingRes(reservation.restaurantId, reservation.created, reservation.date, dbmanager);
+    /*let reservations = getReservationsPerTable(reservation.restaurantId, reservation.date, repo);
+    let tables = getTables(reservation, reservations, repo, reservation.people);
+    let pendingPerTablePeople = getPreviousPendingRes(reservation.restaurantId, reservation.created, reservation.date, repo);
     
     //console.log("Reservations: " + JSON.stringify(reservations));
     //console.log("Pending: " + JSON.stringify(pendingPerTablePeople));
@@ -32,12 +32,12 @@ function acceptReservation(reservation, cb) {
     //console.log(result);
     if (result.table) {
         reservation.accepted(result.table, result.effectiveDate);
-        dbmanager.save(reservation, function (err, id) {
+        repo.save(reservation, function (err, id) {
             cb(null, reservation); //eventPublisher.publish("reservationAccepted", reservation);
         });
     } else {
         reservation.failed();
-        dbmanager.save(reservation, function (err, id) {
+        repo.save(reservation, function (err, id) {
             let error = {
                 message: "Reservation failed: no table available"
             };
@@ -48,9 +48,9 @@ function acceptReservation(reservation, cb) {
         let err = null;
         try {
             //previous code;
-            let reservations = await getReservationsPerTable(reservation.restaurantId, reservation.date, dbmanager);
-            let tables = await getTables(reservation, reservations, dbmanager, reservation.people);
-            let pendingPerTablePeople = await getPreviousPendingRes(reservation.restaurantId, reservation.created, reservation.date, dbmanager);
+            let reservations = await getReservationsPerTable(reservation.restaurantId, reservation.date, repo);
+            let tables = await getTables(reservation, reservations, repo, reservation.people);
+            let pendingPerTablePeople = await getPreviousPendingRes(reservation.restaurantId, reservation.created, reservation.date, repo);
 
             //console.log("Reservations: " + JSON.stringify(reservations));
             //console.log("Pending: " + JSON.stringify(pendingPerTablePeople));
@@ -59,13 +59,13 @@ function acceptReservation(reservation, cb) {
             //console.log(result);
             if (resultData.table) {
                 reservation.accepted(resultData.table, resultData.effectiveDate);
-                await dbmanager.save(reservation, function (err, id) {
+                await repo.reservationAccepted(reservation.restaurantId, reservation, function (err, id) {
                     if(cb && typeof cb === 'function')
                         cb(null, reservation); //eventPublisher.publish("reservationAccepted", reservation);
                 });
             } else {
                 reservation.failed();
-                await dbmanager.save(reservation, function (err, id) {
+                await repo.reservationFailed(reservation.restaurantId, reservation, function (err, id) {
                     let error = {
                         message: "Reservation failed: no table available"
                     };
@@ -225,8 +225,8 @@ function getTables(reservation, reservations, people) {
         try {
             let tables = null;
             if (ENV.test == "true") {
-                //tables = dbmanager.getTables(reservation.restaurantId);
-                tables = await dbmanager.getTables(reservation.restaurantId);
+                //tables = repo.getTables(reservation.restaurantId);
+                tables = await repo.getTables(reservation.restaurantId);
             } else {
                 //tables = await request(https://restaurant-service/:restId/tables(?people=:people));
                 if (!tables)
@@ -288,7 +288,7 @@ function getTables(reservation, reservations, people) {
 }
 
 function getPreviousPendingRes(restId, created, date) {
-    return dbmanager.getPreviousPendingRes(restId, created, date);
+    return repo.getPreviousPendingRes(restId, created, date);
 }
 
 function getReservationsPerTable(restId, date) {
@@ -306,8 +306,8 @@ function getReservationsPerTable(restId, date) {
             toDate.setHours(toDate.getHours() + 1);
             toDate.setMinutes(toDate.getMinutes() + 15);
 
-            //let reservations = dbmanager.getReservationsFromDateToDate(restId, fromDate, toDate);
-            let reservations = await dbmanager.getReservationsFromDateToDate(restId, fromDate, toDate);
+            //let reservations = repo.getReservationsFromDateToDate(restId, fromDate, toDate);
+            let reservations = await repo.getReservationsFromDateToDate(restId, fromDate, toDate);
             let resPerTable = {};
             reservations.forEach(function (res) {
                 if (!resPerTable[res.tableId])
@@ -335,11 +335,11 @@ function getReservationsPerTable(restId, date) {
 }
 
 function getReservations(restId) {
-    return dbmanager.getReservations(restId);
+    return repo.getReservations(restId);
 }
 
 function getReservation(restId, resId) {
-    return dbmanager.getReservation(restId, resId);
+    return repo.getReservation(restId, resId);
 }
 
 function mins(qty) {

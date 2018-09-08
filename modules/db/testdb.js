@@ -24,15 +24,24 @@ var restaturants = [
     },
 ];
 var eventCode = 0;
-var reservations = [];
+// var reservations = [];
+let eventStore = {};
 
-function save(reservation, cb) {
+function save(streamId, message, payload, cb) {
     return new Promise((resolve, reject) => {
-        reservations.push({
+        if (!eventStore[streamId])
+            eventStore[streamId] = { streamId, revision: 0, events: [] };
+        const revision = eventStore[streamId].revision;
+        const event = {
             eventId: eventCode,
-            payload: Object.assign({}, reservation)
-        });
-        const err = null;
+            event: message,
+            payload: Object.assign({}, payload)
+        };
+        let err = null;
+        if(revision !== eventStore[streamId].revision)
+            err = new Error('Wrong revision!');
+        else
+            eventStore[streamId].events.push(event);
         eventCode++;
         if(cb && typeof cb === 'function')
             cb(err, eventCode);
@@ -43,20 +52,31 @@ function save(reservation, cb) {
     });
 }
 
+function reservationPending(restId, payload, cb) {
+  return save(restId, 'reservationPending', payload, cb);
+}
+
+function reservationAccepted(restId, payload, cb) {
+  return save(restId, 'reservationAccepted', payload, cb);
+}
+
+function reservationFailed(restId, payload, cb) {
+  return save(restId, 'reservationFailed', payload, cb);
+}
+
 function getPreviousPendingResCount(restId, created, date) {
     return new Promise((resolve, reject) => {
         //previous code;
-        let pending = reservations.map(r => r.payload).filter(function (a) {
-            return a.restaurantId == restId && a.status == "pending" && a.created.getTime() < created.getTime() && a.date.getTime() + hours(1) + mins(15) >= date.getTime();
+        // console.log(eventStore[restId].events);
+        let pending = eventStore[restId].events.map(r => r.payload).filter((a) => {
+            return a.status == "pending" && a.created.getTime() < created.getTime() && a.date.getTime() + hours(1) + mins(15) >= date.getTime();
         });
 
-        let accepted = reservations.map(r => r.payload).filter((a) => {
-            return a.restaurantId == restId && a.status == "accepted" && a.created.getTime() < created.getTime();
+        let accepted = eventStore[restId].events.map(r => r.payload).filter((a) => {
+            return a.status == "accepted" && a.created.getTime() < created.getTime();
         });
         let result = pending.filter((a) => {
-            return !(accepted.filter((b) => {
-                return b.id == a.id;
-            }).length >= 1);
+            return !(accepted.filter((b) => b.id == a.id).length >= 1);
         });
         
         const err = null;
@@ -71,16 +91,16 @@ function getPreviousPendingResCount(restId, created, date) {
 function getPreviousPendingRes(restId, created, date) {
     return new Promise((resolve, reject) => {
         //previous code;
-        let pending = reservations.map(r => r.payload).filter(function (a) {
-            return a.restaurantId == restId && a.status == "pending" && a.created.getTime() < created.getTime() && ((a.date.getTime() + hours(1) + mins(15) > date.getTime() && a.date.getTime() <= date.getTime()) || (a.date.getTime() - mins(15) < date.getTime() + hours(1) && a.date.getTime() >= date.getTime()));
+        let pending = eventStore[restId].events.map(r => r.payload).filter((a) => {
+            return a.status == "pending" && a.created.getTime() < created.getTime() && ((a.date.getTime() + hours(1) + mins(15) > date.getTime() && a.date.getTime() <= date.getTime()) || (a.date.getTime() - mins(15) < date.getTime() + hours(1) && a.date.getTime() >= date.getTime()));
         });
 
-        let accepted = reservations.map(r => r.payload).filter((a) => {
-            return a.restaurantId == restId && a.status == "accepted" && a.created.getTime() < created.getTime();
+        let accepted = eventStore[restId].events.map(r => r.payload).filter((a) => {
+            return a.status == "accepted" && a.created.getTime() < created.getTime();
         });
 
-        let failed = reservations.map(r => r.payload).filter((a) => {
-            return a.restaurantId == restId && a.status == "failed" && a.created.getTime() < created.getTime();
+        let failed = eventStore[restId].events.map(r => r.payload).filter((a) => {
+            return a.status == "failed" && a.created.getTime() < created.getTime();
         });
 
         pending = pending.filter((a) => {
@@ -119,8 +139,8 @@ function getPreviousPendingRes(restId, created, date) {
 function getReservationsFromDateToDate(restId, fromDate, toDate) {
     return new Promise((resolve, reject) => {
         //previous code;
-        const result = reservations.map(r => r.payload).filter(function (a) {
-            return a.restaurantId === restId && a.status == "accepted" && a.date.getTime() >= fromDate.getTime() &&
+        const result = eventStore[restId].events.map(r => r.payload).filter(function (a) {
+            return a.status == "accepted" && a.date.getTime() >= fromDate.getTime() &&
                 a.date.getTime() <= toDate.getTime();
         });
         //console.log(result);
@@ -168,7 +188,7 @@ function getReservations(restId) {
         //previous code;
         let now = new Date(Date.now());
         now.setMinutes(now.getMinutes() - 30);
-        let result = reservations.map(r => r.payload).filter(a => a.status === "accepted" && a.restaurantId == restId && a.date.getTime() >= now.getTime());
+        let result = eventStore[restId].events.map(r => r.payload).filter(a => a.status === "accepted" && a.date.getTime() >= now.getTime());
         if (result.length === 0)
             result = null;
         
@@ -189,7 +209,7 @@ function getReservation(restId, resId) {
         return result[0];
     return null;*/
     return new Promise((resolve, reject) => {
-        let result = reservations.map(r => r.payload).filter(a => a.restaurantId == restId && a.id == resId);
+        let result = eventStore[restId].events.map(r => r.payload).filter(a => a.id == resId);
         if (result.length === 1)
             result = result[0];
         else
@@ -205,7 +225,8 @@ function getReservation(restId, resId) {
 }
 
 function reset() {
-    reservations = [];
+    // eventStore = [];
+    eventStore = {};
 }
 
 function mins(qty) {
@@ -217,12 +238,15 @@ function hours(qty) {
 }
 
 module.exports = {
-    save: save,
-    getPreviousPendingResCount: getPreviousPendingResCount,
-    getPreviousPendingRes: getPreviousPendingRes,
+    save,
+    reservationPending,
+    reservationAccepted,
+    reservationFailed,
+    getPreviousPendingResCount,
+    getPreviousPendingRes,
     getReservationsFromDateToDate: getReservationsFromDateToDate,
-    getReservations: getReservations,
-    getReservation: getReservation,
-    getTables: getTables,
-    reset: reset
+    getReservations,
+    getReservation,
+    getTables,
+    reset,
 }
