@@ -1,6 +1,10 @@
-const Table = require("../../models/table");
+const EventEmitter = require('events');
+const Table = require('../../models/table');
+const Utils = require('../../lib/utils');
 
-var restaturants = [
+const Promisify = Utils.promisify;
+
+const restaturants = [
     {
         restId: 1,
         tables: [
@@ -9,8 +13,8 @@ var restaturants = [
             new Table(3, 1, 4),
             new Table(4, 1, 4),
             new Table(5, 1, 4),
-            new Table(6, 1, 6)
-        ]
+            new Table(6, 1, 6),
+        ],
     },
     {
         restId: 2,
@@ -19,100 +23,125 @@ var restaturants = [
             new Table(3, 2, 4),
             new Table(2, 2, 3),
             new Table(4, 2, 4),
-            new Table(5, 2, 6)
-        ]
+            new Table(5, 2, 6),
+        ],
     },
 ];
-var eventCode = 0;
-// var reservations = [];
+let eventCode = 0;
+const emitter = new EventEmitter();
+// let reservations = [];
 let eventStore = {};
+let snapshots = {};
 
 function save(streamId, message, payload, cb) {
-    return new Promise((resolve, reject) => {
+    return Promisify(() => {
         if (!eventStore[streamId])
             eventStore[streamId] = { streamId, revision: 0, events: [] };
         const revision = eventStore[streamId].revision;
         const event = {
             eventId: eventCode,
             event: message,
-            payload: Object.assign({}, payload)
+            payload: Object.assign({}, payload),
         };
-        let err = null;
-        if(revision !== eventStore[streamId].revision)
-            err = new Error('Wrong revision!');
+        if (revision !== eventStore[streamId].revision)
+            throw new Error('Wrong revision!');
         else
             eventStore[streamId].events.push(event);
         eventCode++;
-        if(cb && typeof cb === 'function')
-            cb(err, eventCode);
-        if(err) 
-            reject(err);
-        else
-            resolve(eventCode);
+        return eventCode;
+    }, cb);
+}
+
+function persist(event, cb) {
+    return save(event.streamId, event.payload, event.message, cb);
+}
+    
+function emit(message, payload) {
+    emitter.emit(message, payload);
+}
+    
+function on(message, cb) {
+    emitter.on(message, cb);
+}
+
+function publishEvent(event) {
+    const promise = persist(event);
+    emit(`${event.topic}:${event.message}`, event);
+    return promise;
+}
+
+function getStream(streamId, cb) {
+    const result = new Promise(resolve => {
+        if (cb)
+            cb(eventStore[streamId]);
+        resolve(eventStore[streamId]);
     });
+    if (cb)
+        return null;
+    return result;
+}
+
+function getSnapshot(aggregateId, cb) {
+    const result = new Promise(resolve => {
+        if (cb)
+            cb(snapshots[aggregateId]);
+        resolve(snapshots[aggregateId]);
+    });
+    if (cb)
+        return null;
+    return result;
 }
 
 function reservationPending(restId, payload, cb) {
-  return save(restId, 'reservationPending', payload, cb);
+    return save(restId, 'reservationPending', payload, cb);
 }
 
 function reservationAccepted(restId, payload, cb) {
-  return save(restId, 'reservationAccepted', payload, cb);
+    return save(restId, 'reservationAccepted', payload, cb);
 }
 
 function reservationFailed(restId, payload, cb) {
-  return save(restId, 'reservationFailed', payload, cb);
+    return save(restId, 'reservationFailed', payload, cb);
 }
 
-function getPreviousPendingResCount(restId, created, date) {
-    return new Promise((resolve, reject) => {
-        //previous code;
-        // console.log(eventStore[restId].events);
-        let pending = eventStore[restId].events.map(r => r.payload).filter((a) => {
-            return a.status == "pending" && a.created.getTime() < created.getTime() && a.date.getTime() + hours(1) + mins(15) >= date.getTime();
-        });
+function getPreviousPendingResCount(restId, created, date, cb) {
+    // return result.length;
+    return Promisify(() => {
+        const pending = eventStore[restId].events.map(r => r.payload)
+            .filter(a => a.status === 'pending' && a.created.getTime() < created.getTime() 
+                    && a.date.getTime() + Utils.hours(1) + Utils.mins(15) >= date.getTime());
 
-        let accepted = eventStore[restId].events.map(r => r.payload).filter((a) => {
-            return a.status == "accepted" && a.created.getTime() < created.getTime();
-        });
-        let result = pending.filter((a) => {
-            return !(accepted.filter((b) => b.id == a.id).length >= 1);
-        });
+        const accepted = eventStore[restId].events.map(r => r.payload)
+            .filter(a => a.status === 'accepted' && a.created.getTime() < created.getTime());
         
-        const err = null;
-        if(err)
-            reject(err);
-        else
-            resolve(result.length);
-    });
-    //return result.length;
+        const result = pending.filter(a => !(accepted.filter(b => b.id === a.id).length >= 1));
+        
+        return result.length;
+    }, cb);
 }
 
-function getPreviousPendingRes(restId, created, date) {
-    return new Promise((resolve, reject) => {
-        //previous code;
-        let pending = eventStore[restId].events.map(r => r.payload).filter((a) => {
-            return a.status == "pending" && a.created.getTime() < created.getTime() && ((a.date.getTime() + hours(1) + mins(15) > date.getTime() && a.date.getTime() <= date.getTime()) || (a.date.getTime() - mins(15) < date.getTime() + hours(1) && a.date.getTime() >= date.getTime()));
-        });
+function getPreviousPendingRes(restId, created, date, cb) {
+    // return result;
+    return Promisify(() => {
+        let pending = eventStore[restId].events.map(r => r.payload)
+            .filter(a => a.status === 'pending' 
+                    && a.created.getTime() < created.getTime() 
+                    && ((a.date.getTime() + Utils.hours(1) + Utils.mins(15) > date.getTime() 
+                         && a.date.getTime() <= date.getTime()) 
+                        || (a.date.getTime() - Utils.mins(15) < date.getTime() + Utils.hours(1) 
+                            && a.date.getTime() >= date.getTime())));
 
-        let accepted = eventStore[restId].events.map(r => r.payload).filter((a) => {
-            return a.status == "accepted" && a.created.getTime() < created.getTime();
-        });
+        const accepted = eventStore[restId].events.map(r => r.payload)
+            .filter(a => a.status === 'accepted' && a.created.getTime() < created.getTime());
 
-        let failed = eventStore[restId].events.map(r => r.payload).filter((a) => {
-            return a.status == "failed" && a.created.getTime() < created.getTime();
-        });
+        const failed = eventStore[restId].events.map(r => r.payload)
+            .filter(a => a.status === 'failed' && a.created.getTime() < created.getTime());
 
-        pending = pending.filter((a) => {
-            return !(accepted.filter((b) => {
-                return b.id == a.id;
-            }).length >= 1) && !(failed.filter((b) => {
-                return b.id == a.id;
-            }).length >= 1);
-        });
+        pending = pending.filter(a => !(accepted.filter(b => b.id === a.id).length >= 1) 
+                                 && !(failed.filter(b => b.id === a.id).length >= 1));
         const result = {};
         let max = 0;
-        pending.forEach((p) => {
+        pending.forEach(p => {
             if (p.people > max);
             max = p.people;
             if (!result[p.people])
@@ -126,115 +155,76 @@ function getPreviousPendingRes(restId, created, date) {
             else
                 result[i] += result[i - 1];
         }
-        
-        const err = null;
-        if(err)
-            reject(err);
-        else
-            resolve(result);
-    });
-    //return result;
+        return result;
+    }, cb);
 }
 
-function getReservationsFromDateToDate(restId, fromDate, toDate) {
-    return new Promise((resolve, reject) => {
-        //previous code;
-        const result = eventStore[restId].events.map(r => r.payload).filter(function (a) {
-            return a.status == "accepted" && a.date.getTime() >= fromDate.getTime() &&
-                a.date.getTime() <= toDate.getTime();
-        });
-        //console.log(result);
-        const err = null;
-        if(err)
-            reject(err);
-        else
-            resolve(result);
-    });
-    //return result;
+function getReservationsFromDateToDate(restId, fromDate, toDate, cb) {
+    // return result;
+    return Promisify(() => eventStore[restId].events.map(r => r.payload)
+        .filter(a => a.status === 'accepted' && a.date.getTime() >= fromDate.getTime() && a.date.getTime() <= toDate.getTime()),
+    cb);
 }
 
-function getTables(restId) {
-    /*let rests = restaturants.filter((r) => {
+function getTables(restId, cb) {
+    /* let rests = restaturants.filter((r) => {
         return r.restId == restId
     });
     if (rests.length >= 1) {
         return rests[0].tables;
     } else
-        throw new Error("no restaurant with id " + restId);*/
-    return new Promise((resolve, reject) => {
-        //previous code;
+        throw new Error('no restaurant with id ' + restId); */
+    return Promisify(() => {
         let result;
-        let rests = restaturants.filter((r) => {
-            return r.restId == restId
-        });
-        const err = null;
-        try {
-            if (rests.length >= 1) {
-                result = rests[0].tables;
-            } else
-                throw new Error("no restaurant with id " + restId);
-        } catch(e) {
-            err = e;
-        }
-        if(err)
-            reject(err);
+        const rests = restaturants.filter(r => r.restId === restId);
+        if (rests.length >= 1)
+            result = rests[0].tables;
         else
-            resolve(result);
-    });
+            throw new Error(`no restaurant with id ${restId}`);
+        return result;
+    }, cb);
 }
 
-function getReservations(restId) {
-    return new Promise((resolve, reject) => {
-        //previous code;
-        let now = new Date(Date.now());
+function getReservations(restId, cb) {
+    return Promisify(() => {
+        const now = new Date(Date.now());
         now.setMinutes(now.getMinutes() - 30);
-        let result = eventStore[restId].events.map(r => r.payload).filter(a => a.status === "accepted" && a.date.getTime() >= now.getTime());
+        let result = eventStore[restId].events.map(r => r.payload).filter(a => a.status === 'accepted' && a.date.getTime() >= now.getTime());
         if (result.length === 0)
             result = null;
         
-        const err = null;
-        if(err)
-            reject(err);
-        else if(!result)
-            reject({error: `No such reservation with restId = ${restId}`});
-        else
-            resolve(result);
-    });
-    //return result;
+        if (!result)
+            throw new Error(`No such reservation with restId = ${restId}`);
+        return result;
+    }, cb);
+    // return result;
 }
 
-function getReservation(restId, resId) {
-    /*let result = reservations.map(r => r.payload).filter(a => a.restaurantId === restId && a.id === resId);
+function getReservation(restId, resId, cb) {
+    /* let result = reservations.map(r => r.payload).filter(a => a.restaurantId === restId && a.id === resId);
     if (result.length === 1)
         return result[0];
-    return null;*/
-    return new Promise((resolve, reject) => {
-        let result = eventStore[restId].events.map(r => r.payload).filter(a => a.id == resId);
+    return null; */
+    return Promisify(() => {
+        let result = eventStore[restId].events.map(r => r.payload).filter(a => a.id === resId);
         if (result.length === 1)
             result = result[0];
         else
             result = null;
-        const err = null;
-        if(err)
-            reject(err);
-        else if(!result)
-            reject({error: `No such reservation with restId = ${restId} and resId = ${resId}`});
-        else
-            resolve(result);
-    });
+        if (!result)
+            throw new Error(`No such reservation with restId = ${restId} and resId = ${resId}`);
+        return result;
+    }, cb);
 }
 
 function reset() {
-    // eventStore = [];
+    //  eventStore = [];
     eventStore = {};
+    snapshots = {};
 }
 
-function mins(qty) {
-    return qty * 60 * 1000;
-}
-
-function hours(qty) {
-    return mins(qty * 60);
+function resetEmitter() {
+    emitter.eventNames().forEach(e => emitter.removeAllListeners(e));
 }
 
 module.exports = {
@@ -244,9 +234,16 @@ module.exports = {
     reservationFailed,
     getPreviousPendingResCount,
     getPreviousPendingRes,
-    getReservationsFromDateToDate: getReservationsFromDateToDate,
+    getReservationsFromDateToDate,
     getReservations,
     getReservation,
     getTables,
+    persist,
+    publishEvent,
+    emit,
+    on,
+    getStream,
+    getSnapshot,
     reset,
-}
+    resetEmitter,
+};

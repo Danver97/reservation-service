@@ -1,22 +1,23 @@
-const ENV = require("../src/env");
-var dbmanager;
-if(ENV.test == "dynamodb")
-    dbmanager = require("dynamodb");
-if(ENV.test == "true")
-    dbmanager = require("./db/testdb");
+const implem = require('./implements');
+const ENV = require('../src/env');
+const persistence = require('./eventSourcing/persistence');
+const testdb = require('./db/testdb');
 
-const implements = require("./implements");
-const Property = implements.Property;
+let dbmanager;
+// if (ENV.test === 'dynamodb') dbmanager = require('dynamodb');
+if (ENV.node_env === 'test') dbmanager = testdb;
+if (ENV.node_env === 'test_event_sourcing') dbmanager = persistence;
 
-var interface = {
-    save: new Property("function", 4),
-    getPreviousPendingResCount: new Property("function", 3),
-    getPreviousPendingRes: new Property("function", 3),
-    getReservationsFromDateToDate: new Property("function", 3),
-    getReservations: new Property("function", 1),
-    getReservation: new Property("function", 2)
-}
+const Property = implem.Property;
 
-implements.checkImplementation(interface, dbmanager);
+const interf = {
+    getPreviousPendingResCount: new Property('function', 4),
+    getPreviousPendingRes: new Property('function', 4),
+    getReservationsFromDateToDate: new Property('function', 4),
+    getReservations: new Property('function', 2),
+    getReservation: new Property('function', 3),
+};
+
+implem.checkImplementation(interf, dbmanager);
 
 module.exports = dbmanager;
