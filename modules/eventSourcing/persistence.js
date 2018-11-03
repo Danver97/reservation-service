@@ -3,6 +3,8 @@ const EventBroker = require('./eventBroker');
 const EventStore = require('./eventStore');
 const Event = require('./event');
 const ReservationEvents = require('../reservation-events');
+const Reservation = require('../../models/reservation');
+const Promisify = require('../../lib/utils').promisify;
 
 let broker;
 let store;
@@ -36,19 +38,23 @@ function publishWithOptionalPromise(event, cb) {
     return result;
 }
 
-function reservationPending(res, cb) {
-    const event = new Event(res.restaurantId, ReservationEvents.topic, ReservationEvents.reservationPending, res);
+function reservationPending(restId, payload, cb) {
+    const event = new Event(restId, ReservationEvents.topic, ReservationEvents.reservationPending, payload);
     return publishWithOptionalPromise(event, cb);
 }
 
-function reservationAccepted(res, cb) {
-    const event = new Event(res.restaurantId, ReservationEvents.topic, ReservationEvents.reservationAccepted, res);
+function reservationAccepted(restId, payload, cb) {
+    const event = new Event(restId, ReservationEvents.topic, ReservationEvents.reservationAccepted, payload);
     return publishWithOptionalPromise(event, cb);
 }
 
-function reservationFailed(res, cb) {
-    const event = new Event(res.restaurantId, ReservationEvents.topic, ReservationEvents.reservationFailed, res);
+function reservationFailed(restId, payload, cb) {
+    const event = new Event(restId, ReservationEvents.topic, ReservationEvents.reservationFailed, payload);
     return publishWithOptionalPromise(event, cb);
+}
+
+function getTables(restId, cb) {
+    return store.getTables(restId, cb);
 }
 
 function getPreviousPendingResCount(restId, created, date, cb) {
@@ -65,10 +71,19 @@ function getReservationsFromDateToDate(restId, fromDate, toDate, cb) {
 
 function getReservations(restId, cb) {
     return store.getReservations(restId, cb);
+    return Promisify(async () => {
+        const result = await store.getReservations(restId);
+        const reservations = result.map(r => Reservation.fromObject(r));
+        return reservations;
+    }, cb);
 }
 
 function getReservation(restId, resId, cb) {
-    return store.getReservation(restId, resId, cb);
+    return Promisify(async () => {
+        const res = await store.getReservation(restId, resId);
+        const reservation = Reservation.fromObject(res);
+        return reservation;
+    }, cb);
 }
 // rcl
 
@@ -84,6 +99,7 @@ const persistence = {
     getReservationsFromDateToDate,
     getReservations,
     getReservation,
+    getTables,
 };
 
 module.exports = persistence;

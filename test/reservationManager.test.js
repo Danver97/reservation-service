@@ -4,8 +4,11 @@ const repo = require('../modules/repositoryManager');
 const reservationMgr = require('../modules/reservationManager');
 const ENV = require('../src/env');
 
+const waitAsync = (ms) => new Promise(resolve => setTimeout(() => resolve(), ms));
+const waitAsyncTimeout = 20;
     
 const add = (user, restId, username, people, date, hour) => new Promise(async (resolve, reject) => {
+    await waitAsync(waitAsyncTimeout);
     try {
         const res = new Reservation(user, restId, username, people, date, hour);
         await reservationMgr.addReservation(res);
@@ -16,34 +19,28 @@ const add = (user, restId, username, people, date, hour) => new Promise(async (r
     }
 });
 
-const accept = (user, restId, username, people, date, hour, expectedTable, expectedHour, expectedMin) => new Promise(async (resolve, reject) => {
-    try {
-        let res2 = new Reservation(user, restId, username, people, date, hour);
-        await reservationMgr.addReservation(res2);
-        assert.strictEqual(res2.status, 'pending');
-        res2 = await reservationMgr.acceptReservation(res2);
-        assert.strictEqual(res2.status, 'accepted');
-        assert.strictEqual(res2.tableId, expectedTable);
-        assert.strictEqual(res2.date.getHours(), expectedHour);
-        assert.strictEqual(res2.date.getMinutes(), expectedMin);
-        resolve();
-    } catch (e) {
-        reject(e);
-    }
-});
+const accept = async (user, restId, username, people, date, hour, expectedTable, expectedHour, expectedMin) => {
+    await waitAsync(waitAsyncTimeout);
+    let res2 = new Reservation(user, restId, username, people, date, hour);
+    await reservationMgr.addReservation(res2);
+    assert.strictEqual(res2.status, 'pending');
+    await waitAsync(waitAsyncTimeout);
+    res2 = await reservationMgr.acceptReservation(res2);
+    assert.strictEqual(res2.status, 'accepted');
+    assert.strictEqual(res2.tableId, expectedTable);
+    assert.strictEqual(res2.date.getHours(), expectedHour);
+    assert.strictEqual(res2.date.getMinutes(), expectedMin);
+};
 
-const fail = (user, restId, username, people, date, hour) => new Promise(async (resolve, reject) => {
-    try {
-        let res2 = new Reservation(user, restId, username, people, date, hour);
-        await reservationMgr.addReservation(res2);
-        assert.strictEqual(res2.status, 'pending');
-        res2 = await reservationMgr.acceptReservation(res2);
-        assert.strictEqual(res2.status, 'failed');
-        resolve();
-    } catch (e) {
-        reject(e);
-    }
-});
+const fail = async (user, restId, username, people, date, hour) => {
+    await waitAsync(waitAsyncTimeout);
+    let res2 = new Reservation(user, restId, username, people, date, hour);
+    await reservationMgr.addReservation(res2);
+    assert.strictEqual(res2.status, 'pending');
+    await waitAsync(waitAsyncTimeout);
+    res2 = await reservationMgr.acceptReservation(res2);
+    assert.strictEqual(res2.status, 'failed');
+};
 
 const sleep = milliseconds => {
     const start = new Date().getTime();
@@ -63,9 +60,14 @@ describe('ReservationManager unit test', function () {
     const date2 = '2018-07-16';
     const timeout = 1;
     
-    it('check if addReservation() works', async function () {
-        if (ENV.test === 'true')
+    before(() => {
+        if (ENV.node_env === 'test')
             repo.reset();
+        else if (ENV.node_env === 'test_event_sourcing')
+            repo.store.reset();
+    });
+    
+    it('check if addReservation() works', async function () {
         await add(user, restId, username, people, date, '15:00');
         sleep(timeout);
     });

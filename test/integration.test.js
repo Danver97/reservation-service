@@ -4,9 +4,12 @@ const app = require('../src/app');
 const ENV = require('../src/env');
 const Reservation = require('../models/reservation');
 const reservationMgr = require('../modules/reservationManager');
+const repo = require('../modules/repositoryManager');
 
 const req = request(app);
 
+const waitAsync = (ms) => new Promise(resolve => setTimeout(() => resolve(), ms));
+const waitAsyncTimeout = 20;
 
 describe('Integration test', function() {
     
@@ -18,6 +21,13 @@ describe('Integration test', function() {
                 assert.strictEqual(result[p], expected[p]);
         }
     }
+    
+    before(() => {
+        if (ENV.node_env === 'test')
+            repo.reset();
+        else if (ENV.node_env === 'test_event_sourcing')
+            repo.store.reset();
+    });
    
     it('get /', async function() {
         await req
@@ -35,6 +45,7 @@ describe('Integration test', function() {
         let resArr = [];
         
         it('post /reservation', async function() {
+            await waitAsync(waitAsyncTimeout);
             await req
             .post('/reservation')
             .set('Content-Type', 'application/x-www-url-encoded')
@@ -65,6 +76,7 @@ describe('Integration test', function() {
         });
         
         it('get /reservation?restId=1&resId=' + resrv.id, async function() {
+            await waitAsync(waitAsyncTimeout);
             await req
             .get('/reservation?restId=1')
             .expect(500);
@@ -93,6 +105,7 @@ describe('Integration test', function() {
         });
         
         it('get /reservations?restId=1', async function() {
+            await waitAsync(waitAsyncTimeout);
             await req
             .get('/reservations')
             .expect(500);
@@ -100,6 +113,7 @@ describe('Integration test', function() {
             .get('/reservations?restId=10')
             .expect(500);
             await reservationMgr.acceptReservation(resrv);
+            await waitAsync(waitAsyncTimeout);
             await req
             .get('/reservations?restId=1')
             .expect(res => {
@@ -108,7 +122,7 @@ describe('Integration test', function() {
                 response.date = new Date(response.date);
                 response.people = parseInt(response.people);
                 response.userId = parseInt(response.userId);
-                response.restaurantId = parseInt(response.restaurantId);
+                response.restaurantId = parseInt(response.restaurantId, 10);
                 assert.strictEqual(res.body.length, 1);
                 reservationEquals(response, resrv);
             })

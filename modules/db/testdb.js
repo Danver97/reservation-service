@@ -1,6 +1,8 @@
 const EventEmitter = require('events');
 const Table = require('../../models/table');
+const Reservation = require('../../models/reservation');
 const Utils = require('../../lib/utils');
+const ReservationEvents = require('../reservation-events');
 
 const Promisify = Utils.promisify;
 
@@ -33,14 +35,15 @@ const emitter = new EventEmitter();
 let eventStore = {};
 let snapshots = {};
 
-function save(streamId, message, payload, cb) {
+function save(streamId, topic, message, payload, cb) {
     return Promisify(() => {
         if (!eventStore[streamId])
             eventStore[streamId] = { streamId, revision: 0, events: [] };
         const revision = eventStore[streamId].revision;
         const event = {
             eventId: eventCode,
-            event: message,
+            topic,
+            message,
             payload: Object.assign({}, payload),
         };
         if (revision !== eventStore[streamId].revision)
@@ -53,7 +56,8 @@ function save(streamId, message, payload, cb) {
 }
 
 function persist(event, cb) {
-    return save(event.streamId, event.payload, event.message, cb);
+    event.payload = Reservation.fromObject(event.payload);
+    return save(event.streamId, event.topic, event.message, event.payload, cb);
 }
     
 function emit(message, payload) {
@@ -93,15 +97,15 @@ function getSnapshot(aggregateId, cb) {
 }
 
 function reservationPending(restId, payload, cb) {
-    return save(restId, 'reservationPending', payload, cb);
+    return save(restId, ReservationEvents.topic, ReservationEvents.reservationPending, payload, cb);
 }
 
 function reservationAccepted(restId, payload, cb) {
-    return save(restId, 'reservationAccepted', payload, cb);
+    return save(restId, ReservationEvents.topic, ReservationEvents.reservationAccepted, payload, cb);
 }
 
 function reservationFailed(restId, payload, cb) {
-    return save(restId, 'reservationFailed', payload, cb);
+    return save(restId, ReservationEvents.topic, ReservationEvents.reservationFailed, payload, cb);
 }
 
 function getPreviousPendingResCount(restId, created, date, cb) {
@@ -192,7 +196,6 @@ function getReservations(restId, cb) {
         let result = eventStore[restId].events.map(r => r.payload).filter(a => a.status === 'accepted' && a.date.getTime() >= now.getTime());
         if (result.length === 0)
             result = null;
-        
         if (!result)
             throw new Error(`No such reservation with restId = ${restId}`);
         return result;
@@ -206,7 +209,7 @@ function getReservation(restId, resId, cb) {
         return result[0];
     return null; */
     return Promisify(() => {
-        let result = eventStore[restId].events.map(r => r.payload).filter(a => a.id === resId);
+        let result = eventStore[restId].events.map(r => r.payload).filter(a => a.id == resId);
         if (result.length === 1)
             result = result[0];
         else

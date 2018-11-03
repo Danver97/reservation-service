@@ -31,6 +31,17 @@ class Reservation {
         this.date.setMinutes(parseInt(h.m, 10));
     }
     
+    static fromObject(obj) {
+        const res = new Reservation(obj.userId, obj.restaurantId, obj.reservationName, obj.people, obj.date, '15:00');
+        res.id = obj.id;
+        res.status = obj.status;
+        res.date = new Date(obj.date);
+        res.tableId = obj.tableId;
+        res.tablePeople = obj.tablePeople;
+        res.created = new Date(obj.created);
+        return res;
+    }
+    
     pending() {
         if (this.status === 'pending')
             throw new ReservationError('This reservation is already in pending state.');
