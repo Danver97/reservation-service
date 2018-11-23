@@ -1,6 +1,6 @@
 const assert = require('assert');
-const Reservation = require('../models/reservation');
-const repo = require('../modules/repositoryManager');
+const Reservation = require('../domain/models/reservation');
+const repo = require('../infrastructure/repository/repositoryManager')();
 const ENV = require('../src/env');
 
 const waitAsync = (ms) => new Promise(resolve => setTimeout(() => resolve(), ms));
@@ -16,22 +16,21 @@ describe('RepositoryManager unit test', function () {
     tomorrow.setDate(tomorrow.getDate() + 1);
     
     before(() => {
-        if (ENV.node_env === 'test')
+        if (ENV.node_env === 'test' && ENV.event_store === 'testdb')
             repo.reset();
-        else if (ENV.node_env === 'test_event_sourcing')
-            repo.store.reset();
+        else if (ENV.node_env === 'test_event_sourcing' && ENV.event_store === 'testdb')
+            repo.reset();
     });
     
     it('check if addReservation() works', async function () {
         res = new Reservation('pippo', 1, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
         res.pending();
-        await repo.reservationPending(res.restaurantId, res)
+        await repo.reservationPending(res.restaurantId, res);
         filterDate = new Date(res.created.getTime());
         filterDate.setMinutes(filterDate.getMinutes() + 1);
         await waitAsync(waitAsyncTimeout);
         const count = await repo.getPreviousPendingResCount(1, filterDate, res.date);
         assert.strictEqual(count, 1);
-        
     });
 
     it('check if pending res are correctly inserted with right attributes', async function () {

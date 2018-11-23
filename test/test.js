@@ -1,9 +1,9 @@
 const assert = require('assert');
 const ENV = require('../src/env');
-const Reservation = require("../models/reservation");
-//const Table = require("../models/table");
-const ReservationError = require("../errors/reservation_error");
-const repo = require("../modules/repositoryManager");
-const reservationMgr = require("../modules/reservationManager");
+const Reservation = require('../domain/models/reservation');
+//const Table = require('../domain/models/table');
+const ReservationError = require('../domain/errors/reservation_error');
+const repo = require('../infrastructure/repository/repositoryManager');
+const reservationMgr = require('../domain/logic/reservationManager');
 
 //... environment ready for other tests. Just start with 'describe(...)';

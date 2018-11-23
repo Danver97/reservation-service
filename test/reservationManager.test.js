@@ -1,7 +1,7 @@
 const assert = require('assert');
-const Reservation = require('../models/reservation');
-const repo = require('../modules/repositoryManager');
-const reservationMgr = require('../modules/reservationManager');
+const Reservation = require('../domain/models/reservation');
+const repo = require('../infrastructure/repository/repositoryManager')('testdb');
+const reservationMgr = require('../domain/logic/reservationManager')(repo);
 const ENV = require('../src/env');
 
 const waitAsync = (ms) => new Promise(resolve => setTimeout(() => resolve(), ms));
@@ -61,10 +61,10 @@ describe('ReservationManager unit test', function () {
     const timeout = 1;
     
     before(() => {
-        if (ENV.node_env === 'test')
+        if (ENV.node_env === 'test' && ENV.event_store === 'testdb')
             repo.reset();
-        else if (ENV.node_env === 'test_event_sourcing')
-            repo.store.reset();
+        else if (ENV.node_env === 'test_event_sourcing' && ENV.event_store === 'testdb')
+            repo.reset();
     });
     
     it('check if addReservation() works', async function () {

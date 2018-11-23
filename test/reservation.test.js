@@ -1,6 +1,6 @@
 const assert = require('assert');
-const Reservation = require('../models/reservation');
-const ReservationError = require('../errors/reservation_error');
+const Reservation = require('../domain/models/reservation');
+const ReservationError = require('../domain/errors/reservation_error');
 
 describe('Reservation class unit test', function () {
     const res = new Reservation('pippo', 1, 'pippo', 4, '2018-07-15', '15:00');

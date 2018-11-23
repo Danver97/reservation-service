@@ -1,8 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const Reservation = require('../models/reservation');
-const reservationMgr = require('../modules/reservationManager');
-const repository = require('../modules/repositoryManager');
+const Reservation = require('../domain/models/reservation');
+const repository = require('../infrastructure/repository/repositoryManager')();
+const reservationMgr = require('../domain/logic/reservationManager')(repository);
 
 var app = express();
 

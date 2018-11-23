@@ -1,7 +1,7 @@
 const assert = require("assert");
-const Reservation = require("../models/reservation");
+const Reservation = require("../domain/models/reservation");
 const reservationMgr = require("../../modules/reservationManager");
-const repo = require("../../modules/repositoryManager");
+const repo = require("../../infrastructure/repository/repositoryManager");
 const ENV = require("../../src/env");
 
 if(ENV.test === "true")

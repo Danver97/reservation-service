@@ -1,8 +1,8 @@
-const ENV = require('../src/env');
-const Reservation = require('../models/reservation');
-const Table = require('../models/table');
-const repo = require('./repositoryManager');
-const Promisify = require('../lib/utils').promisify;
+const ENV = require('../../src/env');
+// const Reservation = require('../models/reservation');
+// const Table = require('../models/table');
+let repo; // = require('../../infrastructure/repository/repositoryManager');
+const Promisify = require('../../lib/utils').promisify;
 
 function mins(qty) {
     return qty * 60 * 1000;
@@ -33,10 +33,9 @@ function computeTable(reservations, tables, pendingPerTablePeople, pending) {
             // console.log(table.id +' length ' + reservations[table.id].length);
             const res = reservations[table.id][0];
             if (res.date.getTime() + hours(1) <= pending.date.getTime() || res.date.getTime() >= pending.date.getTime() + hours(1)) {
-                if (totalsolutions < pendingPerTablePeople[table.people]) {
+                if (totalsolutions < pendingPerTablePeople[table.people])
                     totalsolutions++;
-                    // console.log('una res con pending ' +table.id);
-                } else if (table.people >= pending.people) {
+                else if (table.people >= pending.people) {
                     tableres = table;
                     effectiveDate = null;
                     finished = true;
@@ -124,12 +123,12 @@ function computeTable(reservations, tables, pendingPerTablePeople, pending) {
     };
 }
 
-function getTables(reservation, reservations, people) {
+function getTables(reservation, reservations /* , people */) {
     return Promisify(async () => {
         let result;
         try {
             let tables = null;
-            if (ENV.test == 'true') {
+            if (ENV.test === 'true') {
                 // tables = repo.getTables(reservation.restaurantId);
                 tables = await repo.getTables(reservation.restaurantId);
             } else {
@@ -309,9 +308,14 @@ function getReservation(restId, resId) {
     return repo.getReservation(restId, resId);
 }
 
-module.exports = {
-    addReservation,
-    acceptReservation,
-    getReservation,
-    getReservations,
-};
+function exportFunc(db) {
+    repo = db;
+    return {
+        addReservation,
+        acceptReservation,
+        getReservation,
+        getReservations,
+    };
+}
+
+module.exports = exportFunc;
