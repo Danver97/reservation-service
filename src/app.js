@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const Reservation = require('../domain/models/reservation');
 const repository = require('../infrastructure/repository/repositoryManager')();
-const reservationMgr = require('../domain/logic/reservationManager')(repository);
+const reservationMgr = require('../domain/logic/restaurantReservationsManager')(repository);
 
 var app = express();
 

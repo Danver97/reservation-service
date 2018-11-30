@@ -6,11 +6,16 @@ const dbs = require('../../lib/eventSourcing/eventStore');
 const Property = implem.Property;
 
 const interf = {
-    getPreviousPendingResCount: new Property('function', 4),
-    getPreviousPendingRes: new Property('function', 4),
-    getReservationsFromDateToDate: new Property('function', 4),
+    restaurantReservationsCreated: new Property('function', 2),
+    reservationFailed: new Property('function', 3),
+    reservationAccepted: new Property('function', 3),
+    reservationCancelled: new Property('function', 3),
     getReservations: new Property('function', 2),
-    getReservation: new Property('function', 3),
+    
+    // getPreviousPendingResCount: new Property('function', 4),
+    // getPreviousPendingRes: new Property('function', 4),
+    // getReservationsFromDateToDate: new Property('function', 4),
+    // getReservation: new Property('function', 3),
 };
 
 function exportFunc(db) {

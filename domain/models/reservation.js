@@ -38,7 +38,7 @@ class Reservation {
         res.date = new Date(obj.date);
         res.tableId = obj.tableId;
         res.tablePeople = obj.tablePeople;
-        res.created = new Date(obj.created);
+        // res.created = new Date(obj.created);
         return res;
     }
     
@@ -46,7 +46,6 @@ class Reservation {
         if (this.status === 'pending')
             throw new ReservationError('This reservation is already in pending state.');
         this.status = 'pending';
-        this.created = new Date();
     }
     
     accepted(table, effectiveDate) {
@@ -60,6 +59,11 @@ class Reservation {
     
     failed() {
         this.status = 'failed';
+        // this.setTable(null, null);
+    }
+    
+    cancelled() {
+        this.status = 'cancelled';
         // this.setTable(null, null);
     }
     

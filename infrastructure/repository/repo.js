@@ -1,4 +1,6 @@
 const ReservationEvents = require('../../lib/reservation-events');
+const Reservation = require('../../domain/models/reservation');
+const RestaurantReservations = require('../../domain/models/restaurantReservations');
 const Table = require('../../domain/models/table');
 const Utils = require('../../lib/utils');
 
@@ -28,79 +30,30 @@ const restaturants = {
     },
 };
 
-function reservationPending(restId, payload, cb) {
-    return this.save(restId, ReservationEvents.topic, ReservationEvents.reservationPending, Object.assign({}, payload), cb);
-}
-
-function reservationAccepted(restId, payload, cb) {
-    return this.save(restId, ReservationEvents.topic, ReservationEvents.reservationAccepted, Object.assign({}, payload), cb);
-}
-
-function reservationFailed(restId, payload, cb) {
-    return this.save(restId, ReservationEvents.topic, ReservationEvents.reservationFailed, Object.assign({}, payload), cb);
-}
-
-function getPreviousPendingResCount(restId, created, date, cb) {
-    return Promisify(async () => {
-        const stream = await this.getStream(restId);
-        const pending = stream.map(r => r.payload)
-            .filter(a => a.status === 'pending' && a.created.getTime() < created.getTime() 
-                    && a.date.getTime() + Utils.hours(1) + Utils.mins(15) >= date.getTime());
-
-        const accepted = stream.map(r => r.payload)
-            .filter(a => a.status === 'accepted' && a.created.getTime() < created.getTime());
-        
-        const result = pending.filter(a => !(accepted.filter(b => b.id === a.id).length >= 1));
-        
-        return result.length; // */
-    }, cb);
-}
-
-function getPreviousPendingRes(restId, created, date, cb) {
-    return Promisify(async () => {
-        const stream = await this.getStream(restId);
-        let pending = stream.map(r => r.payload)
-            .filter(a => a.status === 'pending' 
-                    && a.created.getTime() < created.getTime() 
-                    && ((a.date.getTime() + Utils.hours(1) + Utils.mins(15) > date.getTime() 
-                         && a.date.getTime() <= date.getTime()) 
-                        || (a.date.getTime() - Utils.mins(15) < date.getTime() + Utils.hours(1) 
-                            && a.date.getTime() >= date.getTime())));
-
-        const accepted = stream.map(r => r.payload)
-            .filter(a => a.status === 'accepted' && a.created.getTime() < created.getTime());
-
-        const failed = stream.map(r => r.payload)
-            .filter(a => a.status === 'failed' && a.created.getTime() < created.getTime());
-
-        pending = pending.filter(a => !(accepted.filter(b => b.id === a.id).length >= 1) 
-                                 && !(failed.filter(b => b.id === a.id).length >= 1));
-        const result = {};
-        let max = 0;
-        pending.forEach(p => {
-            if (p.people > max);
-            max = p.people;
-            if (!result[p.people])
-                result[p.people] = 0;
-            result[p.people] += 1;
-        });
-        result[0] = 0;
-        for (let i = 1; i <= max; i++) {
-            if (!result[i])
-                result[i] = result[i - 1];
-            else
-                result[i] += result[i - 1];
-        }
-        return result;
-    }, cb);
-}
-
+/*
 function getReservationsFromDateToDate(restId, fromDate, toDate, cb) {
     return Promisify(async () => {
         const stream = await this.getStream(restId);
         return stream.map(r => r.payload)
             .filter(a => a.status === 'accepted' && a.date.getTime() >= fromDate.getTime() && a.date.getTime() <= toDate.getTime());
     }, cb);
+}
+*/
+
+function restaurantReservationsCreated(rr, cb) {
+    return this.save(rr.restId, rr._revisionId, ReservationEvents.restaurantReservationsCreated, { restId: rr.restId, timeTable: rr.timeTable }, cb);
+}
+
+function reservationFailed(rr, reservation, cb) {
+    return this.save(rr.restId, rr._revisionId, ReservationEvents.reservationFailed, Object.assign({}, reservation), cb);
+}
+
+function reservationAccepted(rr, reservation, cb) {
+    return this.save(rr.restId, rr._revisionId, ReservationEvents.reservationAccepted, Object.assign({}, reservation), cb);
+}
+
+function reservationCancelled(rr, reservation, cb) {
+    return this.save(rr.restId, rr._revisionId, ReservationEvents.reservationCancelled, Object.assign({}, reservation), cb);
 }
 
 function getTables(restId, cb) {
@@ -117,43 +70,38 @@ function getTables(restId, cb) {
 
 function getReservations(restId, cb) {
     return Promisify(async () => {
-        const now = new Date(Date.now());
-        now.setMinutes(now.getMinutes() - 30);
+        // const now = new Date(Date.now());
+        // now.setMinutes(now.getMinutes() - 30);
         const stream = await this.getStream(restId);
-        let result = stream.map(r => r.payload).filter(a => a.status === 'accepted' && a.date.getTime() >= now.getTime());
-        if (result.length === 0)
-            result = null;
-        if (!result)
+        let rr;
+        stream.forEach(e => {
+            if (e.message === ReservationEvents.restaurantReservationsCreated)
+                rr = new RestaurantReservations(e.payload.restId, e.payload.timeTable);
+            if (e.message === ReservationEvents.reservationFailed)
+                rr.reservationFailed(Reservation.fromObject(e.payload));
+            if (e.message === ReservationEvents.reservationAccepted)
+                rr.reservationAccepted(Reservation.fromObject(e.payload));
+            if (e.message === ReservationEvents.reservationCancelled)
+                rr.reservationCancelled(Reservation.fromObject(e.payload).id);
+        });
+        if (!rr)
             throw new Error(`No such reservation with restId = ${restId}`);
-        return result;
+        rr._revisionId = stream.length;
+        // console.log(rr);
+        return rr;
     }, cb);
 }
 
-function getReservation(restId, resId, cb) {
-    return Promisify(async () => {
-        const stream = await this.getStream(restId);
-        let result = stream.map(r => r.payload).filter(a => a.id == resId);
-        if (result.length === 1)
-            result = result[0];
-        else
-            result = null;
-        if (!result)
-            throw new Error(`No such reservation with restId = ${restId} and resId = ${resId}`);
-        return result;
-    }, cb);
-}
 
 function exportFunc(db) {
     return Object.assign(db, {
-        reservationPending: reservationPending.bind(db),
-        reservationAccepted: reservationAccepted.bind(db),
+        restaurantReservationsCreated: restaurantReservationsCreated.bind(db),
         reservationFailed: reservationFailed.bind(db),
-        getPreviousPendingResCount: getPreviousPendingResCount.bind(db),
-        getPreviousPendingRes: getPreviousPendingRes.bind(db),
-        getReservationsFromDateToDate: getReservationsFromDateToDate.bind(db),
+        reservationAccepted: reservationAccepted.bind(db),
+        reservationCancelled: reservationCancelled.bind(db),
+        // getReservationsFromDateToDate: getReservationsFromDateToDate.bind(db),
         getTables: getTables.bind(db),
         getReservations: getReservations.bind(db),
-        getReservation: getReservation.bind(db),
     });
 }
 

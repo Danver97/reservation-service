@@ -3,7 +3,7 @@ const request = require('supertest');
 const app = require('../src/app');
 const ENV = require('../src/env');
 const Reservation = require('../domain/models/reservation');
-const reservationMgr = require('../domain/logic/reservationManager');
+const reservationMgr = require('../domain/logic/restaurantReservationsManager');
 const repo = require('../infrastructure/repository/repositoryManager')();
 
 const req = request(app);
