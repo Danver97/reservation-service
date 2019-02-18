@@ -1,7 +1,7 @@
-const implem = require('../../lib/implements');
+const dbs = require('@danver97/event-sourcing/eventStore');
+const implem = require('implemented');
 const ENV = require('../../src/env');
 const repoImpl = require('./repo');
-const dbs = require('../../lib/eventSourcing/eventStore');
 
 const Property = implem.Property;
 
@@ -11,7 +11,7 @@ const interf = {
     reservationAccepted: new Property('function', 3),
     reservationCancelled: new Property('function', 3),
     getReservations: new Property('function', 2),
-    
+
     // getPreviousPendingResCount: new Property('function', 4),
     // getPreviousPendingRes: new Property('function', 4),
     // getReservationsFromDateToDate: new Property('function', 4),

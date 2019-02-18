@@ -11,13 +11,16 @@
   "author": "Christian Paesante",
   "license": "ISC",
   "dependencies": {
+    "@danver97/event-sourcing": "^1.0.3",
     "aws-sdk": "^2.336.0",
     "body-parser": "^1.18.3",
     "dotenv": "^6.0.0",
     "dynamodb-data-types": "^3.0.1",
     "express": "^4.16.3",
+    "implemented": "^1.0.0",
     "node-native-zip": "^1.1.0",
     "npm": "^6.1.0",
+    "promisify-cb": "^1.0.0",
     "redis-event-broker": "^1.3.8",
     "uuid": "^3.3.2"
   },

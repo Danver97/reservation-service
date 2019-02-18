@@ -1,7 +1,7 @@
+const Promisify = require('promisify-cb');
 const Utils = require('../../lib/utils');
 const ENV = require('../../src/env');
 
-const Promisify = Utils.promisify;
 const hours = Utils.hours;
 const mins = Utils.mins;
 
@@ -41,7 +41,7 @@ function getReservationsPerTable(rr, date) {
                     return 1;
                 });
             });
-            result = resPerTable;    
+            result = resPerTable;
         } catch (e) {
             throw e;
         }
@@ -54,9 +54,9 @@ function getTables(reservation, reservations /* , people */) {
         let result;
         try {
             let tables = null;
-            if (ENV.test === 'true') {
+            if (ENV.test === 'true')
                 tables = await repo.getTables(reservation.restaurantId);
-            } else {
+            else {
                 // tables = await request(https:// restaurant-service/:restId/tables(?people=:people));
                 if (!tables)
                     throw new Error('Tables array not initialized');
@@ -133,17 +133,17 @@ function computeTable(reservations, tables, pending) {
         } else {
             const prev = reservations[table.id][0];
             const next = reservations[table.id][1];
-            if (prev.date.getTime() + hours(1) <= pending.date.getTime() 
+            if (prev.date.getTime() + hours(1) <= pending.date.getTime()
                 && next.date.getTime() >= pending.date.getTime() + hours(1)) {
                 tableres = table;
                 effectiveDate = null;
                 break;
-            } else if (prev.date.getTime() + hours(1) <= pending.date.getTime() - mins(15) 
+            } else if (prev.date.getTime() + hours(1) <= pending.date.getTime() - mins(15)
                        && next.date.getTime() >= pending.date.getTime() + hours(1) - mins(15)) {
                 tableres = table;
                 effectiveDate = pending.date.getTime() - mins(15);
                 break;
-            } else if (prev.date.getTime() + hours(1) <= pending.date.getTime() + mins(15) 
+            } else if (prev.date.getTime() + hours(1) <= pending.date.getTime() + mins(15)
                        && next.date.getTime() >= pending.date.getTime() + hours(1) + mins(15)) {
                 tableres = table;
                 effectiveDate = pending.date.getTime() + mins(15);

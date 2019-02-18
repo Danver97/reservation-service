@@ -1,10 +1,8 @@
+const Promisify = require('promisify-cb');
 const ReservationEvents = require('../../lib/reservation-events');
 const Reservation = require('../../domain/models/reservation');
 const RestaurantReservations = require('../../domain/models/restaurantReservations');
 const Table = require('../../domain/models/table');
-const Utils = require('../../lib/utils');
-
-const Promisify = Utils.promisify;
 
 const restaturants = {
     1: {
