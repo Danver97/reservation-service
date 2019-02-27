@@ -15,7 +15,7 @@ const waitAsyncTimeout = 10;
 describe('Integration test', function() {
     const rr1 = new RestaurantReservations(1);
     const rr2 = new RestaurantReservations(2);
-    
+
     const reservationEquals = (result, expected) => {
         for(let p in expected) {
             if (p === 'id')
@@ -26,7 +26,7 @@ describe('Integration test', function() {
                 assert.strictEqual(result[p], expected[p]);
         }
     };
-    
+
     before(async () => {
         if (ENV.node_env === 'test' && ENV.event_store === 'testdb')
             repo.reset();
@@ -35,7 +35,7 @@ describe('Integration test', function() {
         await repo.restaurantReservationsCreated(rr1);
         await repo.restaurantReservationsCreated(rr2);
     });
-   
+
     it('get /', async function() {
         await req
             .get('/')
@@ -43,7 +43,7 @@ describe('Integration test', function() {
                 service: 'reservation-service',
             }));
     });
-    
+
     context('Context: Reservation {userId: 15, restaurantId: 1, reservationName: \'Pippo\', people: 4, date: \'2018-12-08\', hour: \'15:00\'}', function () {
         const date = '2018-12-08';
         const hour = '15:00';
@@ -119,10 +119,10 @@ describe('Integration test', function() {
             await req
                 .get('/reservations?restId=10')
                 .expect(500);
-            
+
             const reservation = new Reservation(15, 2, 'Pippo2', 4, '2018-12-09', '15:00');
             await reservationMgr.acceptReservation(reservation.restaurantId, reservation);
-            
+
             await waitAsync(waitAsyncTimeout);
             await req
                 .get(`/reservations?restId=${reservation.restaurantId}`)

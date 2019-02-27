@@ -31,7 +31,7 @@ function reservationConfirmed(resId, table, effectiveDate, cb) {
             else // RepositoryError
                 error();
         }
-        return resId;
+        return r;
     }, cb);
     /* return Promisify(async () => {
         let err = null;
@@ -195,7 +195,7 @@ function computeTable(tables, reservation) {
 function acceptReservation(restId, reservation) {
     return Promisify(async () => {
         const rr = await repo.getReservations(restId);
-        // const r = const rr = await repo.getReservation(reservation.id);
+        // const r = await repo.getReservation(reservation.id);
         const tables = rr.getTables(reservation.people);
         const result = computeTable(tables, reservation);
         // console.log('result');

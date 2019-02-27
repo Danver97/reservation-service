@@ -30,8 +30,8 @@ describe('Reservation class unit test', function () {
 
     it('check if accepted() works', function () {
         res.accepted(table, effDate);
-        assert.strictEqual(res.tableId, 1);
-        assert.strictEqual(res.tablePeople, 4);
+        assert.strictEqual(res.table.id, 1);
+        assert.strictEqual(res.table.people, 4);
         assert.strictEqual(res.date.toLocaleString(), effDate.toLocaleString());
         assert.throws(() => res.accepted(table, effDate), ReservationError);
     });

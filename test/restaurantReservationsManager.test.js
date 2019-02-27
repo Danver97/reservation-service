@@ -7,6 +7,7 @@ const repo = require('../infrastructure/repository/repositoryManager')('testdb')
 // const reservationMgr = require('../domain/logic/reservationManager')(repo);
 const reservationMgr = require('../domain/logic/restaurantReservationsManager')(repo);
 const ENV = require('../src/env');
+const assertStrictEqual = require('../lib/utils').assertStrictEqual;
 
 const parseHour = hourStr => {
     const h = hourStr.split(':');
@@ -63,6 +64,27 @@ describe('RestaurantReservationManager unit test', function () {
         else if (ENV.node_env === 'test_event_sourcing' && ENV.event_store === 'testdb')
             repo.reset();
         await repo.restaurantReservationsCreated(rr);
+    });
+
+    it('check if reservationCreated works', async function () {
+        res = new Reservation('pippo', rr.restId, 'pippo', 2, tomorrow.toLocaleDateString(), '15:00');
+        assertStrictEqual(await reservationMgr.reservationCreated(res), res);
+        const result = await repo.getReservation(res.id);
+        assertStrictEqual(result, res);
+    });
+
+    it('check if reservationConfirmed works', async function () {
+        res.accepted(tables[0]);
+        assertStrictEqual(await reservationMgr.reservationConfirmed(res.id, res.table, res.date), res);
+        const result = await repo.getReservation(res.id);
+        assertStrictEqual(result, res);
+    });
+
+    it('check if reservationCancelled works', async function () {
+        res.cancelled();
+        assertStrictEqual(await reservationMgr.reservationCancelled(res.id), res);
+        const result = await repo.getReservation(res.id);
+        assertStrictEqual(result, res);
     });
 
     it('check if acceptReservation works (single table)', async function () {

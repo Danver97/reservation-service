@@ -68,6 +68,15 @@ describe('RepositoryManager unit test', function() {
         assertStrictEqual(result, res);
     });
 
+    it('check if reservationRejected works', async function () {
+        let newRes = new Reservation('pippo', 1, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
+        await repo.reservationCreated(newRes);
+        newRes.rejected();
+        await repo.reservationRejected(newRes);
+        const result = await repo.getReservation(newRes.id);
+        assertStrictEqual(result, newRes);
+    });
+
     it('check if reservationAdded works', async function () {
         const rrs = await repo.getReservations(rr.restId);
         rr.reservationAdded(res);
@@ -97,7 +106,20 @@ describe('RepositoryManager unit test', function() {
     });
 
     it('check if getReservations works', async function () {
+        try {
+            await repo.getReservations('noneid');
+        } catch (e) {
+            assert.throws(() => { throw e; }, Error);
+        }
         const result = await repo.getReservations(rr.restId);
         restaurantReservationsEqual(result, rr);
+    });
+
+    it('check if getReservation works', async function () {
+        try {
+            await repo.getReservation('noneid');
+        } catch (e) {
+            assert.throws(() => { throw e; }, Error);
+        }
     });
 });
