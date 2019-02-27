@@ -123,6 +123,17 @@ function reservationCancelled(resId, cb) {
     };
 } */
 
+function restaurantReservationsCreated(rr, cb) {
+    return optimisticLocking(async error => {
+        try {
+            await repo.restaurantReservationsCreated(rr);
+        } catch (e) {
+            error();
+        }
+        return rr;
+    }, cb);
+}
+
 function getReservationWithin3Hours(tableReservations, reservation) {
     const within3Hours = [];
     for (let i = 0; i < tableReservations.length; i++) {
@@ -225,6 +236,7 @@ function exportFunc(db) {
         reservationCreated,
         reservationConfirmed,
         reservationCancelled,
+        restaurantReservationsCreated,
         acceptReservation,
         cancelReservation,
     };
