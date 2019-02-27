@@ -1,4 +1,4 @@
-const ExtendableError = require('./extendable_error');
+const ExtendableError = require('../../lib/extendable_error');
 
 class ReservationError extends ExtendableError {}
 
