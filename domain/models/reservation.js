@@ -1,14 +1,20 @@
+const uuid = require('uuid/v4');
 const ReservationError = require('../errors/reservation_error');
 
-let resCode = 0;
-    
+const statusCodes = {
+    pending: 0,
+    confirmed: 1,
+    rejected: 2,
+    cancelled: 3,
+};
+
 function parseHour(hour) {
     const h = hour.split(':');
     if (!h[1])
         throw new ReservationError('Invalid Reservation object hour parameter.');
     const h1 = parseInt(h[0], 10);
     const m1 = parseInt(h[1], 10);
-    if (isNaN(h1) || isNaN(m1))
+    if (Number.isNaN(h1) || Number.isNaN(m1))
         throw new ReservationError('Invalid Reservation object hour parameter.');
     return { h: h1, m: m1 };
 }
@@ -18,60 +24,84 @@ class Reservation {
         if (!userId || !reservationName || !people || !restaurantId || !date || !hour)
             throw new ReservationError('Invalid Reservation object constructor parameters.');
         this.status = undefined;
-        this.id = resCode++;
+        this.id = uuid();
         this.userId = userId;
         this.reservationName = reservationName;
         this.people = people;
         this.restaurantId = restaurantId;
-        this.tableId = undefined;
-        this.tablePeople = undefined;
+        this.table = undefined;
         this.date = new Date(date);
         const h = parseHour(hour);
         this.date.setHours(parseInt(h.h, 10));
         this.date.setMinutes(parseInt(h.m, 10));
+        this.statusCode = -1;
+        this.status = 'created';
+        this.pending();
     }
-    
+
     static fromObject(obj) {
         const res = new Reservation(obj.userId, obj.restaurantId, obj.reservationName, obj.people, obj.date, '15:00');
         res.id = obj.id;
-        res.status = obj.status;
+        res.setStatus(obj.status);
         res.date = new Date(obj.date);
-        res.tableId = obj.tableId;
-        res.tablePeople = obj.tablePeople;
+        if (res.statusCode === 1)
+            res.setTable(obj.table);
         // res.created = new Date(obj.created);
         return res;
     }
-    
+
     pending() {
-        if (this.status === 'pending')
-            throw new ReservationError('This reservation is already in pending state.');
-        this.status = 'pending';
+        if (this.statusCode < 0)
+            this.setStatus('pending');
+        else
+            throw new ReservationError(`This reservation is already ${this.status} and can't be set into a pending state.`);
     }
-    
+
     accepted(table, effectiveDate) {
-        if (this.status === 'accepted')
-            throw new ReservationError('This reservation is already in accepted state.');
-        this.status = 'accepted';
+        this.setTable(table);
+        this.confirmed();
         if (effectiveDate)
             this.date = effectiveDate;
-        this.setTable(table.id, table.people);
     }
-    
-    failed() {
-        this.status = 'failed';
+
+    confirmed() {
+        if (this.statusCode === 0)
+            this.setStatus('confirmed');
+        else
+            throw new ReservationError(`This reservation is already ${this.status} and can't be set into a confirmed state.`);
+    }
+
+    rejected() {
+        if (this.statusCode === 0)
+            this.setStatus('rejected');
+        else
+            throw new ReservationError(`This reservation is already ${this.status} and can't be set into a rejected state.`);
         // this.setTable(null, null);
     }
-    
+
     cancelled() {
-        this.status = 'cancelled';
+        if (this.statusCode <= 2)
+            this.setStatus('cancelled');
+        else
+            throw new ReservationError(`This reservation is already ${this.status} and can't be set into a cancelled state.`);
         // this.setTable(null, null);
     }
-    
-    setTable(tableId, people) {
-        this.tableId = tableId;
-        if (this.people > people)
-            throw new ReservationError('Invalid Reservation table: the assigned table (' + people + ' people) is too little for ' + this.people + ' people.');
-        this.tablePeople = people;
+
+    setStatus(status) {
+        this.status = status;
+        this.statusCode = statusCodes[status];
+    }
+
+    setTable(table) {
+        if (!table)
+            throw new ReservationError('Table required.');
+        if (!table.id || !table.people)
+            throw new ReservationError(`Invalid table object. Missing ${table.id ? '' : 'id'}${table.people ? '' : ' people'}`);
+        if (this.people > table.people) {
+            throw new ReservationError(`Invalid Reservation table: the assigned table (${table.people} people)
+            is too little for ${this.people} people.`);
+        }
+        this.table = { id: table.id, people: table.people };
     }
 }
 

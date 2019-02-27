@@ -1,5 +1,6 @@
 const assert = require('assert');
 const uuid = require('uuid/v4');
+const Table = require('../domain/models/table');
 const Reservation = require('../domain/models/reservation');
 const RestaurantReservations = require('../domain/models/restaurantReservations');
 const RestaurantReservationsError = require('../domain/errors/restaurantReservations_error');
@@ -14,58 +15,50 @@ describe('RestaurantReservations unit test', function () {
         Saturday: '7:00-18:00',
         Sunday: '7:00-18:00',
     };
+    const tables = [
+        new Table(1, 1, 2),
+        new Table(2, 1, 3),
+        new Table(3, 1, 4),
+        new Table(4, 1, 4),
+        new Table(5, 1, 4),
+        new Table(6, 1, 6),
+    ];
     let res;
     const tomorrow = new Date(Date.now());
     tomorrow.setDate(tomorrow.getDate() + 1);
     const id = uuid();
-    const rr = new RestaurantReservations(id, timeTable);
-    
+    const rr = new RestaurantReservations(id, timeTable, tables);
+
     it('check if constructor works', function () {
         assert.strictEqual(rr.restId, id);
         assert.strictEqual(JSON.stringify(rr.timeTable), JSON.stringify(timeTable));
     });
-    
-    it('check if setTimeTable works', function () {
-        
-    });
-    
-    it('check if reservationAccepted works', function () {
-        assert.throws(() => rr.reservationAccepted({}), RestaurantReservationsError);
+
+    /* it('check if setTimeTable works', function () {
+
+    }); */
+
+    /* it('check if setTables works', function () {
+
+    }); */
+
+    it('check if reservationAdded works', function () {
+        assert.throws(() => rr.reservationAdded({}), RestaurantReservationsError);
         res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
-        rr.reservationAccepted(res);
-        assert.throws(() => rr.reservationAccepted(res), RestaurantReservationsError);
-        assert.strictEqual(JSON.stringify(rr.sortReservations()), JSON.stringify([res]));
+        assert.throws(() => rr.reservationAdded(res), RestaurantReservationsError);
+        res.accepted(tables[0]);
+        rr.reservationAdded(res);
+        assert.throws(() => rr.reservationAdded(res), RestaurantReservationsError);
+        assert.strictEqual(JSON.stringify(rr.getTables(2)[0].getReservations()), JSON.stringify([res]));
+        const res2 = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
+        res2.cancelled();
+        assert.throws(() => rr.reservationAdded(res2), RestaurantReservationsError);
     });
-    
-    it('check if reservationCancelled works', function () {
-        assert.throws(() => rr.reservationCancelled({}), RestaurantReservationsError);
-        rr.reservationCancelled(res.id);
-        assert.throws(() => rr.reservationCancelled(res.id), RestaurantReservationsError);
-        assert.strictEqual(JSON.stringify(rr.sortReservations()), JSON.stringify([]));
-    });
-    
-    it('check if reservationFailed works', function () {
-        assert.throws(() => rr.reservationFailed({}), RestaurantReservationsError);
-        res = new Reservation('pippo2', rr.restId, 'pippo2', 1, tomorrow.toLocaleDateString(), '15:00');
-        rr.reservationFailed(res);
-        assert.strictEqual(JSON.stringify(rr.sortReservations()), JSON.stringify([]));
-        
-        rr.reservationAccepted(res);
-        assert.throws(() => rr.reservationFailed(res), RestaurantReservationsError);
-        assert.strictEqual(JSON.stringify(rr.sortReservations()), JSON.stringify([res]));
-        rr.reservationCancelled(res.id);
-    });
-    
-    it('check if sortReservations works', function () {
-        const res1 = new Reservation('pippo3', rr.restId, 'pippo3', 1, tomorrow.toLocaleDateString(), '16:00');
-        const res2 = new Reservation('pippo4', rr.restId, 'pippo4', 1, tomorrow.toLocaleDateString(), '15:00');
-        
-        rr.reservationAccepted(res1);
-        let reservationsSorted = rr.sortReservations();
-        assert.strictEqual(JSON.stringify(reservationsSorted.map(r => r.id)), JSON.stringify([res1.id]));
-        
-        rr.reservationAccepted(res2);
-        reservationsSorted = rr.sortReservations();
-        assert.strictEqual(JSON.stringify(reservationsSorted.map(r => r.id)), JSON.stringify([res2.id, res1.id]));
+
+    it('check if reservationRemoved works', function () {
+        assert.throws(() => rr.reservationRemoved(), RestaurantReservationsError);
+        rr.reservationRemoved(res.id);
+        assert.throws(() => rr.reservationRemoved(res.id), RestaurantReservationsError);
+        assert.strictEqual(JSON.stringify(rr.getTables(2)[0].getReservations()), JSON.stringify([]));
     });
 });

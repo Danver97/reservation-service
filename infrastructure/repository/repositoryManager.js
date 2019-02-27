@@ -24,7 +24,7 @@ function exportFunc(db) {
         repo = repoImpl(dbs[ENV.event_store]);
     else
         repo = repoImpl(dbs[db]);
-    implem.checkImplementation(interf, repo);
+    // implem.checkImplementation(interf, repo);
     return repo;
 }
 

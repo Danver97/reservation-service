@@ -1,106 +1,70 @@
 const Promisify = require('promisify-cb');
 const Utils = require('../../lib/utils');
-const ENV = require('../../src/env');
+const ReservationError = require('../errors/reservation_error');
 
 const hours = Utils.hours;
 const mins = Utils.mins;
+const optimisticLocking = Utils.optimisticLocking;
 
 let repo = null;
 
-function getReservationsFromDateToDate(rr, from, to) {
-    const sortedRes = rr.sortReservations();
-    const fromTime = from.getTime();
-    const toTime = to.getTime();
-    return sortedRes.filter(r => r.date.getTime() >= fromTime && r.date.getTime() <= toTime);
-}
-
-function getReservationsPerTable(rr, date) {
-    return Promisify(async () => {
-        let result;
+function reservationCreated(reservation, cb) {
+    return optimisticLocking(async error => {
         try {
-            const fromDate = new Date(date.getTime());
-            fromDate.setHours(fromDate.getHours() - 1);
-            fromDate.setMinutes(fromDate.getMinutes() - 15);
-
-            const toDate = new Date(date.getTime());
-            toDate.setHours(toDate.getHours() + 1);
-            toDate.setMinutes(toDate.getMinutes() + 15);
-
-            // const reservations = repo.getReservationsFromDateToDate(restId, fromDate, toDate);
-            const reservations = getReservationsFromDateToDate(rr, fromDate, toDate);
-            const resPerTable = {};
-            reservations.forEach(res => {
-                if (!resPerTable[res.tableId])
-                    resPerTable[res.tableId] = [];
-                resPerTable[res.tableId].push(res);
-            });
-            Object.keys(resPerTable).forEach(k => {
-                resPerTable[k].sort((a, b) => {
-                    if (a.date.getTime() <= b.date.getTime())
-                        return -1;
-                    return 1;
-                });
-            });
-            result = resPerTable;
+            await repo.reservationCreated(reservation);
         } catch (e) {
-            throw e;
+            error();
         }
-        return result;
-    });
+        return reservation;
+    }, cb);
 }
 
-function getTables(reservation, reservations /* , people */) {
-    return Promisify(async () => {
-        let result;
+function reservationConfirmed(resId, table, effectiveDate, cb) {
+    return optimisticLocking(async error => {
+        const r = await repo.getReservation(resId);
         try {
-            let tables = null;
-            if (ENV.test === 'true')
-                tables = await repo.getTables(reservation.restaurantId);
-            else {
-                // tables = await request(https:// restaurant-service/:restId/tables(?people=:people));
-                if (!tables)
-                    throw new Error('Tables array not initialized');
+            r.accepted(table, effectiveDate);
+            await repo.reservationConfirmed(r);
+        } catch (e) {
+            if (e instanceof ReservationError)
+                console.log('Reservation already cancelled');
+            else // RepositoryError
+                error();
+        }
+        return resId;
+    }, cb);
+    /* return Promisify(async () => {
+        let err = null;
+        do {
+            const r = await repo.getReservation(resId);
+            try {
+                r.accepted(table, effectiveDate);
+                await repo.reservationConfirmed(r);
+            } catch (e) {
+                if (e instanceof ReservationError)
+                    break;
+                else // RepositoryError
+                    err = e;
             }
-            tables.forEach(table => {
-                if (!reservations[table.id])
-                    table.sortKey = hours(2) + mins(30);
-                else if (!reservations[table.id][1] && reservations[table.id][0]) {
-                    const dist = Math.abs(reservations[table.id][0].date.getTime() - reservation.date.getTime());
-                    if (dist === 0)
-                        table.sortKey = 0;
-                    else
-                        table.sortKey = hours(1) + mins(15) + dist;
-                } else if (reservations[table.id][1] && reservations[table.id][0]) {
-                    if (reservations[table.id][1].date.getTime() - reservation.date.getTime() === 0)
-                        table.sortKey = 0;
-                    if (reservations[table.id][0].date.getTime() - reservation.date.getTime() === 0)
-                        table.sortKey = 0;
-                    table.sortKey = Math.abs(reservations[table.id][1].date.getTime() - reservations[table.id][0].date.getTime());
-                }
-            });
-
-            tables = tables.filter(a => a.sortKey > 0);
-
-            tables.sort((a, b) => {
-                if (a.people < b.people)
-                    return -1;
-                if (a.people > b.people)
-                    return 1;
-                if (a.sortKey > b.sortKey)
-                    return -1;
-                if (a.sortKey < b.sortKey)
-                    return 1;
-                return 0;
-            });
-            result = tables;
-        } catch (e) {
-            throw e;
-        }
-        return result;
-    });
+        } while (!err);
+        return resId;
+    }, cb); */
 }
 
-function computeTable(reservations, tables, pending) {
+function reservationCancelled(resId, cb) {
+    return optimisticLocking(async error => {
+        const r = await repo.getReservation(resId);
+        r.cancelled();
+        try {
+            await repo.reservationCancelled(r);
+        } catch (e) {
+            error();
+        }
+        return r;
+    }, cb);
+}
+
+/* function computeTable(reservations, tables, pending) {
     let tableres = null;
     let effectiveDate = null;
     // console.log('reservations[6]');
@@ -157,50 +121,112 @@ function computeTable(reservations, tables, pending) {
         table: tableres,
         effectiveDate,
     };
+} */
+
+function getReservationWithin3Hours(tableReservations, reservation) {
+    const within3Hours = [];
+    for (let i = 0; i < tableReservations.length; i++) {
+        if (reservation.date.getTime() - hours(1) - mins(30) <= tableReservations[i].date.getTime()
+        && reservation.date.getTime() + hours(1) + mins(30) >= tableReservations[i].date.getTime())
+            within3Hours.push(tableReservations[i]);
+    }
+    return within3Hours;
+}
+
+function computeTable(tables, reservation) {
+    let table = null;
+    let effectiveDate = null;
+    // console.log('tables.length');
+    // console.log(tables.length);
+    for (let i = 0; i < tables.length; i++) {
+        const tableReservations = getReservationWithin3Hours(tables[i].getReservations(), reservation);
+        // console.log('tableReservations');
+        // console.log(tableReservations);
+        if (tableReservations.length >= 3)
+            continue;
+        else if (tableReservations.length === 2) {
+            const prev = tableReservations[0];
+            const next = tableReservations[1];
+            if (prev.date.getTime() + hours(1) <= reservation.date.getTime()
+            && reservation.date.getTime() + hours(1) <= next.date.getTime()) {
+                effectiveDate = reservation.date.getTime();
+                table = tables[i];
+                break;
+            } else if (prev.date.getTime() + hours(1) <= reservation.date.getTime() - mins(15)
+                       && next.date.getTime() >= reservation.date.getTime() + hours(1) - mins(15)) {
+                table = tables[i];
+                effectiveDate = reservation.date.getTime() - mins(15);
+                break;
+            } else if (prev.date.getTime() + hours(1) <= reservation.date.getTime() + mins(15)
+                       && next.date.getTime() >= reservation.date.getTime() + hours(1) + mins(15)) {
+                table = tables[i];
+                effectiveDate = reservation.date.getTime() + mins(15);
+                break;
+            }
+        } else if (tableReservations.length === 1) {
+            const res = tableReservations[0];
+            if (res.date.getTime() + hours(1) <= reservation.date.getTime() || res.date.getTime() >= reservation.date.getTime() + hours(1)) {
+                table = tables[i];
+                effectiveDate = null;
+                break;
+            } else if (res.date.getTime() < reservation.date.getTime()
+            && res.date.getTime() + hours(1) <= reservation.date.getTime() + mins(15)) {
+                table = tables[i];
+                effectiveDate = reservation.date.getTime() + mins(15);
+                break;
+            } else if (res.date.getTime() > reservation.date.getTime()
+            && res.date.getTime() >= reservation.date.getTime() + hours(1) - mins(15)) {
+                table = tables[i];
+                effectiveDate = reservation.date.getTime() - mins(15);
+                break;
+            }
+        } else if (tableReservations.length === 0) {
+            effectiveDate = reservation.date.getTime();
+            table = tables[i];
+            break;
+        }
+    }
+    return {
+        table,
+        effectiveDate: effectiveDate ? new Date(effectiveDate) : null,
+    };
 }
 
 function acceptReservation(restId, reservation) {
     return Promisify(async () => {
         const rr = await repo.getReservations(restId);
-        const reservationsPerTable = await getReservationsPerTable(rr, reservation.date);
-        const tables = await getTables(reservation, reservationsPerTable);
-        const result = computeTable(reservationsPerTable, tables, reservation);
+        // const r = const rr = await repo.getReservation(reservation.id);
+        const tables = rr.getTables(reservation.people);
+        const result = computeTable(tables, reservation);
+        // console.log('result');
+        // console.log(result);
         if (result.table) {
             reservation.accepted(result.table, result.effectiveDate);
-            rr.reservationAccepted(reservation);
-            await repo.reservationAccepted(rr, reservation);
-            return reservation;
-        }
-        reservation.failed();
-        rr.reservationFailed(reservation);
-        await repo.reservationFailed(rr, reservation);
-        return null;
+            await repo.reservationAdded(rr, reservation);
+        } else
+            reservation.rejected();
+        return reservation;
     });
 }
 
 function cancelReservation(restId, reservation) {
     return Promisify(async () => {
         const rr = await repo.getReservations(restId);
-        rr.reservationCancelled(reservation.id);
+        rr.reservationRemoved(reservation.id);
         reservation.cancelled();
-        await repo.reservationCancelled(rr, reservation);
-    });
-}
-
-function getReservations(restId) {
-    return Promisify(async () => {
-        const result = await repo.getReservations(restId);
-        // result.reservations;
-        return result.sortReservations();
+        await repo.reservationRemoved(rr, reservation);
+        return reservation;
     });
 }
 
 function exportFunc(db) {
     repo = db;
     return {
+        reservationCreated,
+        reservationConfirmed,
+        reservationCancelled,
         acceptReservation,
         cancelReservation,
-        getReservations,
     };
 }
 

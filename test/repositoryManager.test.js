@@ -1,12 +1,39 @@
+const assert = require('assert');
 const uuid = require('uuid/v4');
 const assertStrictEqual = require('../lib/utils').assertStrictEqual;
+const Table = require('../domain/models/table');
 const Reservation = require('../domain/models/reservation');
 const RestaurantReservations = require('../domain/models/restaurantReservations');
 const repo = require('../infrastructure/repository/repositoryManager')('testdb');
 const ENV = require('../src/env');
 
+function restaurantReservationsEqual(actual, expected) {
+    assert.strictEqual(actual.restId, expected.restId);
+    assert.strictEqual(JSON.stringify(actual.timeTable), JSON.stringify(expected.timeTable));
+    assert.strictEqual(JSON.stringify(actual.reservationsTableId), JSON.stringify(expected.reservationsTableId));
+    assert.strictEqual(JSON.stringify(actual.tablesMap), JSON.stringify(expected.tablesMap));
+    assert.strictEqual(JSON.stringify(actual.tables), JSON.stringify(expected.tables));
+}
+
 describe('RepositoryManager unit test', function() {
-    const rr = new RestaurantReservations(uuid());
+    const timeTable = {
+        Monday: '7:00-18:00',
+        Tuesday: '7:00-18:00',
+        Wednesday: '7:00-18:00',
+        Thursday: '7:00-18:00',
+        Friday: '7:00-18:00',
+        Saturday: '7:00-18:00',
+        Sunday: '7:00-18:00',
+    };
+    const tables = [
+        new Table(1, 1, 2),
+        new Table(2, 1, 3),
+        new Table(3, 1, 4),
+        new Table(4, 1, 4),
+        new Table(5, 1, 4),
+        new Table(6, 1, 6),
+    ];
+    const rr = new RestaurantReservations(uuid(), timeTable, tables);
     let res;
     let res2;
 
@@ -26,33 +53,44 @@ describe('RepositoryManager unit test', function() {
         assertStrictEqual(result, rr);
     });
 
-    it('check if reservationAccepted works', async function () {
+    it('check if reservationCreated works', async function () {
         res = new Reservation('pippo', 1, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
+        await repo.reservationCreated(res);
+        const result = await repo.getReservation(res.id);
+        assertStrictEqual(result, res);
+    });
+
+    it('check if reservationConfirmed works', async function () {
+        res = await repo.getReservation(res.id);
+        res.accepted(tables[0]);
+        await repo.reservationConfirmed(res);
+        const result = await repo.getReservation(res.id);
+        assertStrictEqual(result, res);
+    });
+
+    it('check if reservationAdded works', async function () {
         const rrs = await repo.getReservations(rr.restId);
-        rr.reservationAccepted(res);
-        rrs.reservationAccepted(res);
-        await repo.reservationAccepted(rrs, res);
+        rr.reservationAdded(res);
+        rrs.reservationAdded(res);
+        await repo.reservationAdded(rrs, res);
 
         const result = await repo.getReservations(rr.restId);
-        assertStrictEqual(result, rrs);
+        assertStrictEqual(JSON.stringify(result.getTables()), JSON.stringify(rrs.getTables()));
     });
 
     it('check if reservationCancelled works', async function () {
-        const rrs = await repo.getReservations(rr.restId);
-        rr.reservationCancelled(res.id);
-        rrs.reservationCancelled(res.id);
-        await repo.reservationCancelled(rrs, res);
-
-        const result = await repo.getReservations(rr.restId);
-        assertStrictEqual(result, rrs);
+        res = await repo.getReservation(res.id);
+        res.cancelled();
+        await repo.reservationCancelled(res);
+        const result = await repo.getReservation(res.id);
+        assertStrictEqual(result, res);
     });
 
-    it('check if reservationFailed works', async function () {
-        res2 = new Reservation('pippo3', 1, 'pippo3', 1, tomorrow.toLocaleDateString(), '15:00');
+    it('check if reservationRemoved works', async function () {
         const rrs = await repo.getReservations(rr.restId);
-        rr.reservationFailed(res2);
-        rrs.reservationFailed(res2);
-        await repo.reservationFailed(rrs, res2);
+        rr.reservationRemoved(res.id);
+        rrs.reservationRemoved(res.id);
+        await repo.reservationRemoved(rrs, res);
 
         const result = await repo.getReservations(rr.restId);
         assertStrictEqual(result, rrs);
@@ -60,6 +98,6 @@ describe('RepositoryManager unit test', function() {
 
     it('check if getReservations works', async function () {
         const result = await repo.getReservations(rr.restId);
-        assertStrictEqual(result, rr);
+        restaurantReservationsEqual(result, rr);
     });
 });
