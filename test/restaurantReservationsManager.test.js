@@ -151,7 +151,7 @@ describe('RestaurantReservationManager unit test', function () {
     });
 
     it('check if cancelReservation works', async function () {
-        await reservationMgr.cancelReservation(rr.restId, res); // success
+        await reservationMgr.reservationRemoved(rr.restId, res); // success
         res = new Reservation('pippo', rr.restId, 'pippo', 6, tomorrow.toLocaleDateString(), '15:00');
         assertStrictEqualHour((await reservationMgr.acceptReservation(rr.restId, res)).date, setHour(expectedDate, '15:00'));
         // success 15:00

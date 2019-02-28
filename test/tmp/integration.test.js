@@ -63,7 +63,7 @@ describe('Integration test', function() {
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
                 .send({ userId: resrv.userId })
-                .send({ restId: resrv.restaurantId })
+                .send({ restId: resrv.restId })
                 .send({ reservationName: resrv.reservationName })
                 .send({ people: resrv.people })
                 .send({ date })
@@ -104,7 +104,7 @@ describe('Integration test', function() {
                     response.date = new Date(response.date);
                     response.people = parseInt(response.people, 10);
                     response.userId = parseInt(response.userId, 10);
-                    response.restaurantId = parseInt(response.restaurantId, 10);
+                    response.restId = parseInt(response.restId, 10);
                     reservationEquals(response, resrv);
                 })
                 .expect(200);
@@ -121,18 +121,18 @@ describe('Integration test', function() {
                 .expect(500);
 
             const reservation = new Reservation(15, 2, 'Pippo2', 4, '2018-12-09', '15:00');
-            await reservationMgr.acceptReservation(reservation.restaurantId, reservation);
+            await reservationMgr.acceptReservation(reservation.restId, reservation);
 
             await waitAsync(waitAsyncTimeout);
             await req
-                .get(`/reservations?restId=${reservation.restaurantId}`)
+                .get(`/reservations?restId=${reservation.restId}`)
                 .expect(res => {
                     const response = res.body[0];
                     response.created = new Date(response.created);
                     response.date = new Date(response.date);
                     response.people = parseInt(response.people, 10);
                     response.userId = parseInt(response.userId, 10);
-                    response.restaurantId = parseInt(response.restaurantId, 10);
+                    response.restId = parseInt(response.restId, 10);
                     assert.strictEqual(res.body.length, 1);
                     reservationEquals(response, reservation);
                 })

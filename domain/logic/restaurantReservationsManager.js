@@ -220,7 +220,7 @@ function acceptReservation(restId, reservation) {
     });
 }
 
-function cancelReservation(restId, reservation) {
+function reservationRemoved(restId, reservation) {
     return Promisify(async () => {
         const rr = await repo.getReservations(restId);
         rr.reservationRemoved(reservation.id);
@@ -238,7 +238,7 @@ function exportFunc(db) {
         reservationCancelled,
         restaurantReservationsCreated,
         acceptReservation,
-        cancelReservation,
+        reservationRemoved,
     };
 }
 

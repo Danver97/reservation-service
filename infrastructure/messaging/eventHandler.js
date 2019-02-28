@@ -9,6 +9,12 @@ async function handler(event) {
                 new RestaurantReservations(event.payload.restId, event.payload.timeTable, event.payload.tables),
             );
             break;
+        case 'reservationAdded':
+            await manager.reservationConfirmed(event.payload.id, event.payload.table, event.payload.date);
+            break;
+        case 'reservationCancelled':
+            await manager.reservationRemoved(event.payload.restId, event.payload.resId);
+            break;
         default:
     }
 }

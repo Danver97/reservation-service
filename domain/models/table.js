@@ -5,7 +5,7 @@ class Table {
         if (!id || !restaurantId || !people)
             throw new Error('Invalid Table object constructor parameters.');
         this.id = id;
-        this.restaurantId = restaurantId;
+        this.restId = restaurantId;
         this.people = people;
         this.reservations = new List();
         this.reservationsMap = {};
@@ -13,7 +13,7 @@ class Table {
     }
 
     static fromObject(obj) {
-        return new Table(obj.id, obj.restaurantId, obj.people);
+        return new Table(obj.id, obj.restId, obj.people);
     }
 
     addReservation(reservation) { // O(1)

@@ -46,7 +46,7 @@ app.post('/reservation', async (req, res) => {
         return;
     }
     try {
-        await reservationMgr.acceptReservation(reservation.restaurantId, reservation);
+        await reservationMgr.acceptReservation(reservation.restId, reservation);
         res.status(200);
         res.json({
             message: 'success',

@@ -54,7 +54,7 @@ if (process.env.NODE_ENV_TEST === 'mytest') {
         assert.strictEqual(repo.getReservationsFromDateToDate(1,fromDate, toDate).length,1);
         assert.strictEqual(JSON.stringify(repo.getReservationsFromDateToDate(1,fromDate, toDate)),JSON.stringify([res2]));
 
-        assert.strictEqual(JSON.stringify(repo.getReservations(res2.restaurantId)),JSON.stringify([res2]));
+        assert.strictEqual(JSON.stringify(repo.getReservations(res2.restId)),JSON.stringify([res2]));
         assert.strictEqual(JSON.stringify(repo.getPreviousPendingRes(1, filterDate, res.date)),JSON.stringify({"0":0, "1":1}));
 
         res.accepted({id: 2, people:4}, null);

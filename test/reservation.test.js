@@ -18,7 +18,7 @@ describe('Reservation class unit test', function () {
     it('check if Reservation is created with the right attributes', function () {
         assert.throws(() => new Reservation(), ReservationError);
         assert.strictEqual(res.userId, 'pippo');
-        assert.strictEqual(res.restaurantId, 1);
+        assert.strictEqual(res.restId, 1);
         assert.strictEqual(res.reservationName, 'pippo');
         assert.strictEqual(res.people, 4);
         assert.strictEqual(res.date.toLocaleString(), d.toLocaleString());

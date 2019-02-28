@@ -28,7 +28,7 @@ class Reservation {
         this.userId = userId;
         this.reservationName = reservationName;
         this.people = people;
-        this.restaurantId = restaurantId;
+        this.restId = restaurantId;
         this.table = undefined;
         this.date = new Date(date);
         const h = parseHour(hour);
@@ -40,7 +40,7 @@ class Reservation {
     }
 
     static fromObject(obj) {
-        const res = new Reservation(obj.userId, obj.restaurantId, obj.reservationName, obj.people, obj.date, '15:00');
+        const res = new Reservation(obj.userId, obj.restId, obj.reservationName, obj.people, obj.date, '15:00');
         res.id = obj.id;
         res.setStatus(obj.status);
         res.date = new Date(obj.date);

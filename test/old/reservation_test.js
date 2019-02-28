@@ -8,7 +8,7 @@ if (process.env.NODE_ENV_TEST === 'mytest') {
     try {
         var res = new Reservation('pippo', 1, 'pippo', 4, '2018-07-15', '15:00');
         assert.strictEqual(res.userId, 'pippo');
-        assert.strictEqual(res.restaurantId, 1);
+        assert.strictEqual(res.restId, 1);
         assert.strictEqual(res.reservationName, 'pippo');
         assert.strictEqual(res.people, 4);
         let d = new Date('2018-07-15');

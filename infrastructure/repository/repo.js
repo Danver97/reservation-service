@@ -3,22 +3,14 @@ const ReservationEvents = require('../../lib/reservation-events');
 const Reservation = require('../../domain/models/reservation');
 const RestaurantReservations = require('../../domain/models/restaurantReservations');
 
-/*
-function getReservationsFromDateToDate(restId, fromDate, toDate, cb) {
-    return Promisify(async () => {
-        const stream = await this.getStream(restId);
-        return stream.map(r => r.payload)
-            .filter(a => a.status === 'accepted' && a.date.getTime() >= fromDate.getTime() && a.date.getTime() <= toDate.getTime());
-    }, cb);
-}
-*/
-
+// Reservation
 function reservationCreated(reservation, cb) {
     return this.save(reservation.id, reservation._revisionId, ReservationEvents.reservationCreated, Object.assign({}, reservation), cb);
 }
 
 function reservationConfirmed(reservation, cb) {
     const payload = {
+        restId: reservation.restId,
         resId: reservation.id,
         status: 'confirmed',
         table: reservation.table,
@@ -28,15 +20,16 @@ function reservationConfirmed(reservation, cb) {
 }
 
 function reservationRejected(reservation, cb) {
-    const payload = { resId: reservation.id, status: 'rejected' };
+    const payload = { restId: reservation.restId, resId: reservation.id, status: 'rejected' };
     return this.save(reservation.id, reservation._revisionId, ReservationEvents.reservationRejected, payload, cb);
 }
 
 function reservationCancelled(reservation, cb) {
-    const payload = { resId: reservation.id, status: 'cancelled' };
+    const payload = { restId: reservation.restId, resId: reservation.id, status: 'cancelled' };
     return this.save(reservation.id, reservation._revisionId, ReservationEvents.reservationCancelled, payload, cb);
 }
 
+// RestaurantReservations
 function restaurantReservationsCreated(rr, cb) {
     return this.save(rr.restId, rr._revisionId, ReservationEvents.restaurantReservationsCreated,
         { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables }, cb);
@@ -50,6 +43,7 @@ function reservationRemoved(rr, reservation, cb) {
     return this.save(rr.restId, rr._revisionId, ReservationEvents.reservationRemoved, { restId: rr.restId, resId: reservation.id }, cb);
 }
 
+// Getters
 function getReservation(resId, cb) {
     return Promisify(async () => {
         const stream = await this.getStream(resId);

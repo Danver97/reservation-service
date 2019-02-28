@@ -28,7 +28,7 @@ describe('RepositoryManager unit test', function () {
         
         res = new Reservation('pippo', 1, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
         res.pending();
-        await repo.reservationPending(res.restaurantId, res);
+        await repo.reservationPending(res.restId, res);
         filterDate = new Date(res.created.getTime());
         filterDate.setMinutes(filterDate.getMinutes() + 1);
         await waitAsync(waitAsyncTimeout);
@@ -39,7 +39,7 @@ describe('RepositoryManager unit test', function () {
     it('check if pending res are correctly inserted with right attributes', async function () {
         res2 = new Reservation('pippo2', 1, 'pippo', 2, tomorrow.toLocaleDateString(), '15:00');
         res2.pending();
-        await repo.reservationPending(res2.restaurantId, res2);
+        await repo.reservationPending(res2.restId, res2);
         await waitAsync(waitAsyncTimeout);
         filterDate = new Date(res2.created.getTime());
         filterDate.setMinutes(filterDate.getMinutes() + 1);
@@ -48,7 +48,7 @@ describe('RepositoryManager unit test', function () {
 
     it('check if accepted res are inserted and found by getReservationsFromDateToDate()', async function () {
         res2.accepted({ id: 1, people: 4 }, null);
-        await repo.reservationAccepted(res2.restaurantId, res2);
+        await repo.reservationAccepted(res2.restId, res2);
 
         fromDate = new Date(res2.date.getTime());
         fromDate.setHours(fromDate.getHours() - 1);
@@ -63,13 +63,13 @@ describe('RepositoryManager unit test', function () {
     });
 
     it('check if accepted res are inserted and found by getReservations()', async function () {
-        assert.strictEqual(JSON.stringify(await repo.getReservations(res2.restaurantId)), JSON.stringify([res2]));
+        assert.strictEqual(JSON.stringify(await repo.getReservations(res2.restId)), JSON.stringify([res2]));
         assert.strictEqual(JSON.stringify(await repo.getPreviousPendingRes(1, filterDate, res.date)), JSON.stringify({ 0: 0, 1: 1 }));
     });
 
     it('check if another accepted res is inserted, found and counted', async function () {
         res.accepted({ id: 2, people: 4 }, null);
-        await repo.reservationAccepted(res.restaurantId, res);
+        await repo.reservationAccepted(res.restId, res);
         
         await waitAsync(waitAsyncTimeout);
         
