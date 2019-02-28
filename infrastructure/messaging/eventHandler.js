@@ -4,6 +4,9 @@ const Reservation = require('../../domain/models/reservation');
 let manager = null;
 
 async function handler(event) {
+    if (!event)
+        return;
+    // console.log(event);
     switch (event.message) {
         case 'restaurantCreated':
             await manager.restaurantReservationsCreated(

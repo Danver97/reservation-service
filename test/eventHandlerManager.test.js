@@ -1,8 +1,9 @@
 const assert = require('assert');
-const Event = require('@danver97/event-sourcing/event');
+const broker = require('@danver97/event-sourcing/eventBroker')['testbroker'];
+const Event = require('@danver97/event-sourcing/eventBroker/brokerEvent');
 const repo = require('../infrastructure/repository/repositoryManager')('testdb');
 const manager = require('../domain/logic/restaurantReservationsManager')(repo);
-const handler = require('../infrastructure/messaging/eventHandler')(manager);
+const handlerMgrFunc = require('../infrastructure/messaging/eventHandlerManager');
 const Reservation = require('../domain/models/reservation');
 const Table = require('../domain/models/table');
 
@@ -24,14 +25,20 @@ const tables = [
     new Table(6, 1, 6),
 ];
 
-describe('eventHandler unit test', function () {
+let stopHandler = null;
+
+const waitAsync = ms => new Promise((resolve, reject) => setTimeout(resolve, ms));
+
+describe('eventHandlerManager unit test', function () {
     let res = null;
-    
-    before(() => {
+
+    before(async () => {
         repo.reset();
+        broker.subscribe('microservice-test');
+        stopHandler = handlerMgrFunc(manager, 'testbroker', { number: 10, ms: 10 });
     });
 
-    it('check if restaurantCreated is handled properly', async function () {
+    it('check restaurantReservations creation transaction', async function () {
         const payload = {
             restId: 'asdf',
             owner: 'Giucas Casella',
@@ -39,11 +46,22 @@ describe('eventHandler unit test', function () {
             tables, // : [],
         };
         const restaurantCreated = new Event('asdf', 1, 'restaurantCreated', payload);
-        await handler(restaurantCreated);
-        assert.doesNotThrow(async () => await repo.getReservations('asdf'), Error);
+        await broker.publish(restaurantCreated);
+        await waitAsync(50);
+
+        let err = null;
+        try {
+            await repo.getReservations('asdf');
+        } catch (e) {
+            err = e;
+        }
+        assert.doesNotThrow(() => {
+            if (err)
+                throw err;
+        }, Error);
     });
 
-    it('check if reservationCreated is handled properly', async function () {
+    it('check reservationCreated transaction', async function () {
         const date = new Date();
         date.setHours(date.getHours() + 1);
         const payload = {
@@ -58,40 +76,30 @@ describe('eventHandler unit test', function () {
         };
         res = Reservation.fromObject(payload);
         await repo.reservationCreated(res);
-        const reservationCreated = new Event('res1', 1, 'reservationCreated', payload);
-        await handler(reservationCreated);
+        await waitAsync(50);
+
         const rr = await repo.getReservations('asdf');
         const table = rr.getTables(6)[0];
         res.accepted(table);
         assert.strictEqual(JSON.stringify(table.getReservations()[0]), JSON.stringify(res));
-    });
 
-    it('check if reservationAdded is handled properly', async function () {
-        const payload = {
-            id: res.id,
-            userId: res.userId,
-            date: res.date,
-            people: res.people,
-            table: res.table,
-        };
-        const reservationAdded = new Event('asdf', 1, 'reservationAdded', payload);
-        await handler(reservationAdded);
         const result = await repo.getReservation(res.id);
         assert.strictEqual(result.status, 'confirmed');
         assert.strictEqual(result.status, res.status);
         assert.deepStrictEqual(result.table, res.table);
     });
 
-    it('check if reservationCancelled is handled properly', async function () {
-        const payload = {
-            resId: res.id,
-            restId: res.restId,
-            status: 'cancelled',
-        };
-        const reservationCancelled = new Event(res.id, 1, 'reservationCancelled', payload);
-        await handler(reservationCancelled);
+    it('check reservationCancelled transaction', async function () {
+        res = await repo.getReservation(res.id);
+        await repo.reservationCancelled(res);
+        await waitAsync(50);
+
         const rr = await repo.getReservations('asdf');
         const table = rr.getTables(6)[0];
         assert.strictEqual(JSON.stringify(table.getReservations()[0]), JSON.stringify(undefined));
+    });
+
+    after(() => {
+        stopHandler();
     });
 });
