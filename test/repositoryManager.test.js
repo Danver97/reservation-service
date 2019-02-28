@@ -99,7 +99,7 @@ describe('RepositoryManager unit test', function() {
         const rrs = await repo.getReservations(rr.restId);
         rr.reservationRemoved(res.id);
         rrs.reservationRemoved(res.id);
-        await repo.reservationRemoved(rrs, res);
+        await repo.reservationRemoved(rrs, res.id);
 
         const result = await repo.getReservations(rr.restId);
         assertStrictEqual(result, rrs);

@@ -220,13 +220,12 @@ function acceptReservation(restId, reservation) {
     });
 }
 
-function reservationRemoved(restId, reservation) {
+function reservationRemoved(restId, resId) {
     return Promisify(async () => {
         const rr = await repo.getReservations(restId);
-        rr.reservationRemoved(reservation.id);
-        reservation.cancelled();
-        await repo.reservationRemoved(rr, reservation);
-        return reservation;
+        rr.reservationRemoved(resId);
+        await repo.reservationRemoved(rr, resId);
+        return resId;
     });
 }
 

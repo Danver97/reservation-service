@@ -1,4 +1,5 @@
 const RestaurantReservations = require('../../domain/models/restaurantReservations');
+const Reservation = require('../../domain/models/reservation');
 
 let manager = null;
 
@@ -8,6 +9,9 @@ async function handler(event) {
             await manager.restaurantReservationsCreated(
                 new RestaurantReservations(event.payload.restId, event.payload.timeTable, event.payload.tables),
             );
+            break;
+        case 'reservationCreated':
+            await manager.acceptReservation(event.payload.restId, Reservation.fromObject(event.payload));
             break;
         case 'reservationAdded':
             await manager.reservationConfirmed(event.payload.id, event.payload.table, event.payload.date);

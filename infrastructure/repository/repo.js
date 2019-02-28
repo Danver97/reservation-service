@@ -39,8 +39,8 @@ function reservationAdded(rr, reservation, cb) {
     return this.save(rr.restId, rr._revisionId, ReservationEvents.reservationAdded, Object.assign({}, reservation), cb);
 }
 
-function reservationRemoved(rr, reservation, cb) {
-    return this.save(rr.restId, rr._revisionId, ReservationEvents.reservationRemoved, { restId: rr.restId, resId: reservation.id }, cb);
+function reservationRemoved(rr, resId, cb) {
+    return this.save(rr.restId, rr._revisionId, ReservationEvents.reservationRemoved, { restId: rr.restId, resId }, cb);
 }
 
 // Getters
