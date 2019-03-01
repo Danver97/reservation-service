@@ -9,23 +9,15 @@ function exportFunc(manager, brokerName, brokerOptions = {}) {
 
     async function handleAndRemove(e) {
         if (e) {
-            try {
-                await handler(e);
-                await broker.destroyEvent(e);
-            } catch (err) {
-                console.log(err);
-                throw e;
-            }
+            await handler(e);
+            await broker.destroyEvent(e);
         }
     }
 
     function handleMultiEvents(err, events) {
         if (err)
             throw err;
-        if (Array.isArray(events))
-            events.forEach(handleAndRemove);
-        else
-            handleAndRemove(events);
+        events.forEach(handleAndRemove);
     }
 
     function stopHandler() {
