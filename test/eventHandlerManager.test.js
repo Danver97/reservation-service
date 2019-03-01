@@ -34,8 +34,8 @@ describe('eventHandlerManager unit test', function () {
 
     before(async () => {
         repo.reset();
-        broker.subscribe('microservice-test');
-        stopHandler = handlerMgrFunc(manager, 'testbroker', { number: 10, ms: 10 });
+        await broker.subscribe('microservice-test');
+        stopHandler = handlerMgrFunc(manager, 'testbroker', { number: 10, ms: 10, visibilityTimeout: 5 });
     });
 
     it('check restaurantReservations creation transaction', async function () {
@@ -51,7 +51,7 @@ describe('eventHandlerManager unit test', function () {
 
         let err = null;
         try {
-            await repo.getReservations('asdf');
+            await repo.getReservations('asdf')
         } catch (e) {
             err = e;
         }

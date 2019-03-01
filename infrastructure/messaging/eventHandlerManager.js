@@ -7,13 +7,25 @@ function exportFunc(manager, brokerName, brokerOptions = {}) {
     const handler = handlerFunc(manager);
     const broker = brokers[brokerName];
 
+    async function handleAndRemove(e) {
+        if (e) {
+            try {
+                await handler(e);
+                await broker.destroyEvent(e);
+            } catch (err) {
+                console.log(err);
+                throw e;
+            }
+        }
+    }
+
     function handleMultiEvents(err, events) {
         if (err)
             throw err;
         if (Array.isArray(events))
-            events.forEach(e => handler(e));
+            events.forEach(handleAndRemove);
         else
-            handler(events);
+            handleAndRemove(events);
     }
 
     function stopHandler() {
