@@ -1,0 +1,17 @@
+{
+    "streamId": "string",
+    "eventId": {
+        "$or": ["string", "number"]
+    },
+    "message": "string",
+    "payload": {
+        "id": "string",
+        "userId": "string",
+        "date": "string",
+        "people": "number",
+        "table": {
+        	"id": "string",
+        	"people": "number",
+        },
+    }
+}

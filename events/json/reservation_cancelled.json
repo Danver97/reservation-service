@@ -1,0 +1,12 @@
+{
+    "streamId": "string",
+    "eventId": {
+        "$or": ["string", "number"]
+    },
+    "message": "string",
+    "payload": {
+        "resId": "string",
+        "restId": "string",
+        "status": "cancelled",
+    }
+}

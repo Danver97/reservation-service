@@ -1,0 +1,18 @@
+{
+    "streamId": "string",
+    "eventId": {
+        "$or": ["string", "number"]
+    },
+    "message": "string",
+    "payload": {
+        "id": "string",
+        "restId": "string",
+        "status": "pending",
+        "statusCode": 0,
+        "userId": "string",
+        "reservationName": "string",
+        "people": "number",
+        "date": "string",
+
+    }
+}
