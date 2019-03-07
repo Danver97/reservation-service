@@ -33,22 +33,6 @@ function reservationConfirmed(resId, table, effectiveDate, cb) {
         }
         return r;
     }, cb);
-    /* return Promisify(async () => {
-        let err = null;
-        do {
-            const r = await repo.getReservation(resId);
-            try {
-                r.accepted(table, effectiveDate);
-                await repo.reservationConfirmed(r);
-            } catch (e) {
-                if (e instanceof ReservationError)
-                    break;
-                else // RepositoryError
-                    err = e;
-            }
-        } while (!err);
-        return resId;
-    }, cb); */
 }
 
 function reservationCancelled(resId, cb) {

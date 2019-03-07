@@ -1,10 +1,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const Reservation = require('../domain/models/reservation');
-const repository = require('../infrastructure/repository/repositoryManager')();
-const reservationMgr = require('../domain/logic/restaurantReservationsManager')(repository);
 
 const app = express();
+let reservationMgr = null;
 
 // BODY-PARSER Middleware
 app.use(bodyParser.json());
@@ -34,7 +33,7 @@ app.get('/reservation', async (req, res) => {
         res.json({ error: e });
     }
 });
-    
+
 app.post('/reservation', async (req, res) => {
     const body = req.body;
     let reservation;
@@ -77,4 +76,11 @@ app.get('/reservations', async (req, res) => {
 });
 
 
-module.exports = app;
+function exportFunc(manager) {
+    if (!manager)
+        throw new Error('Missing manager param');
+    reservationMgr = manager;
+    return app;
+}
+
+module.exports = exportFunc;
