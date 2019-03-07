@@ -25,6 +25,7 @@ function exportFunc(manager, brokerName, brokerOptions = {}) {
     }
 
     pollId = broker.startPoll(brokerOptions, handleMultiEvents, brokerOptions.ms);
+    console.log(`Broker polling started with: ${brokerName}`);
     return stopHandler;
 }
 
