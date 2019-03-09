@@ -6,7 +6,6 @@ const RestaurantReservations = require('../domain/models/restaurantReservations'
 const repo = require('../infrastructure/repository/repositoryManager')('testdb');
 // const reservationMgr = require('../domain/logic/reservationManager')(repo);
 const reservationMgr = require('../domain/logic/restaurantReservationsManager')(repo);
-const ENV = require('../src/env');
 const assertStrictEqual = require('../lib/utils').assertStrictEqual;
 
 const parseHour = hourStr => {
@@ -59,10 +58,7 @@ describe('RestaurantReservationManager unit test', function () {
     const expectedDate = new Date(tomorrow);
 
     before(async () => {
-        if (ENV.node_env === 'test' && ENV.event_store === 'testdb')
-            repo.reset();
-        else if (ENV.node_env === 'test_event_sourcing' && ENV.event_store === 'testdb')
-            repo.reset();
+        repo.reset();
         await repo.restaurantReservationsCreated(rr);
     });
 

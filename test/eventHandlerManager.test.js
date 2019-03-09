@@ -1,29 +1,46 @@
 const assert = require('assert');
 const broker = require('@danver97/event-sourcing/eventBroker')['testbroker'];
 const Event = require('@danver97/event-sourcing/eventBroker/brokerEvent');
+const eventsChekerUtil = require('@danver97/service-events');
 const repo = require('../infrastructure/repository/repositoryManager')('testdb');
 const manager = require('../domain/logic/restaurantReservationsManager')(repo);
 const handlerMgrFunc = require('../infrastructure/messaging/eventHandlerManager');
 const Reservation = require('../domain/models/reservation');
 const Table = require('../domain/models/table');
 
+const checkEventByPath = eventsChekerUtil.checkByPath;
+const Paths = eventsChekerUtil.paths;
+
+const dayTimeTable = {
+    morning: {
+        open: "11:00",
+        close: "14:00"
+    },
+    afternoon: {
+        open: "18:00",
+        close: "23:00"
+    },
+};
 const timeTable = {
-    Monday: '7:00-18:00',
-    Tuesday: '7:00-18:00',
-    Wednesday: '7:00-18:00',
-    Thursday: '7:00-18:00',
-    Friday: '7:00-18:00',
-    Saturday: '7:00-18:00',
-    Sunday: '7:00-18:00',
+    Monday: dayTimeTable,
+    Tuesday: dayTimeTable,
+    Wednesday: dayTimeTable,
+    Thursday: dayTimeTable,
+    Friday: dayTimeTable,
+    Saturday: dayTimeTable,
+    Sunday: dayTimeTable,
 };
 const tables = [
-    new Table(1, 1, 2),
-    new Table(2, 1, 3),
-    new Table(3, 1, 4),
-    new Table(4, 1, 4),
-    new Table(5, 1, 4),
-    new Table(6, 1, 6),
+    new Table('1', 1, 2),
+    new Table('2', 1, 3),
+    new Table('3', 1, 4),
+    new Table('4', 1, 4),
+    new Table('5', 1, 4),
+    new Table('6', 1, 6),
 ];
+
+const waitAsyncTimeout = 50;
+const pollInterval = 10;
 
 let stopHandler = null;
 
@@ -35,7 +52,7 @@ describe('eventHandlerManager unit test', function () {
     before(async () => {
         repo.reset();
         await broker.subscribe('microservice-test');
-        stopHandler = handlerMgrFunc(manager, 'testbroker', { number: 10, ms: 10, visibilityTimeout: 5 });
+        stopHandler = handlerMgrFunc(manager, 'testbroker', { number: 10, ms: pollInterval, visibilityTimeout: 5 });
     });
 
     it('check restaurantReservations creation transaction', async function () {
@@ -46,8 +63,9 @@ describe('eventHandlerManager unit test', function () {
             tables, // : [],
         };
         const restaurantCreated = new Event('asdf', 1, 'restaurantCreated', payload);
+        checkEventByPath(Paths.restaurant_catalog.RESTAURANT_CREATED, restaurantCreated);
         await broker.publish(restaurantCreated);
-        await waitAsync(50);
+        await waitAsync(waitAsyncTimeout);
 
         let err = null;
         try {
@@ -76,7 +94,7 @@ describe('eventHandlerManager unit test', function () {
         };
         res = Reservation.fromObject(payload);
         await repo.reservationCreated(res);
-        await waitAsync(50);
+        await waitAsync(waitAsyncTimeout);
 
         const rr = await repo.getReservations('asdf');
         const table = rr.getTables(6)[0];
@@ -92,7 +110,7 @@ describe('eventHandlerManager unit test', function () {
     it('check reservationCancelled transaction', async function () {
         res = await repo.getReservation(res.id);
         await repo.reservationCancelled(res);
-        await waitAsync(50);
+        await waitAsync(waitAsyncTimeout);
 
         const rr = await repo.getReservations('asdf');
         const table = rr.getTables(6)[0];

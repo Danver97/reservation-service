@@ -41,10 +41,7 @@ describe('RepositoryManager unit test', function() {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     before(() => {
-        if (ENV.node_env === 'test' && ENV.event_store === 'testdb')
-            repo.reset();
-        else if (ENV.node_env === 'test_event_sourcing' && ENV.event_store === 'testdb')
-            repo.reset();
+        repo.reset();
     });
 
     it('check if restaurantReservationsCreated works', async function () {

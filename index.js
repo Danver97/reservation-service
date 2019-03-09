@@ -5,5 +5,5 @@ const eventHandlerManager = require('./infrastructure/messaging/eventHandlerMana
 const app = require('./src/app')(businessManager); // require('./infrastructure/api');
 
 app.listen(ENV.port, () => {
-    console.log('Server started on port ' + ENV.port);
+    console.log(`Server started on port ${ENV.port}`);
 });
