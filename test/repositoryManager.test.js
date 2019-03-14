@@ -78,10 +78,14 @@ describe('RepositoryManager unit test', function() {
         const rrs = await repo.getReservations(rr.restId);
         rr.reservationAdded(res);
         rrs.reservationAdded(res);
+        // console.log(res);
         await repo.reservationAdded(rrs, res);
 
         const result = await repo.getReservations(rr.restId);
-        assertStrictEqual(JSON.stringify(result.getTables()), JSON.stringify(rrs.getTables()));
+        const actualRes = Object.assign({}, result.getTables()[0].reservations.head.value);
+        const expectedRes = Object.assign({}, rrs.getTables()[0].reservations.head.value);
+        delete expectedRes._revisionId;
+        assert.deepStrictEqual(actualRes, expectedRes);
     });
 
     it('check if reservationCancelled works', async function () {
