@@ -8,12 +8,12 @@ const errorsTypes = {
 };
 
 class TableError extends ExtendableError {
-    constructor(message, errorCode) {
+    /* constructor(message, errorCode) {
         let code = errorCode;
         if (typeof code === 'object')
             code = code.code;
         super(message, code);
-    }
+    } */
 
     static get errors() {
         return errorsTypes;

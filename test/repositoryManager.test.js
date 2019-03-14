@@ -5,6 +5,7 @@ const Table = require('../domain/models/table');
 const Reservation = require('../domain/models/reservation');
 const RestaurantReservations = require('../domain/models/restaurantReservations');
 const repo = require('../infrastructure/repository/repositoryManager')('testdb');
+const RepositoryError = require('../infrastructure/repository/errors/RepositoryError');
 const ENV = require('../src/env');
 
 function restaurantReservationsEqual(actual, expected) {
@@ -51,6 +52,7 @@ describe('RepositoryManager unit test', function() {
     });
 
     it('check if reservationCreated works', async function () {
+        assert.throws(() => repo.reservationCreated(), RepositoryError);
         res = new Reservation('pippo', 1, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
         await repo.reservationCreated(res);
         const result = await repo.getReservation(res.id);
@@ -58,6 +60,7 @@ describe('RepositoryManager unit test', function() {
     });
 
     it('check if reservationConfirmed works', async function () {
+        assert.throws(() => repo.reservationConfirmed(), RepositoryError);
         res = await repo.getReservation(res.id);
         res.accepted(tables[0]);
         await repo.reservationConfirmed(res);
@@ -66,6 +69,7 @@ describe('RepositoryManager unit test', function() {
     });
 
     it('check if reservationRejected works', async function () {
+        assert.throws(() => repo.reservationRejected(), RepositoryError);
         let newRes = new Reservation('pippo', 1, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
         await repo.reservationCreated(newRes);
         newRes.rejected();
@@ -75,6 +79,7 @@ describe('RepositoryManager unit test', function() {
     });
 
     it('check if reservationAdded works', async function () {
+        assert.throws(() => repo.reservationAdded(), RepositoryError);
         const rrs = await repo.getReservations(rr.restId);
         rr.reservationAdded(res);
         rrs.reservationAdded(res);
@@ -89,6 +94,7 @@ describe('RepositoryManager unit test', function() {
     });
 
     it('check if reservationCancelled works', async function () {
+        assert.throws(() => repo.reservationCancelled(), RepositoryError);
         res = await repo.getReservation(res.id);
         res.cancelled();
         await repo.reservationCancelled(res);
@@ -97,6 +103,7 @@ describe('RepositoryManager unit test', function() {
     });
 
     it('check if reservationRemoved works', async function () {
+        assert.throws(() => repo.reservationRemoved(), RepositoryError);
         const rrs = await repo.getReservations(rr.restId);
         rr.reservationRemoved(res.id);
         rrs.reservationRemoved(res.id);
@@ -107,6 +114,7 @@ describe('RepositoryManager unit test', function() {
     });
 
     it('check if getReservations works', async function () {
+        assert.throws(() => repo.getReservations(), RepositoryError);
         try {
             await repo.getReservations('noneid');
         } catch (e) {
@@ -117,6 +125,7 @@ describe('RepositoryManager unit test', function() {
     });
 
     it('check if getReservation works', async function () {
+        assert.throws(() => repo.getReservation(), RepositoryError);
         try {
             await repo.getReservation('noneid');
         } catch (e) {
