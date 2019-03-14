@@ -35,6 +35,18 @@ class Table {
         this.reservationsArr = arr;
         return arr;
     }
+
+    toString(space) {
+        return JSON.stringify(this, (k, v) => {
+            if (k === 'reservations')
+                return this.getReservations();
+            if (k === 'reservationsArr')
+                return undefined;
+            if (k === 'reservationsMap')
+                return undefined;
+            return v;
+        }, space);
+    }
 }
 
 module.exports = Table;

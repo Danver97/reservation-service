@@ -46,6 +46,11 @@ class Reservation {
         res.date = new Date(obj.date);
         if (res.statusCode === 1)
             res.setTable(obj.table);
+
+        Object.keys(obj).forEach(k => {
+            if (/^_.*/.test(k))
+                res[k] = obj[k];
+        });
         // res.created = new Date(obj.created);
         return res;
     }
