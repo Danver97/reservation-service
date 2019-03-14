@@ -5,8 +5,10 @@ const Table = require('./table');
 class RestaurantReservations {
     constructor(restId, timeTable, tables) {
         if (!restId || !timeTable || !tables) {
-            throw new RestaurantReservationError(`Invalid Reservation object constructor parameters.
-                Missing:${restId ? '' : ' restId'}${timeTable ? '' : ' timeTable'}${tables ? '' : ' tables'}`);
+            throw new RestaurantReservationError(`Invalid Reservation object constructor parameters. Missing the following parameters:
+                ${restId ? '' : ' restId'}
+                ${timeTable ? '' : ' timeTable'}
+                ${tables ? '' : ' tables'}`, RestaurantReservationError.paramError);
         }
         this.restId = restId;
         this.setTimeTable(timeTable);
@@ -15,14 +17,18 @@ class RestaurantReservations {
     }
 
     setTimeTable(timeTable) {
-        if (!timeTable)
-            throw new RestaurantReservationError(`Time table can't be undefined or null. Found: ${timeTable}`);
+        if (!timeTable) {
+            throw new RestaurantReservationError(`Missing the following parameters:
+                ${timeTable ? '' : ' timeTable'}`, RestaurantReservationError.paramError);
+        }
         this.timeTable = timeTable;
     }
 
     setTables(tables) {
-        if (!tables)
-            throw new RestaurantReservationError(`Time table can't be undefined or null. Found: ${tables}`);
+        if (!tables) {
+            throw new RestaurantReservationError(`Missing the following parameters:
+                ${tables ? '' : ' tables'}`, RestaurantReservationError.paramError);
+        }
         this.tables = tables.map(t => Table.fromObject(t));
         this.tables.sort((a, b) => (a.people <= b.people ? -1 : 1));
         this.tablesMap = {};
@@ -30,14 +36,19 @@ class RestaurantReservations {
     }
 
     reservationAdded(reservation) { // O(1)
-        if (!reservation)
-            throw new RestaurantReservationError(`'reservation' can't be undefined or null. Found: ${reservation}`);
+        if (!reservation) {
+            throw new RestaurantReservationError(`Missing the following parameters:
+                ${reservation ? '' : ' reservation'}`, RestaurantReservationError.paramError);
+        }
         if (!(reservation instanceof Reservation))
-            throw new RestaurantReservationError("'reservation' must be instance of Reservation class.");
-        if (this.reservationsTableId[reservation.id])
-            throw new RestaurantReservationError('reservation already added');
+            throw new RestaurantReservationError("'reservation' must be instance of Reservation class", RestaurantReservationError.paramError);
+        if (this.reservationsTableId[reservation.id]) {
+            throw new RestaurantReservationError(
+                `Reservation with id ${reservation.id} already added`, RestaurantReservationError.reservationAlreadyAddedError,
+            );
+        }
         if (reservation.status !== 'confirmed')
-            throw new RestaurantReservationError(`reservation must be in a 'confirmed' status. Status found: ${reservation.status}`);
+            throw new RestaurantReservationError(`Reservation must be in a 'confirmed' status. Status found: ${reservation.status}`);
         const t = this.tablesMap[reservation.table.id];
         t.addReservation(reservation);
         this.reservationsTableId[reservation.id] = t.id;
@@ -45,18 +56,18 @@ class RestaurantReservations {
 
     reservationRemoved(resId) { // O(1)
         if (!resId && resId !== 0)
-            throw new RestaurantReservationError(`'resId' can't be undefined or null. Found: ${resId}`);
+            throw new RestaurantReservationError(`Missing the following parameters:${resId ? '' : ' resId'}`, RestaurantReservationError.paramError);
         const type = typeof resId;
         if (type !== 'number' && type !== 'string')
-            throw new RestaurantReservationError(`'resId' must be string or number. Found: ${type}`);
+            throw new RestaurantReservationError(`'resId' must be string or number. Found: ${type}`, RestaurantReservationError.paramError);
         if (!this.reservationsTableId[resId])
-            throw new RestaurantReservationError('reservation not found');
+            throw new RestaurantReservationError(`Reservation with id ${resId} not found`, RestaurantReservationError.reservationNotFoundError);
         const t = this.tablesMap[this.reservationsTableId[resId]];
         t.removeReservation(resId);
         delete this.reservationsTableId[resId];
     }
 
-    getTables(people) { // O(N) - N: total tables
+    getTables(people = 0) { // O(N) - N: total tables
         let index = 0;
         for (index = 0; index < this.tables.length; index++) {
             if (this.tables[index].people >= people)

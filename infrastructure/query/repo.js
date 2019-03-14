@@ -6,7 +6,7 @@ let mongoCollection = null;
 
 function getReservation(id, cb) {
     if (!id)
-        throw new QueryError(`Missing the following parameters:${id ? '' : ' id'}`);
+        throw new QueryError(`Missing the following parameters:${id ? '' : ' id'}`, QueryError.paramError);
     return Promisify(async () => {
         const doc = await mongoCollection.findOne({ _id: id });
         return Reservation.fromObject(doc);
@@ -15,7 +15,7 @@ function getReservation(id, cb) {
 
 function getUserReservations(userId, cb) {
     if (!userId)
-        throw new QueryError(`Missing the following parameters:${userId ? '' : ' userId'}`);
+        throw new QueryError(`Missing the following parameters:${userId ? '' : ' userId'}`, QueryError.paramError);
     return Promisify(async () => {
         const docs = await mongoCollection.find({ userId }).toArray();
         return docs.map(d => Reservation.fromObject(d));
@@ -24,7 +24,7 @@ function getUserReservations(userId, cb) {
 
 function getRestaurantReservations(restId, cb) {
     if (!restId)
-        throw new QueryError(`Missing the following parameters:${restId ? '' : ' restId'}`);
+        throw new QueryError(`Missing the following parameters:${restId ? '' : ' restId'}`, QueryError.paramError);
     return Promisify(async () => {
         const doc = await mongoCollection.findOne({ _id: restId, restId });
         return doc;
@@ -33,7 +33,7 @@ function getRestaurantReservations(restId, cb) {
 
 function exportFunc(mongodbCollection) {
     if (!mongodbCollection)
-        throw new QueryError(`Missing the following parameters:${mongodbCollection ? '' : ' mongodbCollection'}`);
+        throw new QueryError(`Missing the following parameters:${mongodbCollection ? '' : ' mongodbCollection'}`, QueryError.paramError);
     mongoCollection = mongodbCollection;
     return {
         getReservation,

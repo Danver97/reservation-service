@@ -7,7 +7,7 @@ const errorsTypes = {
     },
 };
 
-class QueryError extends ExtendableError {
+class TableError extends ExtendableError {
     constructor(message, errorCode) {
         let code = errorCode;
         if (typeof code === 'object')
@@ -24,4 +24,4 @@ class QueryError extends ExtendableError {
     }
 }
 
-module.exports = QueryError;
+module.exports = TableError;

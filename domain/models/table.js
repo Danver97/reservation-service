@@ -1,9 +1,14 @@
 const List = require('../../lib/list').List;
+const TableError = require('../errors/table_error');
 
 class Table {
     constructor(id, restaurantId, people) {
-        if (!id || !restaurantId || !people)
-            throw new Error('Invalid Table object constructor parameters.');
+        if (!id || !restaurantId || !people) {
+            throw new TableError(`Invalid Table object constructor parameters. Missing the following parameters:
+                ${id ? '' : ' id'}
+                ${restaurantId ? '' : ' restaurantId'}
+                ${people ? '' : ' people'}`, TableError.paramError);
+        }
         this.id = id;
         this.restId = restaurantId;
         this.people = people;
@@ -17,11 +22,15 @@ class Table {
     }
 
     addReservation(reservation) { // O(1)
+        if (!reservation)
+            throw new TableError(`Missing the following parameters:${reservation ? '' : ' reservation'}`, TableError.paramError);
         this.reservationsMap[reservation.id] = this.reservations.push(reservation);
         this.reservationsArr = null;
     }
 
     removeReservation(resId) { // O(1)
+        if (!resId)
+            throw new TableError(`Missing the following parameters:${resId ? '' : ' resId'}`, TableError.paramError);
         this.reservations.remove(this.reservationsMap[resId]);
         delete this.reservationsMap[resId];
         this.reservationsArr = null;
