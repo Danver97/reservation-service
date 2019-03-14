@@ -9,6 +9,8 @@ function getReservation(id, cb) {
         throw new QueryError(`Missing the following parameters:${id ? '' : ' id'}`, QueryError.paramError);
     return Promisify(async () => {
         const doc = await mongoCollection.findOne({ _id: id });
+        if (!doc)
+            throw new QueryError('Document not found', QueryError.notFound);
         return Reservation.fromObject(doc);
     }, cb);
 }
@@ -22,11 +24,24 @@ function getUserReservations(userId, cb) {
     }, cb);
 }
 
+function getReservations(restId, cb) {
+    if (!restId)
+        throw new QueryError(`Missing the following parameters:${restId ? '' : ' restId'}`, QueryError.paramError);
+    return Promisify(async () => {
+        const docs = await mongoCollection.findOne({ _id: restId, restId }, { projection: { reservations: 1 } });
+        if (!docs)
+            throw new QueryError('Document not found', QueryError.notFound);
+        return docs.reservations;
+    }, cb);
+}
+
 function getRestaurantReservations(restId, cb) {
     if (!restId)
         throw new QueryError(`Missing the following parameters:${restId ? '' : ' restId'}`, QueryError.paramError);
     return Promisify(async () => {
         const doc = await mongoCollection.findOne({ _id: restId, restId });
+        if (!doc)
+            throw new QueryError('Document not found', QueryError.notFound);
         return doc;
     }, cb);
 }
@@ -38,6 +53,7 @@ function exportFunc(mongodbCollection) {
     return {
         getReservation,
         getUserReservations,
+        getReservations,
         getRestaurantReservations,
     };
 }

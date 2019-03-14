@@ -5,6 +5,10 @@ const errorsTypes = {
         code: 0,
         name: 'paramError',
     },
+    notFound: {
+        code: 100,
+        name: 'notFound',
+    },
 };
 
 class QueryError extends ExtendableError {
@@ -21,6 +25,10 @@ class QueryError extends ExtendableError {
 
     static get paramError() {
         return errorsTypes.paramError.code;
+    }
+
+    static get notFound() {
+        return errorsTypes.notFound.code;
     }
 }
 
