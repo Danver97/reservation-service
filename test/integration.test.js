@@ -139,7 +139,6 @@ describe('Integration test', function() {
         const resrv = new Reservation('15', '1', 'Pippo', 4, '2018-12-08', '15:00');
 
         it('post /reservation', async function() {
-            await waitAsync(waitAsyncTimeout);
             await req
                 .post('/reservation')
                 .set('Content-Type', 'application/x-www-url-encoded')
@@ -170,7 +169,6 @@ describe('Integration test', function() {
         });
 
         it('get /reservation?resId=' + resrv.id, async function() {
-            await waitAsync(waitAsyncTimeout);
             await writeRes(resrv);
             await req
                 .get('/reservation')
@@ -190,8 +188,6 @@ describe('Integration test', function() {
         });
 
         it('get /reservations?restId=1', async function() {
-            await waitAsync(waitAsyncTimeout);
-
             await writeRR(rr1);
             await addResToRR(rr1, resrv, tables[0]);
 
@@ -202,7 +198,6 @@ describe('Integration test', function() {
                 .get('/reservations?restId=10')
                 .expect(404);
 
-            await waitAsync(waitAsyncTimeout);
             await req
                 .get(`/reservations?restId=${resrv.restId}`)
                 .expect(res => {
