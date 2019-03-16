@@ -4,7 +4,7 @@ const Event = require('@danver97/event-sourcing/eventBroker/brokerEvent');
 const eventsChekerUtil = require('@danver97/service-events');
 const repo = require('../infrastructure/repository/repositoryManager')('testdb');
 const manager = require('../domain/logic/restaurantReservationsManager')(repo);
-const handlerMgrFunc = require('../infrastructure/messaging/eventHandlerManager');
+const brokerHandlerFunc = require('../infrastructure/messaging/eventHandler/brokerHandler');
 const Reservation = require('../domain/models/reservation');
 const Table = require('../domain/models/table');
 
@@ -42,7 +42,7 @@ const tables = [
 const waitAsyncTimeout = 50;
 const pollInterval = 10;
 
-let stopHandler = null;
+let pollId = null;
 
 const waitAsync = ms => new Promise((resolve, reject) => setTimeout(resolve, ms));
 
@@ -52,7 +52,9 @@ describe('eventHandlerManager unit test', function () {
     before(async () => {
         repo.reset();
         await broker.subscribe('microservice-test');
-        stopHandler = handlerMgrFunc(manager, 'testbroker', { number: 10, ms: pollInterval, visibilityTimeout: 5 });
+        brokerHandler = brokerHandlerFunc(manager, broker);
+        const pollOptions = { number: 10, ms: pollInterval, visibilityTimeout: 5 };
+        pollId = broker.startPoll(pollOptions, brokerHandler, pollOptions.ms);
     });
 
     it('check restaurantReservations creation transaction', async function () {
@@ -118,6 +120,6 @@ describe('eventHandlerManager unit test', function () {
     });
 
     after(() => {
-        stopHandler();
+        broker.stopPoll(pollId);
     });
 });

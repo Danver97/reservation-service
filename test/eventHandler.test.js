@@ -3,7 +3,7 @@ const Event = require('@danver97/event-sourcing/event');
 const eventsChekerUtil = require('@danver97/service-events');
 const repo = require('../infrastructure/repository/repositoryManager')('testdb');
 const manager = require('../domain/logic/restaurantReservationsManager')(repo);
-const handler = require('../infrastructure/messaging/eventHandler')(manager);
+const handler = require('../infrastructure/messaging/eventHandler/eventHandler')(manager);
 const Reservation = require('../domain/models/reservation');
 const Table = require('../domain/models/table');
 

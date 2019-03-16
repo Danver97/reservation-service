@@ -1,5 +1,5 @@
-const RestaurantReservations = require('../../domain/models/restaurantReservations');
-const Reservation = require('../../domain/models/reservation');
+const RestaurantReservations = require('../../../domain/models/restaurantReservations');
+const Reservation = require('../../../domain/models/reservation');
 
 let manager = null;
 
