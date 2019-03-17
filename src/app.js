@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const Reservation = require('../domain/models/reservation');
 const QueryError = require('../infrastructure/query/query_error');
+const ReservationManagerError = require('../domain/errors/reservationManager_error');
 
 const app = express();
 let reservationMgr = null;
@@ -58,6 +59,11 @@ app.post('/reservation', async (req, res) => {
             resId: reservation.id,
         });
     } catch (e) {
+        if (e instanceof ReservationManagerError && e.code === 100) {
+            res.status(400);
+            res.json({ error: 'The restaurant indicated in the reservation does not exist' });
+            return;
+        }
         console.log(e);
         res.status(500);
         res.json({ error: e });

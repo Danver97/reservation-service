@@ -1,6 +1,8 @@
 const Promisify = require('promisify-cb');
 const Utils = require('../../lib/utils');
 const ReservationError = require('../errors/reservation_error');
+const ReservationManagerError = require('../errors/reservationManager_error');
+const RepositoryError = require('../../infrastructure/repository/errors/RepositoryError');
 
 const hours = Utils.hours;
 const mins = Utils.mins;
@@ -11,8 +13,11 @@ let repo = null;
 function reservationCreated(reservation, cb) {
     return optimisticLocking(async error => {
         try {
+            await repo.getReservations(reservation.restId);
             await repo.reservationCreated(reservation);
         } catch (e) {
+            if (e instanceof RepositoryError && e.code === RepositoryError.eventStreamDoesNotExist)
+                throw new ReservationManagerError('Restaurant doesn\'t exist', ReservationManagerError.restaurantDoesNotExist);
             error();
         }
         return reservation;
@@ -47,65 +52,6 @@ function reservationCancelled(resId, cb) {
         return r;
     }, cb);
 }
-
-/* function computeTable(reservations, tables, pending) {
-    let tableres = null;
-    let effectiveDate = null;
-    // console.log('reservations[6]');
-    // console.log(reservations[6] ? reservations[6] : 'undefined');
-    for (let i = 0; i < tables.length; i++) {
-        const table = tables[i];
-        if (table.people < pending.people)
-            continue;
-        if (!reservations[table.id] || reservations[table.id].length === 0) {
-            tableres = table;
-            break;
-        } else if (reservations[table.id].length === 1) {
-            const res = reservations[table.id][0];
-            if (res.date.getTime() + hours(1) <= pending.date.getTime() || res.date.getTime() >= pending.date.getTime() + hours(1)) {
-                tableres = table;
-                effectiveDate = null;
-                break;
-            } else if (res.date.getTime() < pending.date.getTime() && res.date.getTime() + hours(1) <= pending.date.getTime() + mins(15)) {
-                tableres = table;
-                effectiveDate = pending.date.getTime() + mins(15);
-                break;
-            } else if (res.date.getTime() > pending.date.getTime() && res.date.getTime() <= pending.date.getTime() + hours(1) - mins(15)) {
-                tableres = table;
-                effectiveDate = pending.date.getTime() - mins(15);
-                break;
-            }
-        } else if (reservations[table.id].length >= 3) {
-            // console.log(`${table.id} length ${reservations[table.id].length}`);
-            continue;
-        } else {
-            const prev = reservations[table.id][0];
-            const next = reservations[table.id][1];
-            if (prev.date.getTime() + hours(1) <= pending.date.getTime()
-                && next.date.getTime() >= pending.date.getTime() + hours(1)) {
-                tableres = table;
-                effectiveDate = null;
-                break;
-            } else if (prev.date.getTime() + hours(1) <= pending.date.getTime() - mins(15)
-                       && next.date.getTime() >= pending.date.getTime() + hours(1) - mins(15)) {
-                tableres = table;
-                effectiveDate = pending.date.getTime() - mins(15);
-                break;
-            } else if (prev.date.getTime() + hours(1) <= pending.date.getTime() + mins(15)
-                       && next.date.getTime() >= pending.date.getTime() + hours(1) + mins(15)) {
-                tableres = table;
-                effectiveDate = pending.date.getTime() + mins(15);
-                break;
-            }
-        }
-    }
-    if (effectiveDate != null)
-        effectiveDate = new Date(effectiveDate);
-    return {
-        table: tableres,
-        effectiveDate,
-    };
-} */
 
 function restaurantReservationsCreated(rr, cb) {
     return optimisticLocking(async error => {

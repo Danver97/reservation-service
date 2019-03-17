@@ -1,17 +1,17 @@
-const ExtendableError = require('../../../lib/extendable_error');
+const ExtendableError = require('../../lib/extendable_error');
 
 const errorsTypes = {
     paramError: {
         code: 0,
         name: 'paramError',
     },
-    eventStreamDoesNotExist: {
+    restaurantDoesNotExist: {
         code: 100,
-        name: 'eventStreamDoesNotExist',
+        name: 'restaurantDoesNotExist',
     },
 };
 
-class RepositoryError extends ExtendableError {
+class ReservationManagerError extends ExtendableError {
     /* constructor(message, errorCode) {
         let code = errorCode;
         if (typeof code === 'object')
@@ -27,9 +27,9 @@ class RepositoryError extends ExtendableError {
         return errorsTypes.paramError.code;
     }
 
-    static get eventStreamDoesNotExist() {
-        return errorsTypes.eventStreamDoesNotExist.code;
+    static get restaurantDoesNotExist() {
+        return errorsTypes.restaurantDoesNotExist.code;
     }
 }
 
-module.exports = RepositoryError;
+module.exports = ReservationManagerError;

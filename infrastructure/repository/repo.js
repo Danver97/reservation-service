@@ -92,7 +92,7 @@ function getReservation(resId, cb) {
             }
         });
         if (!r)
-            throw new Error(`No such reservation with resId = ${resId}`);
+            throw new RepositoryError(`No such reservation with resId = ${resId}`, RepositoryError.eventStreamDoesNotExist);
         r._revisionId = stream.length;
         // console.log(r);
         return r;
@@ -103,8 +103,6 @@ function getReservations(restId, cb) {
     if (!restId)
         throw new RepositoryError(`Missing the following parameters:${restId ? '' : ' restId'}`, RepositoryError.paramError);
     return Promisify(async () => {
-        // const now = new Date(Date.now());
-        // now.setMinutes(now.getMinutes() - 30);
         const stream = await this.getStream(restId);
         let rr;
         stream.forEach(e => {
@@ -121,17 +119,9 @@ function getReservations(restId, cb) {
                     break;
                 default:
             }
-            /* if (e.message === ReservationEvents.restaurantReservationsCreated)
-                rr = new RestaurantReservations(e.payload.restId, e.payload.timeTable);
-            if (e.message === ReservationEvents.reservationFailed)
-                rr.reservationFailed(Reservation.fromObject(e.payload));
-            if (e.message === ReservationEvents.reservationAccepted)
-                rr.reservationAccepted(Reservation.fromObject(e.payload));
-            if (e.message === ReservationEvents.reservationCancelled)
-                rr.reservationCancelled(Reservation.fromObject(e.payload).id); */
         });
         if (!rr)
-            throw new Error(`No such restaurant reservations with restId = ${restId}`);
+            throw new RepositoryError(`No such restaurant reservations with restId = ${restId}`, RepositoryError.eventStreamDoesNotExist);
         rr._revisionId = stream.length;
         // console.log(rr);
         return rr;
@@ -150,7 +140,6 @@ function exportFunc(db) {
         restaurantReservationsCreated: restaurantReservationsCreated.bind(db),
         reservationAdded: reservationAdded.bind(db),
         reservationRemoved: reservationRemoved.bind(db),
-        // getReservationsFromDateToDate: getReservationsFromDateToDate.bind(db),
         getReservation: getReservation.bind(db),
         getReservations: getReservations.bind(db),
     });

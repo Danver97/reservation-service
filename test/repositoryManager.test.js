@@ -53,7 +53,7 @@ describe('RepositoryManager unit test', function() {
 
     it('check if reservationCreated works', async function () {
         assert.throws(() => repo.reservationCreated(), RepositoryError);
-        res = new Reservation('pippo', 1, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
+        res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
         await repo.reservationCreated(res);
         const result = await repo.getReservation(res.id);
         assertStrictEqual(result, res);
@@ -70,7 +70,7 @@ describe('RepositoryManager unit test', function() {
 
     it('check if reservationRejected works', async function () {
         assert.throws(() => repo.reservationRejected(), RepositoryError);
-        let newRes = new Reservation('pippo', 1, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
+        let newRes = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
         await repo.reservationCreated(newRes);
         newRes.rejected();
         await repo.reservationRejected(newRes);

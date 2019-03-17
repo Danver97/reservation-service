@@ -151,6 +151,17 @@ describe('Integration test', function() {
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
                 .send({ userId: resrv.userId })
+                .send({ restId: 'noRestaurantReservationsId' })
+                .send({ reservationName: resrv.reservationName })
+                .send({ people: resrv.people })
+                .send({ date })
+                .send({ hour })
+                .expect(400);
+            await req
+                .post('/reservation')
+                .set('Content-Type', 'application/x-www-url-encoded')
+                .type('form')
+                .send({ userId: resrv.userId })
                 .send({ restId: resrv.restId })
                 .send({ reservationName: resrv.reservationName })
                 .send({ people: resrv.people })
