@@ -66,6 +66,7 @@ function assertRestaurantReservationsEqual(actual, expected) {
 describe('query unit test', function () {
 
     before(async function () {
+        this.timeout(10000);
         const connString = await mongod.getConnectionString();
         query = await queryFunc(connString, 'Reservation', 'Reservation');
         mongodb = new MongoClient(connString, { useNewUrlParser: true });
