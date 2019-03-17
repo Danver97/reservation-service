@@ -144,7 +144,6 @@ describe('Integration test', function() {
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
                 .send({ userId: resrv.userId })
-                // .expect(JSON.stringify({}))
                 .expect(400);
             await req
                 .post('/reservation')

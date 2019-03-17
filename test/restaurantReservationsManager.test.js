@@ -1,10 +1,8 @@
 const assert = require('assert');
-// const uuid = require('uuid/v4');
 const Table = require('../domain/models/table');
 const Reservation = require('../domain/models/reservation');
 const RestaurantReservations = require('../domain/models/restaurantReservations');
 const repo = require('../infrastructure/repository/repositoryManager')('testdb');
-// const reservationMgr = require('../domain/logic/reservationManager')(repo);
 const reservationMgr = require('../domain/logic/restaurantReservationsManager')(repo);
 const assertStrictEqual = require('../lib/utils').assertStrictEqual;
 

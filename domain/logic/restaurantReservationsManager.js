@@ -77,12 +77,8 @@ function getReservationWithin3Hours(tableReservations, reservation) {
 function computeTable(tables, reservation) {
     let table = null;
     let effectiveDate = null;
-    // console.log('tables.length');
-    // console.log(tables.length);
     for (let i = 0; i < tables.length; i++) {
         const tableReservations = getReservationWithin3Hours(tables[i].getReservations(), reservation);
-        // console.log('tableReservations');
-        // console.log(tableReservations);
         if (tableReservations.length >= 3)
             continue;
         else if (tableReservations.length === 2) {
@@ -139,8 +135,6 @@ function acceptReservation(restId, reservation) {
         // const r = await repo.getReservation(reservation.id);
         const tables = rr.getTables(reservation.people);
         const result = computeTable(tables, reservation);
-        // console.log('result');
-        // console.log(result);
         if (result.table) {
             reservation.accepted(result.table, result.effectiveDate);
             await repo.reservationAdded(rr, reservation);
