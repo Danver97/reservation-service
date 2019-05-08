@@ -1,0 +1,193 @@
+{
+  "consumer": {
+    "name": "reservation-service"
+  },
+  "provider": {
+    "name": "reservation-service"
+  },
+  "messages": [
+    {
+      "description": "reservationCreated",
+      "providerStates": [
+        {
+          "name": "a new reservation is created",
+          "params": null
+        }
+      ],
+      "contents": {
+        "streamId": "8a3c29ac-2988-4f7e-9b85-d3ac6d233a99",
+        "eventId": 1,
+        "message": "reservationCreated",
+        "payload": {
+          "restId": "fc463365-3038-40ed-b029-5593f748f8a5",
+          "resId": "8a3c29ac-2988-4f7e-9b85-d3ac6d233a99"
+        }
+      },
+      "matchingRules": {
+        "body": {
+          "$.streamId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.eventId": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.restId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.resId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          }
+        }
+      },
+      "metaData": {
+        "content-type": "application/json"
+      }
+    },
+    {
+      "description": "reservationAdded",
+      "providerStates": [
+        {
+          "name": "a reservation is added to the restaurant reservations",
+          "params": null
+        }
+      ],
+      "contents": {
+        "streamId": "fc463365-3038-40ed-b029-5593f748f8a5",
+        "eventId": 1,
+        "message": "reservationAdded",
+        "payload": {
+          "resId": "8a3c29ac-2988-4f7e-9b85-d3ac6d233a99",
+          "table": {
+            "id": "3",
+            "people": 4
+          },
+          "date": "2019-05-08T13:00:11.997Z"
+        }
+      },
+      "matchingRules": {
+        "body": {
+          "$.streamId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.eventId": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.resId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.table.id": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.table.people": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          }
+        }
+      },
+      "metaData": {
+        "content-type": "application/json"
+      }
+    },
+    {
+      "description": "reservationCancelled",
+      "providerStates": [
+        {
+          "name": "a reservation has been added to the restaurant reservations but it is now cancelled",
+          "params": null
+        }
+      ],
+      "contents": {
+        "streamId": "8a3c29ac-2988-4f7e-9b85-d3ac6d233a99",
+        "eventId": 1,
+        "message": "reservationCancelled",
+        "payload": {
+          "restId": "fc463365-3038-40ed-b029-5593f748f8a5",
+          "resId": "8a3c29ac-2988-4f7e-9b85-d3ac6d233a99"
+        }
+      },
+      "matchingRules": {
+        "body": {
+          "$.streamId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.eventId": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.restId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.resId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          }
+        }
+      },
+      "metaData": {
+        "content-type": "application/json"
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}
