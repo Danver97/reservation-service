@@ -1,6 +1,7 @@
 const pact = require('@pact-foundation/pact');
 
 const { like, term } = pact.Matchers;
+console.log(pact.Matchers);
 const likeUuid = pact.Matchers.uuid;
 
 const hourRegExp = '(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))';

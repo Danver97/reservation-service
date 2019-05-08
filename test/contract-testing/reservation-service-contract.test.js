@@ -1,4 +1,3 @@
-const uuid = require('uuid/v4');
 const repo = require('../../infrastructure/repository/repositoryManager')('testdb');
 const manager = require('../../domain/logic/restaurantReservationsManager')(repo);
 const Reservation = require('../../domain/models/reservation');
@@ -16,13 +15,15 @@ const defineAsyncInteraction = MessageConsumerPact({
 describe('Reservation Service Contract Testing', function () {
     this.slow(5000);
     this.timeout(10000);
-    const restId = uuid(); // '24071e32-263f-45cc-81b9-f4acac75fb1d';
-    const resId = uuid(); // '445f6ab3-8551-4285-bc0e-7e8d61e79827';
-    const userId = uuid(); // '70f7d254-e8fa-4671-bb50-e7d181551149';
+    const restId = '24071e32-263f-45cc-81b9-f4acac75fb1d';
+    const resId = '445f6ab3-8551-4285-bc0e-7e8d61e79827';
+    const userId = '70f7d254-e8fa-4671-bb50-e7d181551149';
     const reservationName = 'Smith family'
     const people = 4;
     const rr = new RestaurantReservations(restId, testUtils.timeTable, testUtils.tables);
-    let r = new Reservation(userId, restId, reservationName, people, new Date(), '15:00');
+
+    const date = new Date('2040/08/15'); // iso8601DateTimeWithMillis
+    let r = new Reservation(userId, restId, reservationName, people, date, '15:00');
     r.id = resId;
 
     beforeEach(() => repo.reset());
