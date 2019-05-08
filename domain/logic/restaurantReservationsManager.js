@@ -129,18 +129,19 @@ function computeTable(tables, reservation) {
     };
 }
 
-function acceptReservation(restId, reservation) {
+function acceptReservation(restId, resId) {
     return Promisify(async () => {
+        // let r = reservation;
         const rr = await repo.getReservations(restId);
-        // const r = await repo.getReservation(reservation.id);
-        const tables = rr.getTables(reservation.people);
-        const result = computeTable(tables, reservation);
+        const r = await repo.getReservation(resId);
+        const tables = rr.getTables(r.people);
+        const result = computeTable(tables, r);
         if (result.table) {
-            reservation.accepted(result.table, result.effectiveDate);
-            await repo.reservationAdded(rr, reservation);
+            r.accepted(result.table, result.effectiveDate);
+            await repo.reservationAdded(rr, r);
         } else
-            reservation.rejected();
-        return reservation;
+            r.rejected();
+        return r;
     });
 }
 

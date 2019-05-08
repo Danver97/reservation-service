@@ -14,10 +14,10 @@ async function handler(event) {
             );
             break;
         case 'reservationCreated':
-            await manager.acceptReservation(event.payload.restId, Reservation.fromObject(event.payload));
+            await manager.acceptReservation(event.payload.restId, event.payload.resId);
             break;
         case 'reservationAdded':
-            await manager.reservationConfirmed(event.payload.id, event.payload.table, event.payload.date);
+            await manager.reservationConfirmed(event.payload.resId, event.payload.table, event.payload.date);
             break;
         case 'reservationCancelled':
             await manager.reservationRemoved(event.payload.restId, event.payload.resId);
