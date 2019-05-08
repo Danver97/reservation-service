@@ -1,16 +1,16 @@
 const path = require('path');
 const pact = require('@pact-foundation/pact');
+const pactnode = require('@pact-foundation/pact-node');
 const Event = require('@danver97/event-sourcing/event');
 const repo = require('../../infrastructure/repository/repositoryManager')('testdb');
 const manager = require('../../domain/logic/restaurantReservationsManager')(repo);
 const handler = require('../../infrastructure/messaging/eventHandler/eventHandler')(manager);
+const consumerVersion = require('../../package.json').version;
 
 const {
     MessageConsumerPact,
     asynchronousBodyHandler,
 } = pact;
-
-let messagePact;
 
 async function commonMessageHandler (message, assertFunc) {
     const event = Event.fromObject(message);
@@ -22,31 +22,48 @@ async function commonMessageHandler (message, assertFunc) {
         await assertReturn;
 };
 
-function defineAsyncInteraction (state, eventName, content, assertFunc) {
-    return (
-        messagePact
-            .given(state)
-            .expectsToReceive(eventName)
-            .withContent(content)
-            .withMetadata({ 'content-type': 'application/json' })
-            .verify(asynchronousBodyHandler(message => commonMessageHandler(message, assertFunc)))
-    );
-};
+class Interactor {
+    constructor(options) {
+        if (!options.consumer || !options.provider) {
+            throw new Error(`Missing parameters in options:
+                ${!options.consumer ? 'options.consumer' : ''}
+                ${!options.provider ? 'options.provider' : ''}`);
+        }
+        this.pactDir = options.dir || path.resolve(process.cwd(), 'pacts')
+        const opts = {
+            consumer: options.consumer,
+            dir: this.pactDir,
+            pactfileWriteMode: options.pactfileWriteMode || 'update',
+            provider: options.provider,
+            logLevel: options.logLevel || 'warn',
+        };
+        this.messagePact = new MessageConsumerPact(opts);
+        this.consumer = options.consumer;
+        this.provider = options.provider;
+    }
 
-function exportFunc(options) {
-    if (!options.consumer || !options.provider)
-        throw new Error(`Missing parameters in options:
-        ${!options.consumer ? 'options.consumer' : ''}
-        ${!options.provider ? 'options.provider' : ''}`);
-    const opts = {
-        consumer: options.consumer,
-        dir: options.dir || path.resolve(process.cwd(), 'pacts'),
-        pactfileWriteMode: options.pactfileWriteMode || 'update',
-        provider: options.provider,
-        logLevel: options.logLevel || 'warn',
-    };
-    messagePact = new MessageConsumerPact(opts);
-    return defineAsyncInteraction;
+    defineAsyncInteraction (state, eventName, content, assertFunc) {
+        return (
+            this.messagePact
+                .given(state)
+                .expectsToReceive(eventName)
+                .withContent(content)
+                .withMetadata({ 'content-type': 'application/json' })
+                .verify(asynchronousBodyHandler(message => commonMessageHandler(message, assertFunc)))
+        );
+    }
+
+    async publishPacts(pactBrokerUrl) {
+        const pactJsonFile = `${this.consumer}-${this.provider}.json`;
+        const options = {
+            pactBroker: pactBrokerUrl || '192.168.99.100',
+            pactFilesOrDirs: [path.resolve(this.pactDir, `./${pactJsonFile}`)],
+            consumerVersion,
+        };
+        const publisher = new pactnode.Publisher(options);
+        await publisher.publish();
+        console.log(`\n\nPact ${pactJsonFile} published to PactBroker at ${options.pactBroker}`);
+    }
 }
 
-module.exports = exportFunc;
+module.exports = Interactor;

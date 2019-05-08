@@ -4,10 +4,9 @@ const Reservation = require('../../domain/models/reservation');
 const RestaurantReservations = require('../../domain/models/restaurantReservations');
 const testUtils = require('../test-utils');
 const eventContent = require('./eventContent');
-const MessageConsumerPact = require('./utils');
-const consumerVersion = require('../../package.json').version;
+const Interactor = require('./utils');
 
-const defineAsyncInteraction = MessageConsumerPact({
+const interactor = new Interactor({
     consumer: 'reservation-service',  // TODO: parametrize
     provider: 'reservation-service',
 });
@@ -35,7 +34,7 @@ describe('Reservation Service Contract Testing', function () {
         const state = 'a new reservation is created';
         const eventName = 'reservationCreated';
         const content = eventContent.reservationCreatedEvent(r);
-        await defineAsyncInteraction(state, eventName, content);
+        await interactor.defineAsyncInteraction(state, eventName, content);
     });
 
     it('reservationAdded is handled properly', async () => {
@@ -46,7 +45,7 @@ describe('Reservation Service Contract Testing', function () {
         const state = 'a reservation is added to the restaurant reservations';
         const eventName = 'reservationAdded';
         const content = eventContent.reservationAddedEvent(rAccepted);
-        await defineAsyncInteraction(state, eventName, content);
+        await interactor.defineAsyncInteraction(state, eventName, content);
     });
 
     it('reservationCancelled is handled properly', async () => {
@@ -57,8 +56,10 @@ describe('Reservation Service Contract Testing', function () {
         const state = 'a reservation has been added to the restaurant reservations but it is now cancelled';
         const eventName = 'reservationCancelled';
         const content = eventContent.reservationCancelledEvent(r);
-        await defineAsyncInteraction(state, eventName, content);
+        await interactor.defineAsyncInteraction(state, eventName, content);
 
         /* should pass even reservation has not been approved? */
     });
+
+    after(() => interactor.publishPacts());
 });
