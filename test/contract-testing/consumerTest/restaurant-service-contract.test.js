@@ -1,6 +1,6 @@
-const repo = require('../../infrastructure/repository/repositoryManager')('testdb');
-const RestaurantReservations = require('../../domain/models/restaurantReservations');
-const testUtils = require('../test-utils');
+const repo = require('../../../infrastructure/repository/repositoryManager')('testdb');
+const RestaurantReservations = require('../../../domain/models/restaurantReservations');
+const testUtils = require('../../test-utils');
 const eventContent = require('./eventContent');
 const Interactor = require('./utils');
 

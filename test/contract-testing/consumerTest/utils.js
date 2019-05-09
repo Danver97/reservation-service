@@ -2,9 +2,9 @@ const path = require('path');
 const pact = require('@pact-foundation/pact');
 const pactnode = require('@pact-foundation/pact-node');
 const Event = require('@danver97/event-sourcing/event');
-const repo = require('../../infrastructure/repository/repositoryManager')('testdb');
-const manager = require('../../domain/logic/restaurantReservationsManager')(repo);
-const handler = require('../../infrastructure/messaging/eventHandler/eventHandler')(manager);
+const repo = require('../../../infrastructure/repository/repositoryManager')('testdb');
+const manager = require('../../../domain/logic/restaurantReservationsManager')(repo);
+const handler = require('../../../infrastructure/messaging/eventHandler/eventHandler')(manager);
 const consumerVersion = require('../../package.json').version;
 
 const {
