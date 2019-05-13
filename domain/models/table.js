@@ -23,14 +23,14 @@ class Table {
 
     addReservation(reservation) { // O(1)
         if (!reservation)
-            throw new TableError(`Missing the following parameters:${reservation ? '' : ' reservation'}`, TableError.paramError);
+            throw new TableError(`Missing the following parameters: reservation`, TableError.paramError);
         this.reservationsMap[reservation.id] = this.reservations.push(reservation);
         this.reservationsArr = null;
     }
 
     removeReservation(resId) { // O(1)
         if (!resId)
-            throw new TableError(`Missing the following parameters:${resId ? '' : ' resId'}`, TableError.paramError);
+            throw new TableError(`Missing the following parameters: resId`, TableError.paramError);
         this.reservations.remove(this.reservationsMap[resId]);
         delete this.reservationsMap[resId];
         this.reservationsArr = null;

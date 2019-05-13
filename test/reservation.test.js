@@ -17,6 +17,8 @@ describe('Reservation class unit test', function () {
 
     it('check if Reservation is created with the right attributes', function () {
         assert.throws(() => new Reservation(), ReservationError);
+        assert.throws(() => new Reservation('pippo', 1, 'pippo', 4, '2018-07-15', '15'), ReservationError);
+        assert.throws(() => new Reservation('pippo', 1, 'pippo', 4, '2018-07-15', 'aa:bb'), ReservationError);
         assert.strictEqual(res.userId, 'pippo');
         assert.strictEqual(res.restId, 1);
         assert.strictEqual(res.reservationName, 'pippo');
@@ -54,6 +56,12 @@ describe('Reservation class unit test', function () {
     });
 
     it('check if setTable() works', function () {
-        assert.throws(() => res.setTable(1, 3), ReservationError);
+        assert.throws(() => res.setTable(), ReservationError);
+        assert.throws(() => res.setTable(1), ReservationError);
+        assert.throws(() => res.setTable({ id: 1 }), ReservationError);
+        assert.throws(() => res.setTable({ people: 4 }), ReservationError);
+        assert.throws(() => res.setTable({ id: 1, people: 1 }), ReservationError);
+        res.setTable({ id: 1, people: 4 });
+        assert.deepStrictEqual(res.table, { id: 1, people: 4 });
     });
 });

@@ -30,19 +30,21 @@ describe('RestaurantReservations unit test', function () {
     const rr = new RestaurantReservations(id, timeTable, tables);
 
     it('check if constructor works', function () {
+        assert.throws(() => new RestaurantReservations(), RestaurantReservationsError);
         assert.strictEqual(rr.restId, id);
         assert.strictEqual(JSON.stringify(rr.timeTable), JSON.stringify(timeTable));
     });
 
-    /* it('check if setTimeTable works', function () {
+    it('check if setTimeTable works', function () {
+        assert.throws(() => rr.setTimeTable(), RestaurantReservationsError);
+    });
 
-    }); */
-
-    /* it('check if setTables works', function () {
-
-    }); */
+    it('check if setTables works', function () {
+        assert.throws(() => rr.setTables(), RestaurantReservationsError);
+    });
 
     it('check if reservationAdded works', function () {
+        assert.throws(() => rr.reservationAdded(), RestaurantReservationsError);
         assert.throws(() => rr.reservationAdded({}), RestaurantReservationsError);
         res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
         assert.throws(() => rr.reservationAdded(res), RestaurantReservationsError);
@@ -57,6 +59,7 @@ describe('RestaurantReservations unit test', function () {
 
     it('check if reservationRemoved works', function () {
         assert.throws(() => rr.reservationRemoved(), RestaurantReservationsError);
+        assert.throws(() => rr.reservationRemoved({}), RestaurantReservationsError);
         rr.reservationRemoved(res.id);
         assert.throws(() => rr.reservationRemoved(res.id), RestaurantReservationsError);
         assert.strictEqual(JSON.stringify(rr.getTables(2)[0].getReservations()), JSON.stringify([]));

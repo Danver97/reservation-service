@@ -1,4 +1,5 @@
 require('./reservation.test');
+require('./table.test');
 require('./restaurantReservations.test');
 require('./repositoryManager.test');
 require('./restaurantReservationsManager.test');

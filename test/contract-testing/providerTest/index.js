@@ -57,7 +57,7 @@ const p = new Interactor({
 });
 
 describe('Consumers contract test', function () {
-    this.slow(5000);
+    this.slow(7000);
     this.timeout(20000);
     it('verify that published events satisfy consumer contracts expectations', function () {
         return p.verify();

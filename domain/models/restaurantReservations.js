@@ -18,16 +18,14 @@ class RestaurantReservations {
 
     setTimeTable(timeTable) {
         if (!timeTable) {
-            throw new RestaurantReservationError(`Missing the following parameters:
-                ${timeTable ? '' : ' timeTable'}`, RestaurantReservationError.paramError);
+            throw new RestaurantReservationError(`Missing the following parameters: timeTable`, RestaurantReservationError.paramError);
         }
         this.timeTable = timeTable;
     }
 
     setTables(tables) {
         if (!tables) {
-            throw new RestaurantReservationError(`Missing the following parameters:
-                ${tables ? '' : ' tables'}`, RestaurantReservationError.paramError);
+            throw new RestaurantReservationError(`Missing the following parameters: tables`, RestaurantReservationError.paramError);
         }
         this.tables = tables.map(t => Table.fromObject(t));
         this.tables.sort((a, b) => (a.people <= b.people ? -1 : 1));
@@ -37,8 +35,8 @@ class RestaurantReservations {
 
     reservationAdded(reservation) { // O(1)
         if (!reservation) {
-            throw new RestaurantReservationError(`Missing the following parameters:
-                ${reservation ? '' : ' reservation'}`, RestaurantReservationError.paramError);
+            throw new RestaurantReservationError(`Missing the following parameters: reservation
+            `, RestaurantReservationError.paramError);
         }
         if (!(reservation instanceof Reservation))
             throw new RestaurantReservationError("'reservation' must be instance of Reservation class", RestaurantReservationError.paramError);
@@ -56,7 +54,7 @@ class RestaurantReservations {
 
     reservationRemoved(resId) { // O(1)
         if (!resId && resId !== 0)
-            throw new RestaurantReservationError(`Missing the following parameters:${resId ? '' : ' resId'}`, RestaurantReservationError.paramError);
+            throw new RestaurantReservationError(`Missing the following parameters: resId`, RestaurantReservationError.paramError);
         const type = typeof resId;
         if (type !== 'number' && type !== 'string')
             throw new RestaurantReservationError(`'resId' must be string or number. Found: ${type}`, RestaurantReservationError.paramError);

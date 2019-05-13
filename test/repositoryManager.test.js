@@ -46,6 +46,7 @@ describe('RepositoryManager unit test', function() {
     });
 
     it('check if restaurantReservationsCreated works', async function () {
+        assert.throws(() => repo.restaurantReservationsCreated(), RepositoryError);
         await repo.restaurantReservationsCreated(rr);
         const result = await repo.getReservations(rr.restId);
         assertStrictEqual(result, rr);
