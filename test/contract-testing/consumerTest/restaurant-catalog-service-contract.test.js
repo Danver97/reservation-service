@@ -7,10 +7,10 @@ const Interactor = require('./utils');
 
 const interactor = new Interactor({
     consumer: 'reservation-service',  // TODO: parametrize
-    provider: 'restaurant-service',
+    provider: 'restaurant-catalog-service',
 });
 
-describe('Restaurant Service Contract Testing', function () {
+describe('Restaurant Catalog Service Contract Testing', function () {
     this.slow(5000);
     this.timeout(10000);
     const restId = '24071e32-263f-45cc-81b9-f4acac75fb1d';
