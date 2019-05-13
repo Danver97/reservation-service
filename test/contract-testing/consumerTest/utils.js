@@ -6,6 +6,7 @@ const repo = require('../../../infrastructure/repository/repositoryManager')('te
 const manager = require('../../../domain/logic/restaurantReservationsManager')(repo);
 const handler = require('../../../infrastructure/messaging/eventHandler/eventHandler')(manager);
 const consumerVersion = require('../../../package.json').version;
+const pactBroker = require('../pactBroker.config');
 
 const {
     MessageConsumerPact,
@@ -56,7 +57,7 @@ class Interactor {
     async publishPacts(pactBrokerUrl) {
         const pactJsonFile = `${this.consumer}-${this.provider}.json`;
         const options = {
-            pactBroker: pactBrokerUrl || '192.168.99.100',
+            pactBroker: pactBroker.url,
             pactFilesOrDirs: [path.resolve(this.pactDir, `./${pactJsonFile}`)],
             consumerVersion,
         };

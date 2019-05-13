@@ -3,6 +3,7 @@ const { MessageProviderPact, Matchers } = require('@pact-foundation/pact');
 const packageJSON = require('../../../package.json');
 const providerVersion = packageJSON.version;
 const provider = packageJSON.name;
+const pactBroker = require('../pactBroker.config');
 
 class Interactor {
     constructor(options) {
@@ -12,7 +13,7 @@ class Interactor {
             stateHandlers: options.stateHandlers,
             provider,
             providerVersion,
-            pactBrokerUrl: 'http://192.168.99.100',
+            pactBrokerUrl: pactBroker.url,
             logLevel: 'warn',
             publishVerificationResult: true,
             tags: ['alpha'],
