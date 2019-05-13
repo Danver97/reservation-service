@@ -8,7 +8,9 @@ const RepositoryError = require('./errors/RepositoryError');
 function reservationCreated(reservation, cb) {
     if (!reservation)
         throw new RepositoryError(`Missing the following parameters:${reservation ? '' : ' reservation'}`, RepositoryError.paramError);
-    return this.save(reservation.id, reservation._revisionId, ReservationEvents.reservationCreated, Object.assign({}, reservation), cb);
+        const payload = Object.assign({}, reservation);
+        payload.resId = reservation.id;
+    return this.save(reservation.id, reservation._revisionId, ReservationEvents.reservationCreated, payload, cb);
 }
 
 function reservationConfirmed(reservation, cb) {
@@ -53,7 +55,9 @@ function reservationAdded(rr, reservation, cb) {
             RepositoryError.paramError,
         );
     }
-    return this.save(rr.restId, rr._revisionId, ReservationEvents.reservationAdded, Object.assign({}, reservation), cb);
+    const payload = Object.assign({}, reservation);
+    payload.resId = reservation.id;
+    return this.save(rr.restId, rr._revisionId, ReservationEvents.reservationAdded, payload, cb);
 }
 
 function reservationRemoved(rr, resId, cb) {

@@ -1,5 +1,5 @@
 const path = require('path');
-const { MessageProviderPact } = require('@pact-foundation/pact');
+const { MessageProviderPact, Matchers } = require('@pact-foundation/pact');
 const packageJSON = require('../../../package.json');
 const providerVersion = packageJSON.version;
 const provider = packageJSON.name;
@@ -7,21 +7,22 @@ const provider = packageJSON.name;
 class Interactor {
     constructor(options) {
         // const pactUrl = options.pactUrl || path.resolve(process.cwd(), 'pacts');
-        const opts = {
+        this.opts = {
             messageProviders: options.messageProviders,
             stateHandlers: options.stateHandlers,
             provider,
             providerVersion,
-            pactBrokerUrl: '192.168.99.100',
+            pactBrokerUrl: 'http://192.168.99.100',
             logLevel: 'warn',
             publishVerificationResult: true,
             tags: ['alpha'],
         };
-        this.messageProvider = new MessageProviderPact(opts);
+        this.messageProvider = new MessageProviderPact(this.opts);
     }
 
-    verify() {
-        return this.messageProvider.verify();
+    async verify() {
+        await this.messageProvider.verify();
+        console.log(`\n\nPact verification results published to PactBroker at ${this.opts.pactBrokerUrl}`);
     }
 }
 

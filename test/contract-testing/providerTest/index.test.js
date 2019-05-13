@@ -36,11 +36,12 @@ function reservationRejected() {
 
 function reservationAdded () {
     const r = new Reservation(uuid(), rr.restId, 'Gino', 4, new Date(), '15:00');
-    return repo.reservationRemoved(rr, r);
+    r.accepted(testUtils.tables[4]);
+    return repo.reservationAdded(rr, r);
 }
 function reservationRemoved() {
     const r = new Reservation(uuid(), rr.restId, 'Gino', 4, new Date(), '15:00');
-    return repo.reservationRemoved(rr, r);
+    return repo.reservationRemoved(rr, r.id);
 }
 
 const p = new Interactor({
@@ -57,7 +58,7 @@ const p = new Interactor({
 
 describe('Consumers contract test', function () {
     this.slow(5000);
-    this.timeout(10000);
+    this.timeout(20000);
     it('verify that published events satisfy consumer contracts expectations', function () {
         return p.verify();
     });

@@ -1,9 +1,9 @@
 const pact = require('@pact-foundation/pact');
 
-const { like, term } = pact.Matchers;
+const { like, term, iso8601DateTimeWithMillis } = pact.Matchers;
 const likeUuid = pact.Matchers.uuid;
 
-const hourRegExp = '(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))';
+const hourRegExp = '^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$';
 const dayTimeTable = {
     morning: {
         open: term({ generate: '11:00', matcher: hourRegExp }),
@@ -77,7 +77,7 @@ function reservationAddedEvent(reservation) {
         // restId: likeUuid(reservation.restId),
         resId: likeUuid(reservation.id),
         table: likeTable(r.table.id, r.table.people),
-        date: reservation.date,
+        date: iso8601DateTimeWithMillis(reservation.date.toJSON()),
     });
 }
 
