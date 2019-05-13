@@ -3,7 +3,7 @@
     "name": "reservation-service"
   },
   "provider": {
-    "name": "restaurant-service"
+    "name": "restaurant-catalog-service"
   },
   "messages": [
     {

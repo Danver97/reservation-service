@@ -1,2 +1,2 @@
-require('./restaurant-service-contract.test');
+require('./restaurant-catalog-service-contract.test');
 require('./reservation-service-contract.test');
