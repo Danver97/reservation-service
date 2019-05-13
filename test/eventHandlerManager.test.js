@@ -1,15 +1,13 @@
 const assert = require('assert');
+const uuid = require('uuid/v4');
 const broker = require('@danver97/event-sourcing/eventBroker')['testbroker'];
 const Event = require('@danver97/event-sourcing/eventBroker/brokerEvent');
-const eventsChekerUtil = require('@danver97/service-events');
 const repo = require('../infrastructure/repository/repositoryManager')('testdb');
 const manager = require('../domain/logic/restaurantReservationsManager')(repo);
 const brokerHandlerFunc = require('../infrastructure/messaging/eventHandler/brokerHandler');
 const Reservation = require('../domain/models/reservation');
+const RestaurantReservations = require('../domain/models/restaurantReservations');
 const Table = require('../domain/models/table');
-
-const checkEventByPath = eventsChekerUtil.checkByPath;
-const Paths = eventsChekerUtil.paths;
 
 const dayTimeTable = {
     morning: {
@@ -47,7 +45,6 @@ let pollId = null;
 const waitAsync = ms => new Promise((resolve, reject) => setTimeout(resolve, ms));
 
 describe('eventHandlerManager unit test', function () {
-    let res = null;
 
     before(async () => {
         repo.reset();
@@ -57,21 +54,24 @@ describe('eventHandlerManager unit test', function () {
         pollId = broker.startPoll(pollOptions, brokerHandler, pollOptions.ms);
     });
 
+    beforeEach(async () => {
+        await repo.reset();
+    });
+
     it('check restaurantReservations creation transaction', async function () {
         const payload = {
-            restId: 'asdf',
+            restId: uuid(),
             owner: 'Giucas Casella',
             timeTable,
             tables, // : [],
         };
-        const restaurantCreated = new Event('asdf', 1, 'restaurantCreated', payload);
-        checkEventByPath(Paths.restaurant_catalog.RESTAURANT_CREATED, restaurantCreated);
+        const restaurantCreated = new Event(payload.restId, 1, 'restaurantCreated', payload);
         await broker.publish(restaurantCreated);
         await waitAsync(waitAsyncTimeout);
 
         let err = null;
         try {
-            await repo.getReservations('asdf')
+            await repo.getReservations(payload.restId);
         } catch (e) {
             err = e;
         }
@@ -81,42 +81,67 @@ describe('eventHandlerManager unit test', function () {
         }, Error);
     });
 
-    it('check reservationCreated transaction', async function () {
-        const date = new Date();
-        date.setHours(date.getHours() + 1);
-        const payload = {
-            id: 'res1',
-            restId: 'asdf',
-            status: 'pending',
-            statusCode: 0,
-            userId: '132456',
-            reservationName: 'Antonacci',
-            people: 6,
-            date: date.toJSON(),
-        };
-        res = Reservation.fromObject(payload);
-        await repo.reservationCreated(res);
-        await waitAsync(waitAsyncTimeout);
+    context('A restaurant reservation is already created', function () {
 
-        const rr = await repo.getReservations('asdf');
-        const table = rr.getTables(6)[0];
-        res.accepted(table);
-        assert.strictEqual(JSON.stringify(table.getReservations()[0]), JSON.stringify(res));
+        const rr = new RestaurantReservations(uuid(), timeTable, tables);
 
-        const result = await repo.getReservation(res.id);
-        assert.strictEqual(result.status, 'confirmed');
-        assert.strictEqual(result.status, res.status);
-        assert.deepStrictEqual(result.table, res.table);
-    });
+        beforeEach(async () => {
+            await repo.reset();
+            await manager.restaurantReservationsCreated(rr);
+        });
 
-    it('check reservationCancelled transaction', async function () {
-        res = await repo.getReservation(res.id);
-        await repo.reservationCancelled(res);
-        await waitAsync(waitAsyncTimeout);
+        it('check reservationCreated transaction', async function () {
+            const date = new Date();
+            date.setHours(date.getHours() + 1);
+            const payload = {
+                id: uuid(),
+                restId: rr.restId,
+                status: 'pending',
+                statusCode: 0,
+                userId: '132456',
+                reservationName: 'Antonacci',
+                people: 6,
+                date: date.toJSON(),
+            };
+            const res = Reservation.fromObject(payload);
+            await repo.reservationCreated(res);
+            await waitAsync(waitAsyncTimeout);
 
-        const rr = await repo.getReservations('asdf');
-        const table = rr.getTables(6)[0];
-        assert.strictEqual(JSON.stringify(table.getReservations()[0]), JSON.stringify(undefined));
+            const new_rr = await repo.getReservations(rr.restId);
+            const table = new_rr.getTables(6)[0];
+            res.accepted(table);
+            assert.deepStrictEqual(table.getReservations()[0], res);
+
+            const result = await repo.getReservation(res.id);
+            assert.strictEqual(result.status, 'confirmed');
+            assert.strictEqual(result.status, res.status);
+            assert.deepStrictEqual(result.table, res.table);
+        });
+
+        it('check reservationCancelled transaction', async function () {
+            const date = new Date();
+            date.setHours(date.getHours() + 1);
+            const payload = {
+                id: uuid(),
+                restId: rr.restId,
+                status: 'pending',
+                statusCode: 0,
+                userId: '132456',
+                reservationName: 'Antonacci',
+                people: 6,
+                date: date.toJSON(),
+            };
+            let res = Reservation.fromObject(payload);
+            await repo.reservationCreated(res);
+            await waitAsync(waitAsyncTimeout);
+            res = await repo.getReservation(res.id);
+            await repo.reservationCancelled(res);
+            await waitAsync(waitAsyncTimeout);
+
+            const new_rr = await repo.getReservations(rr.restId);
+            const table = new_rr.getTables(6)[0];
+            assert.deepStrictEqual(table.getReservations()[0], undefined);
+        });
     });
 
     after(() => {

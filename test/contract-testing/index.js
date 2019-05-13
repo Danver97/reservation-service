@@ -1,0 +1,2 @@
+require('./consumerTest');
+require('./providerTest');
