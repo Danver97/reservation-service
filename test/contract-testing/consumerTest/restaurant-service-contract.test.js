@@ -1,3 +1,4 @@
+const assert = require('assert');
 const repo = require('../../../infrastructure/repository/repositoryManager')('testdb');
 const RestaurantReservations = require('../../../domain/models/restaurantReservations');
 const testUtils = require('../../test-utils');
@@ -21,7 +22,9 @@ describe('Restaurant Service Contract Testing', function () {
         const state = 'a new restaurant is created';
         const eventName = 'restaurantCreated';
         const content = eventContent.restaurantCreatedEvent(restId, 'gino');
-        return interactor.defineAsyncInteraction(state, eventName, content);
+        return interactor.defineAsyncInteraction(state, eventName, content, () => {
+            assert.doesNotThrow(async () => await repo.getReservations(rr.restId), Error);
+        });
     });
 
     after(() => interactor.publishPacts());
