@@ -8,4 +8,3 @@ require('./eventHandlerManager.test');
 require('./query.test');
 require('./integration.test');
 require('./contract-testing');
-console.log(process.env.ENV_VAR, process.env.ENV_VAR2);
