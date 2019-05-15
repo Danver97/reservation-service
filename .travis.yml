@@ -1,3 +1,6 @@
 language: node_js
 node_js:
   - "10"
+before_script:
+  - echo $ENV_VAR
+  - echo $ENV_VAR2
