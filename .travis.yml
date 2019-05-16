@@ -1,4 +1,13 @@
 language: node_js
 node_js:
   - "10"
-  
+#jobs:
+#  include:
+#    - stage: Test
+#      env: EXTERNAL_DEPENDECIES=false
+#      script: npm test
+#    - stage: Test
+#      env: EXTERNAL_DEPENDECIES=true
+#      script: npm test
+#      if: branch IN (master, develop)
+
