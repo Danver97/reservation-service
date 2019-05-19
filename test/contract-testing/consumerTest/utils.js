@@ -55,6 +55,12 @@ class Interactor {
     }
 
     async publishPacts(pactBrokerUrl) {
+        console.log('\n\nPublishing pact files...');
+        if (!pactBroker.isAvailable) {
+            console.log('Pact broker is not available.');
+            console.log('Pacts files won\'t be published.');
+            return;
+        }
         const pactJsonFile = `${this.consumer}-${this.provider}.json`;
         const options = {
             pactBroker: pactBroker.url,
@@ -63,7 +69,7 @@ class Interactor {
         };
         const publisher = new pactnode.Publisher(options);
         await publisher.publish();
-        console.log(`\n\nPact ${pactJsonFile} published to PactBroker at ${options.pactBroker}`);
+        console.log(`\nPact ${pactJsonFile} published to PactBroker at ${options.pactBroker}`);
     }
 }
 
