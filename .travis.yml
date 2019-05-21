@@ -1,26 +1,26 @@
 language: node_js
 node_js:
 - '10'
-#jobs:
-#  include:
-#    - stage: Test
-#      env: EXTERNAL_DEPENDECIES=false
-#      script: npm test
-#    - stage: Test
-#      env: EXTERNAL_DEPENDECIES=true
-#      script: npm test
-#      if: branch = develop AND type != pull_request
-#    - stage: Release
-#      if: branch = master AND type != pull_request
-#      before_deploy: npm version minor
-#      deploy:
-#        provider: releases
-#        api_key:
-#          secure: rnujIIJil2Go+cwskpfxAtcoC1OuOK6Iedr+Je3bDgSpQajqoYhXBtzEZugE3/IkDtl0NA2WrTRChCvymdxalD1oCsuy+5QQHssRX+ZW+fW7Oo8XydYONEzYoPNPzMDl5eXGyfZhTrmInzx7XkuCS+PKSGYgpMjIUgFxJqdsVNwy27Xwj9XC23LPJYxZZyruaKge89cmpvWtiGbWcjY+ii3PbudBH5It0gVn91lCT5rl701RapKiyujhFv09qPTf39MPDzvu4OgqXqs8xO6DjSwesjNl/pj+Lzqwuz83GEMPUsMPOeFxUMrWq3Xmegd1T7Z9i6OvXJhGLzJscXTPhPUE1A3vRzYxleFm65Sd5l2vBkrZVRr9gq5wctflDw1XPtlExe309m40g50QNxJEfm9OIbW0TD9SJIBwh5A+3hsCz9hwXevwpOXqIuu0JjVtSjzMLHChbRoNNFFg3MqgCXpIjGGHwJkkuxvtlnOQTeeyiwt/LaMX+F32EqUeRqabQpnsKi6bWTXwGpxvhQ2I8G0iKAde7plmszBntx/reENiWzuUjPzr0YnELcg1HBahKtYnydbp+O8Qq8DNDgD/nOsIWpn7Q2hR30Sz+zorNobBr38fqoUhy4X4byHyN6u9j5CLHipYd1CFnWwVi1l33A1wAKIUs/+kTwHwoh5dZ+k=
-#        on:
-#          repo: Danver97/reservation-service
-#          branch: develop
-#          tags: true
-#stages:
-#  - name: Test
-#  - name: Release
+jobs:
+  include:
+    - stage: Test
+      script:
+        - npm test
+
+    - stage: Release
+      if: branch = master AND type != pull_request
+      before_deploy:
+        - npm version minor -m "[skip ci]"
+        #- git push "https://${GH_TOKEN}@${GH_REPO}" master
+#        - docker build . -t $MICROSERVICE_NAME-v${VERSION_STR[0]}
+      deploy:
+        provider: releases
+        api_key:
+          secure: rnujIIJil2Go+cwskpfxAtcoC1OuOK6Iedr+Je3bDgSpQajqoYhXBtzEZugE3/IkDtl0NA2WrTRChCvymdxalD1oCsuy+5QQHssRX+ZW+fW7Oo8XydYONEzYoPNPzMDl5eXGyfZhTrmInzx7XkuCS+PKSGYgpMjIUgFxJqdsVNwy27Xwj9XC23LPJYxZZyruaKge89cmpvWtiGbWcjY+ii3PbudBH5It0gVn91lCT5rl701RapKiyujhFv09qPTf39MPDzvu4OgqXqs8xO6DjSwesjNl/pj+Lzqwuz83GEMPUsMPOeFxUMrWq3Xmegd1T7Z9i6OvXJhGLzJscXTPhPUE1A3vRzYxleFm65Sd5l2vBkrZVRr9gq5wctflDw1XPtlExe309m40g50QNxJEfm9OIbW0TD9SJIBwh5A+3hsCz9hwXevwpOXqIuu0JjVtSjzMLHChbRoNNFFg3MqgCXpIjGGHwJkkuxvtlnOQTeeyiwt/LaMX+F32EqUeRqabQpnsKi6bWTXwGpxvhQ2I8G0iKAde7plmszBntx/reENiWzuUjPzr0YnELcg1HBahKtYnydbp+O8Qq8DNDgD/nOsIWpn7Q2hR30Sz+zorNobBr38fqoUhy4X4byHyN6u9j5CLHipYd1CFnWwVi1l33A1wAKIUs/+kTwHwoh5dZ+k=
+        on:
+          repo: Danver97/reservation-service
+          branch: master
+          tags: true
+stages:
+  - name: Test
+  - name: Release
