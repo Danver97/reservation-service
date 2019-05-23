@@ -1,4 +1,7 @@
 DIRNAME=$(dirname $0)
 # mkdir $DIRNAME/node_modules
-# npm install --prefix $DIRNAME
+CWD=$(pwd)
+cd $DIRNAME
+npm install
+cd $CWD
 zip -r mongodb.zip $DIRNAME
