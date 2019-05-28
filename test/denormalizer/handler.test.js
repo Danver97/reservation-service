@@ -2,8 +2,9 @@ const assert = require('assert');
 const Event = require('@danver97/event-sourcing/event');
 const MongoMemoryServer = require('mongodb-memory-server').MongoMemoryServer;
 const MongoClient = require('mongodb').MongoClient;
-const handlerFunc = require('../../infrastructure/denormalizers/mongodb/handler');
+const orderControl = require('../../infrastructure/denormalizers/mongodb/orderControl')('testdb');
 const writerFunc = require('../../infrastructure/denormalizers/mongodb/writer');
+const handlerFunc = require('../../infrastructure/denormalizers/mongodb/handler');
 const utils = require('./utils');
 
 const mongod = new MongoMemoryServer();
@@ -12,45 +13,29 @@ let collection = null;
 let writer = null;
 let handler = null;
 
-describe('Event Handler unit test', function () {
-    const streamId = '1';
-    const restaurantReservations = {
-        _id: streamId,
-        restId: streamId,
-        timeTable: utils.timeTable,
-        tables: [],
-        _revisionId: 1,
-    };
+describe('MongoDB Denormalizer handler unit test', function () {
+    const restaurantReservations = utils.restaurantReservations();
+    const reservation = utils.reservation();
 
-    const reservation = {
-        id: 'asdf',
-        restId: streamId,
-        status: 'pending',
-        statusCode: 0,
-        userId: 'asdfUser',
-        reservationName: 'Lucio',
-        people: 4,
-        date: new Date(),
-    };
-
-    before(async () => {
+    before(async function () {
         this.timeout(10000);
         const mongoConfig = {
-            connString: await mongod.getConnectionString(),
+            url: await mongod.getConnectionString(),
             db: 'Reservation',
             collection: 'Reservation',
         };
-        client = new MongoClient(mongoConfig.connString, { useNewUrlParser: true });
+        client = new MongoClient(mongoConfig.url, { useNewUrlParser: true });
         await client.connect();
         collection = client.db(mongoConfig.db).collection(mongoConfig.collection);
         writer = await writerFunc(mongoConfig);
-        handler = handlerFunc(writer);
+        handler = handlerFunc(writer, orderControl);
     });
 
     it('check if restaurantReservationsCreated event is handled properly', async function () {
         const e = new Event(restaurantReservations.restId, 1, 'restaurantReservationsCreated', restaurantReservations);
         // await handler(e, () => console.log(e));
         await handler(e);
+        console.log(await collection.findOne({}));
         const doc = await collection.findOne({ _id: restaurantReservations.restId });
         assert.deepStrictEqual(doc, restaurantReservations);
     });

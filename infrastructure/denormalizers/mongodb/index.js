@@ -1,3 +1,5 @@
+const Event = require('@danver97/event-sourcing/event');
+
 const handlerFunc = require('./handler');
 const orderControlFunc = require('./orderControl');
 const writerFunc = require('./writer');
@@ -27,7 +29,7 @@ TODO:
     - Fa l'update condizionale su DynamoDB
 */
 exports.mongoDenormalizer = async function(event, context) {
-    const messages = event.Records.map(e => JSON.parse(e.body));
+    const messages = event.Records.map(e => Event.fromObject(JSON.parse(e.body)));
     const promises = [];
     for (let m of messages) {
         promises.push(handler(m));

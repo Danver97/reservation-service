@@ -1,20 +1,20 @@
 const Promisify = require('promisify-cb');
 
 const dependencies = {
-    db: null,
+    projector: null,
 };
 
 function reservationCreated(e, cb) {
     return Promisify(async () => {
         const reservation = e.payload;
-        await dependencies.db.reservationCreated(reservation);
+        await dependencies.projector.reservationCreated(reservation);
     }, cb);
 }
 
 function reservationConfirmed(e, cb) {
     return Promisify(async () => {
         const resId = e.payload.resId;
-        await dependencies.db.reservationConfirmed(resId, e.eventId - 1, e.payload);
+        await dependencies.projector.reservationConfirmed(resId, e.eventId - 1, e.payload);
     }, cb);
 }
 
@@ -22,7 +22,7 @@ function reservationRejected(e, cb) {
     return Promisify(async () => {
         const resId = e.payload.resId;
         const status = e.payload.status;
-        await dependencies.db.reservationRejected(resId, e.eventId - 1, status);
+        await dependencies.projector.reservationRejected(resId, e.eventId - 1, status);
     }, cb);
 }
 
@@ -30,14 +30,14 @@ function reservationCancelled(e, cb) {
     return Promisify(async () => {
         const resId = e.payload.resId;
         const status = e.payload.status;
-        await dependencies.db.reservationCancelled(resId, e.eventId - 1, status);
+        await dependencies.projector.reservationCancelled(resId, e.eventId - 1, status);
     }, cb);
 }
 
 function restaurantReservationsCreated(e, cb) {
     return Promisify(async () => {
         const rr = e.payload;
-        await dependencies.db.restaurantReservationsCreated(rr);
+        await dependencies.projector.restaurantReservationsCreated(rr);
     }, cb);
 }
 
@@ -45,7 +45,7 @@ function reservationAdded(e, cb) {
     return Promisify(async () => {
         const restId = e.streamId;
         const reservation = e.payload;
-        await dependencies.db.reservationAdded(restId, e.eventId - 1, reservation);
+        await dependencies.projector.reservationAdded(restId, e.eventId - 1, reservation);
     }, cb);
 }
 
@@ -53,7 +53,7 @@ function reservationRemoved(e, cb) {
     return Promisify(async () => {
         const restId = e.payload.restId;
         const resId = e.payload.resId;
-        await dependencies.db.reservationRemoved(restId, e.eventId - 1, resId);
+        await dependencies.projector.reservationRemoved(restId, e.eventId - 1, resId);
     }, cb);
 }
 
@@ -91,8 +91,7 @@ async function handler(e, ack) {
     if (!e)
         return;
     if (typeof handlersMap[e.message] === 'function') {
-        const lastEventId = await dependencies.orderCtrl.getLastProcessedEvent(e.streamId);
-
+        const lastEventId = (await dependencies.orderCtrl.getLastProcessedEvent(e.streamId)).eventId;
         // If it is and old event
         if (e.eventId <= lastEventId) {
             // Removes it from the queue without processing it
@@ -117,12 +116,12 @@ async function handler(e, ack) {
     }
 }
 
-function exportFunc(db, orderCtrl) {
-    dependencies.db = db;
+function exportFunc(writer, orderCtrl) {
+    dependencies.projector = writer;
     dependencies.orderCtrl = orderCtrl;
-    if (!dependencies.db || !dependencies.orderCtrl) {
-        throw new Error(`OrderControlError: Missing one or more of the following parameters:
-        ${dependencies.db ? '' : 'db'}
+    if (!dependencies.projector || !dependencies.orderCtrl) {
+        throw new Error(`HandlerError: Missing one or more of the following parameters:
+        ${dependencies.projector ? '' : 'writer'}
         ${dependencies.orderCtrl ? '' : 'orderCtrl'}`);
     }
     return handler;

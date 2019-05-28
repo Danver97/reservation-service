@@ -5,17 +5,17 @@ const writerFunc = require('./writer');
 let writer = null;
 
 class Writer {
-    constructor(urlString, dbName, collectionName) {
-        if (!urlString || !dbName || !collectionName) {
+    constructor(url, dbName, collectionName) {
+        if (!url || !dbName || !collectionName) {
             throw new Error(`WriterError: missing one of the following parameter in the constructor:
-            ${urlString ? '' : 'urlString'}
+            ${url ? '' : 'url'}
             ${dbName ? '' : 'dbName'}
             ${collectionName ? '' : 'collectionName'}`);
         }
-        this.urlString = urlString;
+        this.url = url;
         this.dbName = dbName;
         this.collectionName = collectionName;
-        this.client = new mongodb.MongoClient(this.urlString, { useNewUrlParser: true });
+        this.client = new mongodb.MongoClient(this.url, { useNewUrlParser: true });
     }
 
     async connect() {
@@ -103,9 +103,10 @@ class Writer {
     }
     
     reservationRemoved(restId, _revisionId, resId, cb) {
-        return Promisify(async () => {
-            this.collection.updateOne({ _id: restId, _revisionId }, { $pull: { reservations: { id: resId } }, $inc: { _revisionId: 1 } });
-        }, cb);
+        return Promisify(() => this.collection.updateOne(
+            { _id: restId, _revisionId },
+            { $pull: { reservations: { id: resId } }, $inc: { _revisionId: 1 } }
+        ), cb);
     }
 }
 
