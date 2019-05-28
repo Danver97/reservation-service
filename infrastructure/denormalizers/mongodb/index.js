@@ -4,7 +4,7 @@ const handlerFunc = require('./handler');
 const orderControlFunc = require('./orderControl');
 const writerFunc = require('./writer');
 
-const orderCtrlTable = process.env.ORDER_CTRL_TABLE;
+const orderCtrlDb = process.env.ORDER_CONTROL_DB;
 const writerOptions = {
     url: process.env.MONGODB_URL,
     db: process.env.MONGODB_DB,
@@ -12,23 +12,11 @@ const writerOptions = {
 };
 const writer = writerFunc(writerOptions);
 
-const orderControl = orderControlFunc(orderCtrlTable);
+const orderControl = orderControlFunc(orderCtrlDb);
 
 const handler = handlerFunc(writer, orderControl);
 
-/*
-TODO:
-- Migliorare il writer: questo deve avere tutto l'occorrente per gestire le connessioni 
-  e controllare che vi sia sempre una connessione tra mongoDB e la funzione                 (DONE)
-
-- Introdurre l'order control attraverso un costante conditional update su DynamoDB:
-  - Il modulo che si occupa dell'effettiva query di DynamoDB può essere a sè stante         (DONE)
-  - L'order control va implementato nell'handler:                                           (DONE)
-    - Controlla se l'evento è ricevuto in ordine all'interno del suo stream
-    - Denormalizza
-    - Fa l'update condizionale su DynamoDB
-*/
-exports.mongoDenormalizer = async function(event, context) {
+exports.mongoDenormalizer = async function(event) {
     const messages = event.Records.map(e => Event.fromObject(JSON.parse(e.body)));
     const promises = [];
     for (let m of messages) {
