@@ -29,6 +29,7 @@
     "@danver97/service-events": "^1.0.5",
     "@pact-foundation/pact": "^8.2.2",
     "cross-env": "^5.2.0",
+    "dynamo-db-local": "^3.2.0",
     "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-config-strongloop": "^2.1.0",

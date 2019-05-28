@@ -1,4 +1,5 @@
-const DDB = require('aws-sdk');
+const Endpoint = require('aws-sdk/global').Endpoint;
+const DDB = require('aws-sdk/clients/dynamodb');
 const ddbDataTypes = require('dynamodb-data-types').AttributeValue;
 
 // const dynamodb = new DDB({apiVersion: '2012-08-10'});
@@ -19,7 +20,7 @@ class DynamoOrderControlDb {
         }
         this.dynamodb = new DDB({
             apiVersion: '2012-08-10',
-            // endpoint = new Endpoint(endpoint)
+            endpoint = new Endpoint(endpoint),
         });
         this.tableName = tableName;
     }
