@@ -67,18 +67,64 @@ const handlersMap = {
     reservationRemoved,
 };
 
+async function acknoledgeUtil(ackFunc, ack) {
+    if (ack && typeof ackFunc === 'function') {
+        await ackFunc();
+    } else if (!ack) {
+        // If the queue requires acknolegde to remove events, doesn't acknoledges it not calling ackFunc()
+        // If the queue requires success of the function to remove events, throws an error
+        if (typeof ackFunc !== 'function')
+            throw new Error('EventId too much ahead of the expected eventId');
+    }
+
+}
+
+function acknoledge(akcFunc) {
+    return acknoledgeUtil(akcFunc, true);
+}
+
+function dontAcknoledge(akcFunc) {
+    return acknoledgeUtil(akcFunc, false);
+}
+
 async function handler(e, ack) {
     if (!e)
         return;
     if (typeof handlersMap[e.message] === 'function') {
-        await handlersMap[e.message](e);
-        if (typeof ack === 'function')
-            await ack();
+        const lastEventId = await dependencies.orderCtrl.getLastProcessedEvent(e.streamId);
+
+        // If it is and old event
+        if (e.eventId <= lastEventId) {
+            // Removes it from the queue without processing it
+            await acknoledge(ack);
+            return;
+        }
+
+        // If it is a too young event
+        if (e.eventId > lastEventId + 1) {
+            // Ignore it
+            await dontAcknoledge(ack);
+            return;
+        }
+
+        // If it is the next event that needs to be processed
+        if (e.eventId === lastEventId + 1) {
+            // Process it
+            await handlersMap[e.message](e);
+            await dependencies.orderCtrl.updateLastProcessedEvent(e.streamId, lastEventId);
+            await acknoledge(ack);
+        }
     }
 }
 
-function exportFunc(db) {
+function exportFunc(db, orderCtrl) {
     dependencies.db = db;
+    dependencies.orderCtrl = orderCtrl;
+    if (!dependencies.db || !dependencies.orderCtrl) {
+        throw new Error(`OrderControlError: Missing one or more of the following parameters:
+        ${dependencies.db ? '' : 'db'}
+        ${dependencies.orderCtrl ? '' : 'orderCtrl'}`);
+    }
     return handler;
 }
 
