@@ -18,10 +18,10 @@ class DynamoOrderControlDb {
                 `OrderControlError: missing the following parameters in the export function ${tableName ? '' : 'tableName'}`
             );
         }
-        this.dynamodb = new DDB({
-            apiVersion: '2012-08-10',
-            endpoint = new Endpoint(endpoint),
-        });
+        const ddbOptions = { apiVersion: '2012-08-10' };
+        if (endpoint)
+            ddbOptions.endpoint = new Endpoint(endpoint);
+        this.dynamodb = new DDB(ddbOptions);
         this.tableName = tableName;
     }
 
@@ -89,6 +89,14 @@ class DynamoOrderControlDb {
     }
 }
 
-const db = new DynamoOrderControlDb(process.env.ORDER_CONTROL_TABLE, process.env.ORDER_CONTROL_DB_URL);
+let db = new DynamoOrderControlDb(process.env.ORDER_CONTROL_TABLE, process.env.ORDER_CONTROL_DB_URL);
 
-module.exports = db;
+module.exports = function (options) {
+    if (options) { 
+        if (options.fromEnv)
+            db = new DynamoOrderControlDb(process.env.ORDER_CONTROL_TABLE, process.env.ORDER_CONTROL_DB_URL);
+        else
+            db = new DynamoOrderControlDb(options.tableName, options.endpoint);
+    }
+    return db;
+}

@@ -22,8 +22,8 @@ class OrderControlHandler {
     }
 }
 
-function exportFunc(dbname) {
-    const db = dbFunc(dbname);
+function exportFunc(dbname, dboptions) {
+    const db = dbFunc(dbname, dboptions);
     return new OrderControlHandler(db);
 }
 

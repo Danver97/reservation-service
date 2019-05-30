@@ -42,4 +42,4 @@ class TestOrderControlDb {
 const testdb = new TestOrderControlDb();
 testdb.class = TestOrderControlDb;
 
-module.exports = testdb;
+module.exports = () => testdb;

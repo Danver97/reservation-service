@@ -1,10 +1,10 @@
-module.exports = function (dbname) {
+module.exports = function (dbname, dboptions) {
     const dbName = dbname || process.env.ORDER_CONTROL_DB;
     switch (dbname) {
         case 'testdb':
-            return require('./testdb');
+            return require('./testdb')(dboptions);
         case 'dynamodb':
-            return require('./dynamodb');
+            return require('./dynamodb')(dboptions);
         default:
     }
 }
