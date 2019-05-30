@@ -98,7 +98,6 @@ async function handler(e, ack) {
             await acknoledge(ack);
             return;
         }
-
         // If it is a too young event
         if (e.eventId > lastEventId + 1) {
             // Ignore it

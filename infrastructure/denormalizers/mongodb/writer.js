@@ -64,7 +64,7 @@ class Writer {
             await this.collection.insertOne(reservation);
         }, cb);
     }
-    
+
     reservationConfirmed(resId, _revisionId, payload, cb) {
         const status = payload.status;
         const table = payload.table;
@@ -75,33 +75,33 @@ class Writer {
             await this.collection.updateOne({ _id: resId, _revisionId }, update);
         }, cb);
     }
-    
+
     reservationRejected(resId, _revisionId, status, cb) {
         return Promisify(async () => {
             await this.collection.updateOne({ _id: resId, _revisionId }, { $set: { status }, $inc: { _revisionId: 1 } });
         }, cb);
     }
-    
+
     reservationCancelled(resId, _revisionId, status, cb) {
         return Promisify(async () => {
             await this.collection.updateOne({ _id: resId, _revisionId }, { $set: { status }, $inc: { _revisionId: 1 } });
         }, cb);
     }
-    
+
     restaurantReservationsCreated(restaurantReservations, cb) {
         restaurantReservations._id = restaurantReservations.restId;
         restaurantReservations._revisionId = 1;
         restaurantReservations.reservations = [];
         return Promisify(() => this.collection.insertOne(restaurantReservations), cb);
     }
-    
+
     reservationAdded(restId, _revisionId, reservation, cb) {
         return Promisify(() => this.collection.updateOne(
             { _id: restId, _revisionId },
             { $push: { reservations: { $each: [reservation], $sort: { date: 1 } } }, $inc: { _revisionId: 1 } },
         ), cb);
     }
-    
+
     reservationRemoved(restId, _revisionId, resId, cb) {
         return Promisify(() => this.collection.updateOne(
             { _id: restId, _revisionId },
@@ -124,7 +124,11 @@ class Writer {
  * @param {object} options.collection Collection name of the db's collection to write to
  */
 async function exportFunc(options) {
-    if (writer && writer.isConnected)
+    function areSameOptions(options) {
+        return options.url === writer.url && options.db === writer.dbName && options.collection === writer.collectionName;
+    }
+
+    if (!options || (writer && writer.isConnected && areSameOptions(options)))
         return writer;
     writer = new Writer(options.url, options.db, options.collection);
     await writer.connect();

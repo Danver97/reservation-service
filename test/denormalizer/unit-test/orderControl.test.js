@@ -1,10 +1,10 @@
 const assert = require('assert');
 const uuid = require('uuid/v4');
-const orderCtrl = require('../../infrastructure/denormalizers/mongodb/orderControl')('testdb');
+const orderCtrl = require('../../../infrastructure/denormalizers/mongodb/orderControl')('testdb');
 
 const repo = orderCtrl.db;
 
-describe('MongoDB Denormalizer order control', function () {
+describe('order control unit test', function () {
     const streamId1 = uuid();
     const streamId2 = uuid();
 
@@ -61,5 +61,9 @@ describe('MongoDB Denormalizer order control', function () {
         const response2 = await orderCtrl.getLastProcessedEvents([streamId1, streamId2]);
         assert.strictEqual(response2[0].eventId, 3);
         assert.strictEqual(response2[1].eventId, 5);
+    });
+
+    after(async () => {
+        await orderCtrl.db.reset();
     });
 });

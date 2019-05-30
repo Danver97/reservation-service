@@ -2,9 +2,9 @@ const assert = require('assert');
 const Event = require('@danver97/event-sourcing/event');
 const MongoMemoryServer = require('mongodb-memory-server').MongoMemoryServer;
 const MongoClient = require('mongodb').MongoClient;
-const orderControl = require('../../infrastructure/denormalizers/mongodb/orderControl')('testdb');
-const writerFunc = require('../../infrastructure/denormalizers/mongodb/writer');
-const handlerFunc = require('../../infrastructure/denormalizers/mongodb/handler');
+const orderControl = require('../../../infrastructure/denormalizers/mongodb/orderControl')('testdb');
+const writerFunc = require('../../../infrastructure/denormalizers/mongodb/writer');
+const handlerFunc = require('../../../infrastructure/denormalizers/mongodb/handler');
 const utils = require('./utils');
 
 const mongod = new MongoMemoryServer();
@@ -13,7 +13,7 @@ let collection = null;
 let writer = null;
 let handler = null;
 
-describe('MongoDB Denormalizer handler unit test', function () {
+describe('handler unit test', function () {
     const restaurantReservations = utils.restaurantReservations();
     const reservation = utils.reservation();
 
@@ -35,7 +35,6 @@ describe('MongoDB Denormalizer handler unit test', function () {
         const e = new Event(restaurantReservations.restId, 1, 'restaurantReservationsCreated', restaurantReservations);
         // await handler(e, () => console.log(e));
         await handler(e);
-        console.log(await collection.findOne({}));
         const doc = await collection.findOne({ _id: restaurantReservations.restId });
         assert.deepStrictEqual(doc, restaurantReservations);
     });
@@ -105,8 +104,9 @@ describe('MongoDB Denormalizer handler unit test', function () {
         assert.deepStrictEqual(doc, reservation);
     });
 
-    after(() => {
-        mongod.stop();
-    })
+    after(async () => {
+        await mongod.stop();
+        await orderControl.db.reset();
+    });
 
 });

@@ -2,7 +2,7 @@ const assert = require('assert');
 const MongoMemoryServer = require('mongodb-memory-server').MongoMemoryServer;
 const MongoClient = require('mongodb').MongoClient;
 const Event = require('@danver97/event-sourcing/event');
-const writerFunc = require('../../infrastructure/denormalizers/mongodb/writer');
+const writerFunc = require('../../../infrastructure/denormalizers/mongodb/writer');
 const utils = require('./utils');
 
 const mongod = new MongoMemoryServer();
@@ -10,7 +10,7 @@ let client = null;
 let collection = null;
 let writer = null;
 
-describe('MongoDB Denormalizer writer unit test', function () {
+describe('writer unit test', function () {
     const rr = utils.restaurantReservations();
     const reservation = utils.reservation();
 
