@@ -1,9 +1,9 @@
 const assert = require('assert');
-const repo = require('../../../infrastructure/repository/repositoryManager')('testdb');
-const manager = require('../../../domain/logic/restaurantReservationsManager')(repo);
-const Reservation = require('../../../domain/models/reservation');
-const RestaurantReservations = require('../../../domain/models/restaurantReservations');
-const testUtils = require('../../test-utils');
+const repo = require('../../../../infrastructure/repository/repositoryManager')('testdb');
+const manager = require('../../../../domain/logic/restaurantReservationsManager')(repo);
+const Reservation = require('../../../../domain/models/reservation');
+const RestaurantReservations = require('../../../../domain/models/restaurantReservations');
+const testUtils = require('../../../test-utils');
 const eventContent = require('./lib/eventContent');
 const Interactor = require('./lib/utils');
 

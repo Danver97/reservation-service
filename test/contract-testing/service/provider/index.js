@@ -1,8 +1,8 @@
 const uuid = require('uuid/v4');
-const repo = require('../../../infrastructure/repository/repositoryManager')('testdb');
-const Reservation = require('../../../domain/models/reservation');
-const RestaurantReservations = require('../../../domain/models/restaurantReservations');
-const testUtils = require('../../test-utils');
+const repo = require('../../../../infrastructure/repository/repositoryManager')('testdb');
+const Reservation = require('../../../../domain/models/reservation');
+const RestaurantReservations = require('../../../../domain/models/restaurantReservations');
+const testUtils = require('../../../test-utils');
 const Interactor = require('./utils');
 
 const rr = new RestaurantReservations(uuid(), testUtils.timeTable, testUtils.tables);
