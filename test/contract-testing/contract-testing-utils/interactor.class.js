@@ -3,7 +3,7 @@ const pact = require('@pact-foundation/pact');
 const pactnode = require('@pact-foundation/pact-node');
 const Event = require('@danver97/event-sourcing/event');
 const consumerVersion = require('../../../package.json').version;
-const pactBroker = require('../../../pactBroker.config');
+const pactBroker = require('../pactBroker.config');
 
 const {
     MessageConsumerPact,

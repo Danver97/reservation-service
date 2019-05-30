@@ -101,6 +101,7 @@ async function handler(e, ack) {
         // If it is a too young event
         if (e.eventId > lastEventId + 1) {
             // Ignore it
+            console.log('Expected eventId:', lastEventId + 1, 'Found:', e.eventId);
             await dontAcknoledge(ack);
             return;
         }

@@ -58,7 +58,7 @@ class Writer {
     }
 
     reservationCreated(reservation, cb) {
-        reservation._id = reservation.id;
+        reservation._id = reservation.resId;
         reservation._revisionId = 1;
         return Promisify(async () => {
             await this.collection.insertOne(reservation);
@@ -105,7 +105,7 @@ class Writer {
     reservationRemoved(restId, _revisionId, resId, cb) {
         return Promisify(() => this.collection.updateOne(
             { _id: restId, _revisionId },
-            { $pull: { reservations: { id: resId } }, $inc: { _revisionId: 1 } }
+            { $pull: { reservations: { resId } }, $inc: { _revisionId: 1 } }
         ), cb);
     }
 }

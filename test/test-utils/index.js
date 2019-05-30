@@ -43,9 +43,21 @@ const tables = [
     new Table('6', 1, 6),
 ];
 
+function getTables(restId) {
+    return [
+        new Table('1', restId, 2),
+        new Table('2', restId, 3),
+        new Table('3', restId, 4),
+        new Table('4', restId, 4),
+        new Table('5', restId, 4),
+        new Table('6', restId, 6),
+    ];
+}
+
 const testUtils = {
     timeTable,
     tables,
+    getTables,
     assertStrictEqual,
 };
 

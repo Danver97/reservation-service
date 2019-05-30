@@ -47,6 +47,27 @@ function likeTables(restId) {
     ];
 }
 
+function likeRRTable(id, people, restId) {
+    const table = {
+        id: like(id),
+        people: like(people),
+        reservations: [],
+    };
+    if (restId)
+    table.restId = likeUuid(restId);
+    return table;
+}
+function likeRRTables(restId) {
+    return [
+        likeRRTable('1', 2, restId),
+        likeRRTable('2', 3, restId),
+        likeRRTable('3', 4, restId),
+        likeRRTable('4', 4, restId),
+        likeRRTable('5', 4, restId),
+        likeRRTable('6', 6, restId),
+    ];
+}
+
 function basicEvent(streamId, eventId, message, payload){
     return {
         streamId: likeUuid(streamId),
@@ -61,6 +82,8 @@ module.exports = {
         likeTimeTable,
         likeTable,
         likeTables,
+        likeRRTable,
+        likeRRTables,
     },
     basicEvent,
 }

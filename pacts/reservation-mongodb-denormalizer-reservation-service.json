@@ -1,0 +1,875 @@
+{
+  "consumer": {
+    "name": "reservation-mongodb-denormalizer"
+  },
+  "provider": {
+    "name": "reservation-service"
+  },
+  "messages": [
+    {
+      "description": "reservationCreated",
+      "providerStates": [
+        {
+          "name": "a new reservation is created",
+          "params": null
+        }
+      ],
+      "contents": {
+        "streamId": "445f6ab3-8551-4285-bc0e-7e8d61e79827",
+        "eventId": 1,
+        "message": "reservationCreated",
+        "payload": {
+          "restId": "24071e32-263f-45cc-81b9-f4acac75fb1d",
+          "resId": "445f6ab3-8551-4285-bc0e-7e8d61e79827",
+          "userId": "70f7d254-e8fa-4671-bb50-e7d181551149",
+          "reservationName": "Smith family",
+          "status": "pending",
+          "people": 6,
+          "date": "2040-08-15T13:00:00.000Z"
+        }
+      },
+      "matchingRules": {
+        "body": {
+          "$.streamId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.eventId": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.restId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.resId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.userId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.reservationName": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.people": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.date": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d\\.\\d{3,}([+-][0-2]\\d:[0-5]\\d|Z)$"
+              }
+            ]
+          }
+        }
+      },
+      "metaData": {
+        "content-type": "application/json"
+      }
+    },
+    {
+      "description": "reservationConfirmed",
+      "providerStates": [
+        {
+          "name": "a reservation has been added to the restaurant reservations and it is now confirmed",
+          "params": null
+        }
+      ],
+      "contents": {
+        "streamId": "445f6ab3-8551-4285-bc0e-7e8d61e79827",
+        "eventId": 2,
+        "message": "reservationConfirmed",
+        "payload": {
+          "resId": "445f6ab3-8551-4285-bc0e-7e8d61e79827",
+          "status": "confirmed",
+          "table": {
+            "id": "6",
+            "people": 6
+          },
+          "date": "2040-08-15T13:00:00.000Z"
+        }
+      },
+      "matchingRules": {
+        "body": {
+          "$.streamId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.eventId": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.resId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.table.id": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.table.people": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.date": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d\\.\\d{3,}([+-][0-2]\\d:[0-5]\\d|Z)$"
+              }
+            ]
+          }
+        }
+      },
+      "metaData": {
+        "content-type": "application/json"
+      }
+    },
+    {
+      "description": "reservationCancelled",
+      "providerStates": [
+        {
+          "name": "a reservation has been added to the restaurant reservations but it is now cancelled",
+          "params": null
+        }
+      ],
+      "contents": {
+        "streamId": "445f6ab3-8551-4285-bc0e-7e8d61e79827",
+        "eventId": 3,
+        "message": "reservationCancelled",
+        "payload": {
+          "resId": "445f6ab3-8551-4285-bc0e-7e8d61e79827",
+          "status": "cancelled"
+        }
+      },
+      "matchingRules": {
+        "body": {
+          "$.streamId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.eventId": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.resId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          }
+        }
+      },
+      "metaData": {
+        "content-type": "application/json"
+      }
+    },
+    {
+      "description": "restaurantReservationsCreated",
+      "providerStates": [
+        {
+          "name": "a new restaurantReservations is created",
+          "params": null
+        }
+      ],
+      "contents": {
+        "streamId": "24071e32-263f-45cc-81b9-f4acac75fb1d",
+        "eventId": 1,
+        "message": "restaurantReservationsCreated",
+        "payload": {
+          "restId": "24071e32-263f-45cc-81b9-f4acac75fb1d",
+          "tables": [
+            {
+              "id": "1",
+              "people": 2,
+              "restId": "24071e32-263f-45cc-81b9-f4acac75fb1d"
+            },
+            {
+              "id": "2",
+              "people": 3,
+              "restId": "24071e32-263f-45cc-81b9-f4acac75fb1d"
+            },
+            {
+              "id": "3",
+              "people": 4,
+              "restId": "24071e32-263f-45cc-81b9-f4acac75fb1d"
+            },
+            {
+              "id": "4",
+              "people": 4,
+              "restId": "24071e32-263f-45cc-81b9-f4acac75fb1d"
+            },
+            {
+              "id": "5",
+              "people": 4,
+              "restId": "24071e32-263f-45cc-81b9-f4acac75fb1d"
+            },
+            {
+              "id": "6",
+              "people": 6,
+              "restId": "24071e32-263f-45cc-81b9-f4acac75fb1d"
+            }
+          ],
+          "timeTable": {
+            "Monday": {
+              "morning": {
+                "open": "11:00",
+                "close": "14:00"
+              },
+              "afternoon": {
+                "open": "18:00",
+                "close": "23:00"
+              }
+            },
+            "Tuesday": {
+              "morning": {
+                "open": "11:00",
+                "close": "14:00"
+              },
+              "afternoon": {
+                "open": "18:00",
+                "close": "23:00"
+              }
+            },
+            "Wednesday": {
+              "morning": {
+                "open": "11:00",
+                "close": "14:00"
+              },
+              "afternoon": {
+                "open": "18:00",
+                "close": "23:00"
+              }
+            },
+            "Thursday": {
+              "morning": {
+                "open": "11:00",
+                "close": "14:00"
+              },
+              "afternoon": {
+                "open": "18:00",
+                "close": "23:00"
+              }
+            },
+            "Friday": {
+              "morning": {
+                "open": "11:00",
+                "close": "14:00"
+              },
+              "afternoon": {
+                "open": "18:00",
+                "close": "23:00"
+              }
+            },
+            "Saturday": {
+              "morning": {
+                "open": "11:00",
+                "close": "14:00"
+              },
+              "afternoon": {
+                "open": "18:00",
+                "close": "23:00"
+              }
+            },
+            "Sunday": {
+              "morning": {
+                "open": "11:00",
+                "close": "14:00"
+              },
+              "afternoon": {
+                "open": "18:00",
+                "close": "23:00"
+              }
+            }
+          }
+        }
+      },
+      "matchingRules": {
+        "body": {
+          "$.streamId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.eventId": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.restId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.tables[0].id": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.tables[0].people": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.tables[0].restId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.tables[1].id": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.tables[1].people": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.tables[1].restId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.tables[2].id": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.tables[2].people": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.tables[2].restId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.tables[3].id": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.tables[3].people": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.tables[3].restId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.tables[4].id": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.tables[4].people": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.tables[4].restId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.tables[5].id": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.tables[5].people": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.tables[5].restId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Monday.morning.open": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Monday.morning.close": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Monday.afternoon.open": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Monday.afternoon.close": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Tuesday.morning.open": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Tuesday.morning.close": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Tuesday.afternoon.open": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Tuesday.afternoon.close": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Wednesday.morning.open": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Wednesday.morning.close": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Wednesday.afternoon.open": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Wednesday.afternoon.close": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Thursday.morning.open": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Thursday.morning.close": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Thursday.afternoon.open": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Thursday.afternoon.close": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Friday.morning.open": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Friday.morning.close": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Friday.afternoon.open": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Friday.afternoon.close": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Saturday.morning.open": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Saturday.morning.close": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Saturday.afternoon.open": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Saturday.afternoon.close": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Sunday.morning.open": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Sunday.morning.close": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Sunday.afternoon.open": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          },
+          "$.payload.timeTable.Sunday.afternoon.close": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$"
+              }
+            ]
+          }
+        }
+      },
+      "metaData": {
+        "content-type": "application/json"
+      }
+    },
+    {
+      "description": "reservationAdded",
+      "providerStates": [
+        {
+          "name": "a reservation is added to the restaurant reservations",
+          "params": null
+        }
+      ],
+      "contents": {
+        "streamId": "24071e32-263f-45cc-81b9-f4acac75fb1d",
+        "eventId": 2,
+        "message": "reservationAdded",
+        "payload": {
+          "restId": "24071e32-263f-45cc-81b9-f4acac75fb1d",
+          "resId": "445f6ab3-8551-4285-bc0e-7e8d61e79827",
+          "table": {
+            "id": "6",
+            "people": 6
+          },
+          "date": "2040-08-15T13:00:00.000Z"
+        }
+      },
+      "matchingRules": {
+        "body": {
+          "$.streamId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.eventId": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.restId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.resId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.table.id": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.table.people": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.date": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d\\.\\d{3,}([+-][0-2]\\d:[0-5]\\d|Z)$"
+              }
+            ]
+          }
+        }
+      },
+      "metaData": {
+        "content-type": "application/json"
+      }
+    },
+    {
+      "description": "reservationRemoved",
+      "providerStates": [
+        {
+          "name": "a reservation is removed from the restaurant reservations",
+          "params": null
+        }
+      ],
+      "contents": {
+        "streamId": "24071e32-263f-45cc-81b9-f4acac75fb1d",
+        "eventId": 3,
+        "message": "reservationRemoved",
+        "payload": {
+          "restId": "24071e32-263f-45cc-81b9-f4acac75fb1d",
+          "resId": "445f6ab3-8551-4285-bc0e-7e8d61e79827"
+        }
+      },
+      "matchingRules": {
+        "body": {
+          "$.streamId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.eventId": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.payload.restId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          },
+          "$.payload.resId": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+              }
+            ]
+          }
+        }
+      },
+      "metaData": {
+        "content-type": "application/json"
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}
