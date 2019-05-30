@@ -4,8 +4,8 @@ const manager = require('../../../domain/logic/restaurantReservationsManager')(r
 const Reservation = require('../../../domain/models/reservation');
 const RestaurantReservations = require('../../../domain/models/restaurantReservations');
 const testUtils = require('../../test-utils');
-const eventContent = require('./eventContent');
-const Interactor = require('./utils');
+const eventContent = require('./lib/eventContent');
+const Interactor = require('./lib/utils');
 
 const interactor = new Interactor({
     consumer: 'reservation-service',  // TODO: parametrize

@@ -2,8 +2,8 @@ const assert = require('assert');
 const repo = require('../../../infrastructure/repository/repositoryManager')('testdb');
 const RestaurantReservations = require('../../../domain/models/restaurantReservations');
 const testUtils = require('../../test-utils');
-const eventContent = require('./eventContent');
-const Interactor = require('./utils');
+const eventContent = require('./lib/eventContent');
+const Interactor = require('./lib/utils');
 
 const interactor = new Interactor({
     consumer: 'reservation-service',  // TODO: parametrize
