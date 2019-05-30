@@ -1,16 +1,17 @@
 const assert = require('assert');
 const repo = require('../../../../infrastructure/repository/repositoryManager')('testdb');
 const manager = require('../../../../domain/logic/restaurantReservationsManager')(repo);
+const handler = require('../../../../infrastructure/messaging/eventHandler/eventHandler')(manager);
 const Reservation = require('../../../../domain/models/reservation');
 const RestaurantReservations = require('../../../../domain/models/restaurantReservations');
 const testUtils = require('../../../test-utils');
 const eventContent = require('./lib/eventContent');
-const Interactor = require('./lib/utils');
+const Interactor = require('../../contract-testing-utils').Interactor;
 
 const interactor = new Interactor({
     consumer: 'reservation-service',  // TODO: parametrize
     provider: 'reservation-service',
-});
+}, handler);
 
 describe('Reservation Service Contract Testing', function () {
     this.slow(5000);

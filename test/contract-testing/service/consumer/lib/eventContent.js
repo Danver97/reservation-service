@@ -1,8 +1,9 @@
 const pact = require('@pact-foundation/pact');
+const eventContentUtils = require('../../../contract-testing-utils').eventContentUtils;
 
 const { like, term, iso8601DateTimeWithMillis } = pact.Matchers;
 const likeUuid = pact.Matchers.uuid;
-
+/*
 const hourRegExp = '^(([0-1][0-9]:[0-5][0-9])|(2[0-3]:[0-5][0-9]))$';
 const dayTimeTable = {
     morning: {
@@ -49,19 +50,19 @@ function basicEvent(streamId, eventId, message, payload){
         message,
         payload,
     };
-}
+}*/
 
 function restaurantCreatedEvent(restId, owner) {
-    return basicEvent(restId, 1, 'restaurantCreated', {
+    return eventContentUtils.basicEvent(restId, 1, 'restaurantCreated', {
         restId: likeUuid(restId),
         owner: like(owner),
-        tables: likeTables(restId),
+        tables: eventContentUtils.matchers.likeTables(restId),
         timeTable,
     });
 }
 
 function reservationCreatedEvent(reservation) {
-    return basicEvent(reservation.id, 1, 'reservationCreated', {
+    return eventContentUtils.basicEvent(reservation.id, 1, 'reservationCreated', {
         restId: likeUuid(reservation.restId),
         resId: likeUuid(reservation.id),
         /* userId: likeUuid(userId),
@@ -73,16 +74,16 @@ function reservationCreatedEvent(reservation) {
 
 function reservationAddedEvent(reservation) {
     const r = reservation
-    return basicEvent(reservation.restId, 1, 'reservationAdded', {
+    return eventContentUtils.basicEvent(reservation.restId, 1, 'reservationAdded', {
         // restId: likeUuid(reservation.restId),
         resId: likeUuid(reservation.id),
-        table: likeTable(r.table.id, r.table.people),
+        table: eventContentUtils.matchers.likeTable(r.table.id, r.table.people),
         date: iso8601DateTimeWithMillis(reservation.date.toJSON()),
     });
 }
 
 function reservationCancelledEvent(reservation) {
-    return basicEvent(reservation.id, 1, 'reservationCancelled', {
+    return eventContentUtils.basicEvent(reservation.id, 1, 'reservationCancelled', {
         restId: likeUuid(reservation.restId),
         resId: likeUuid(reservation.id),
     });
