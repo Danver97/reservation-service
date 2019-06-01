@@ -14,8 +14,9 @@ let writer = null;
 let handler = null;
 
 describe('handler unit test', function () {
-    const restaurantReservations = utils.restaurantReservations();
-    const reservation = utils.reservation();
+    let rr;
+    let res;
+    let resToAdd;
 
     before(async function () {
         this.timeout(10000);
@@ -31,77 +32,140 @@ describe('handler unit test', function () {
         handler = handlerFunc(writer, orderControl);
     });
 
+    
+
+    beforeEach(async () => {
+        rr = utils.restaurantReservations();
+        res = utils.reservation();
+        resToAdd = utils.reservationToAdd(rr.restId);
+        await orderControl.db.reset();
+        await collection.deleteMany({});
+    });
+
     it('check if restaurantReservationsCreated event is handled properly', async function () {
-        const e = new Event(restaurantReservations.restId, 1, 'restaurantReservationsCreated', restaurantReservations);
-        // await handler(e, () => console.log(e));
+        // Update done
+        const e = new Event(rr.restId, 1, 'restaurantReservationsCreated', rr);
         await handler(e);
-        const doc = await collection.findOne({ _id: restaurantReservations.restId });
-        assert.deepStrictEqual(doc, restaurantReservations);
+        
+        // Assertions
+        const doc = await collection.findOne({ _id: rr.restId });
+        assert.deepStrictEqual(doc, rr);
     });
 
     it('check if reservationAdded event is handled properly', async function () {
-        const res = { id: reservation.id, date: reservation.date, userId: reservation.userId, people: reservation.people };
-        res.table = { id: 15, people: 4 };
-        restaurantReservations.reservations.push(res);
-        restaurantReservations._revisionId++;
-        const e = new Event(restaurantReservations.restId, 2, 'reservationAdded', res);
-        // await handler(e, () => console.log(e));
+        // Preset
+        await collection.insertOne(rr);
+        await orderControl.updateLastProcessedEvent(rr.restId, 0, 1);
+
+        // Update to do
+        rr.reservations.push(resToAdd);
+        rr._revisionId++;
+
+        // Update done
+        const e = new Event(rr.restId, 2, 'reservationAdded', resToAdd);
         await handler(e);
-        const doc = await collection.findOne({ _id: restaurantReservations.restId });
-        assert.deepStrictEqual(doc, restaurantReservations);
+
+        // Assertions
+        const doc = await collection.findOne({ _id: rr.restId });
+        assert.deepStrictEqual(doc, rr);
     });
 
     it('check if reservationRemoved event is handled properly', async function () {
-        restaurantReservations.reservations = restaurantReservations.reservations.filter(r => r.id !== reservation.id);
-        restaurantReservations._revisionId++;
-        const e = new Event(restaurantReservations.restId, 3, 'reservationRemoved', { restId: restaurantReservations.restId, resId: reservation.id });
-        // await handler(e, () => console.log(e));
+        // Preset
+        rr.reservations.push(resToAdd);
+        rr._revisionId++;
+        const newDoc = Object.assign({ _id: rr.restId, _revisionId: 2 }, rr);
+        await collection.insertOne(newDoc);
+        await orderControl.updateLastProcessedEvent(rr.restId, 0, 2);
+
+        // Update to do
+        rr.reservations = rr.reservations.filter(r => r.resId !== resToAdd.resId);
+        rr._revisionId++;
+
+        // Update done
+        const e = new Event(rr.restId, 3, 'reservationRemoved', { restId: rr.restId, resId: resToAdd.resId });
         await handler(e);
-        const doc = await collection.findOne({ _id: restaurantReservations.restId });
-        assert.deepStrictEqual(doc, restaurantReservations);
+
+        // Assertions
+        const doc = await collection.findOne({ _id: rr.restId });
+        assert.deepStrictEqual(doc, rr);
     });
 
     it('check if reservationCreated event is handled properly', async function () {
-        const e = new Event(reservation.id, 1, 'reservationCreated', reservation);
-        // await handler(e, () => console.log(e));
+        // Preset
+
+        // Update done
+        const e = new Event(res.resId, 1, 'reservationCreated', res);
         await handler(e);
-        const doc = await collection.findOne({ _id: reservation.id });
-        assert.deepStrictEqual(doc, reservation);
+
+        // Assertions
+        const doc = await collection.findOne({ _id: res.resId });
+        assert.deepStrictEqual(doc, res);
     });
 
     it('check if reservationConfirmed event is handled properly', async function () {
-        reservation.status = 'confirmed'; // changes
-        reservation.table = { id: 15, people: 4 };
-        reservation._revisionId++;
-        const payload = { resId: reservation.id, restId: reservation.restId, table: reservation.table, status: reservation.status };
-        const e = new Event(reservation.id, 2, 'reservationConfirmed', payload);
-        // await handler(e, () => console.log(e));
+        // Preset
+        const newDoc = Object.assign({ _id: res.resId, _revisionId: 1 }, res);
+        await collection.insertOne(newDoc);
+        await orderControl.updateLastProcessedEvent(res.resId, 0, 1);
+        
+        // Update to do
+        res.status = 'confirmed';
+        res.table = { id: 15, people: 4 };
+        res._revisionId++;
+
+        // Update done
+        const payload = { resId: res.resId, restId: res.restId, table: res.table, status: res.status };
+        const e = new Event(res.resId, 2, 'reservationConfirmed', payload);
         await handler(e);
-        const doc = await collection.findOne({ _id: reservation.id });
-        assert.deepStrictEqual(doc, reservation);
+
+        // Assertions
+        const doc = await collection.findOne({ _id: res.resId });
+        assert.deepStrictEqual(doc, res);
     });
 
     it('check if reservationRejected event is handled properly', async function () {
-        reservation.status = 'rejected'; // changes
-        reservation._revisionId++;
-        const payload = { resId: reservation.id, restId: reservation.restId, status: reservation.status };
-        const e = new Event(reservation.id, 3, 'reservationRejected', payload);
-        // await handler(e, () => console.log(e));
+        // Preset
+        const newDoc = Object.assign({ _id: res.resId, _revisionId: 1 }, res);
+        await collection.insertOne(newDoc);
+        await orderControl.updateLastProcessedEvent(res.resId, 0, 1);
+
+        // Update to do
+        res.status = 'rejected'; // changes
+        res._revisionId++;
+
+        // Update done
+        const payload = { resId: res.resId, restId: res.restId, status: res.status };
+        const e = new Event(res.resId, 2, 'reservationRejected', payload);
         await handler(e);
-        const doc = await collection.findOne({ _id: reservation.id });
-        assert.deepStrictEqual(doc, reservation);
+
+        // Assertions
+        const doc = await collection.findOne({ _id: res.resId });
+        assert.deepStrictEqual(doc, res);
     });
 
 
     it('check if reservationCancelled event is handled properly', async function () {
-        reservation.status = 'cancelled' // changes
-        reservation._revisionId++;
-        const payload = { resId: reservation.id, restId: reservation.restId, status: reservation.status };
-        const e = new Event(reservation.id, 4, 'reservationCancelled', payload);
-        // await handler(e, () => console.log(e));
+        // Preset
+        res.table = { id: 15, people: 4 };
+        res.status = 'confirmed';
+        res._revisionId++;
+        const newDoc = Object.assign({ _id: res.resId, _revisionId: 2 }, res);
+        await collection.insertOne(newDoc);
+        await orderControl.updateLastProcessedEvent(res.resId, 0, 2);
+
+        // Update to do
+        res.status = 'cancelled' // changes
+        res._revisionId++;
+        const payload = { resId: res.resId, restId: res.restId, status: res.status };
+
+        // Update done
+        const e = new Event(res.resId, 3, 'reservationCancelled', payload);
         await handler(e);
-        const doc = await collection.findOne({ _id: reservation.id });
-        assert.deepStrictEqual(doc, reservation);
+
+        // Assertions
+        const doc = await collection.findOne({ _id: res.resId });
+        assert.deepStrictEqual(doc, res);
     });
 
     after(async () => {

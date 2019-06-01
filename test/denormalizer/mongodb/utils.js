@@ -48,7 +48,7 @@ function reservation(restId, userId) {
     const resId = uuid();
     return {
         _id: resId,
-        id: resId,
+        resId,
         restId: restId || defaultRestId,
         status: 'pending',
         statusCode: 0,
