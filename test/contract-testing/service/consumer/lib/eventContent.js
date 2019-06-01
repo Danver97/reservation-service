@@ -1,5 +1,6 @@
 const pact = require('@pact-foundation/pact');
 const eventContentUtils = require('../../../contract-testing-utils').eventContentUtils;
+const timeTable = require('../../../../test-utils').timeTable;
 
 const { like, term, iso8601DateTimeWithMillis } = pact.Matchers;
 const likeUuid = pact.Matchers.uuid;
