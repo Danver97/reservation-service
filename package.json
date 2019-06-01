@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node index",
     "test": "mocha --exit ./test/test.js",
+    "test-unit": "mocha --exit ./test/unit.test.js",
+    "test-contract": "mocha --exit ./test/contract.test.js",
     "test-coverage": "nyc mocha --exit ./test/test.js"
   },
   "author": "Christian Paesante",

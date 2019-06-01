@@ -1,2 +1,2 @@
-require('./consumerTest');
-require('./providerTest');
+require('./service');
+require('./denormalizers');

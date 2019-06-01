@@ -1,0 +1,2 @@
+require('./consumer');
+require('./provider');
