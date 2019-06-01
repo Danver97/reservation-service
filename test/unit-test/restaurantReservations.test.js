@@ -1,9 +1,9 @@
 const assert = require('assert');
 const uuid = require('uuid/v4');
-const Table = require('../domain/models/table');
-const Reservation = require('../domain/models/reservation');
-const RestaurantReservations = require('../domain/models/restaurantReservations');
-const RestaurantReservationsError = require('../domain/errors/restaurantReservations_error');
+const Table = require('../../domain/models/table');
+const Reservation = require('../../domain/models/reservation');
+const RestaurantReservations = require('../../domain/models/restaurantReservations');
+const RestaurantReservationsError = require('../../domain/errors/restaurantReservations_error');
 
 describe('RestaurantReservations unit test', function () {
     let timeTable = {

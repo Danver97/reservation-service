@@ -1,8 +1,8 @@
 const assert = require('assert');
 const uuid = require('uuid/v4');
-const Table = require('../domain/models/table');
-const TableError = require('../domain/errors/table_error');
-const Reservation = require('../domain/models/reservation');
+const Table = require('../../domain/models/table');
+const TableError = require('../../domain/errors/table_error');
+const Reservation = require('../../domain/models/reservation');
 
 describe('Table class unit test', function () {
 

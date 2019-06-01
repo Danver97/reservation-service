@@ -2,12 +2,12 @@ const assert = require('assert');
 const uuid = require('uuid/v4');
 const broker = require('@danver97/event-sourcing/eventBroker')['testbroker'];
 const Event = require('@danver97/event-sourcing/eventBroker/brokerEvent');
-const repo = require('../infrastructure/repository/repositoryManager')('testdb');
-const manager = require('../domain/logic/restaurantReservationsManager')(repo);
-const brokerHandlerFunc = require('../infrastructure/messaging/eventHandler/brokerHandler');
-const Reservation = require('../domain/models/reservation');
-const RestaurantReservations = require('../domain/models/restaurantReservations');
-const Table = require('../domain/models/table');
+const repo = require('../../infrastructure/repository/repositoryManager')('testdb');
+const manager = require('../../domain/logic/restaurantReservationsManager')(repo);
+const brokerHandlerFunc = require('../../infrastructure/messaging/eventHandler/brokerHandler');
+const Reservation = require('../../domain/models/reservation');
+const RestaurantReservations = require('../../domain/models/restaurantReservations');
+const Table = require('../../domain/models/table');
 
 const dayTimeTable = {
     morning: {

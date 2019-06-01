@@ -3,15 +3,15 @@ const request = require('supertest');
 const MongoClient = require('mongodb').MongoClient;
 const MongoMemoryServer = require('mongodb-memory-server').MongoMemoryServer;
 
-const ENV = require('../src/env');
-const Reservation = require('../domain/models/reservation');
-const RestaurantReservations = require('../domain/models/restaurantReservations');
-const Table = require('../domain/models/table');
-const repo = require('../infrastructure/repository/repositoryManager')();
-const reservationMgr = require('../domain/logic/restaurantReservationsManager')(repo);
-const queryManagerFunc = require('../infrastructure/query');
-const appFunc = require('../src/app');
-const Utils = require('../lib/utils');
+const ENV = require('../../src/env');
+const Reservation = require('../../domain/models/reservation');
+const RestaurantReservations = require('../../domain/models/restaurantReservations');
+const Table = require('../../domain/models/table');
+const repo = require('../../infrastructure/repository/repositoryManager')();
+const reservationMgr = require('../../domain/logic/restaurantReservationsManager')(repo);
+const queryManagerFunc = require('../../infrastructure/query');
+const appFunc = require('../../src/app');
+const Utils = require('../../lib/utils');
 
 Utils.defineArrayFlatMap();
 

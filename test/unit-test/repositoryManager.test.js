@@ -1,12 +1,12 @@
 const assert = require('assert');
 const uuid = require('uuid/v4');
-const assertStrictEqual = require('../lib/utils').assertStrictEqual;
-const Table = require('../domain/models/table');
-const Reservation = require('../domain/models/reservation');
-const RestaurantReservations = require('../domain/models/restaurantReservations');
-const repo = require('../infrastructure/repository/repositoryManager')('testdb');
-const RepositoryError = require('../infrastructure/repository/errors/RepositoryError');
-const ENV = require('../src/env');
+const assertStrictEqual = require('../../lib/utils').assertStrictEqual;
+const Table = require('../../domain/models/table');
+const Reservation = require('../../domain/models/reservation');
+const RestaurantReservations = require('../../domain/models/restaurantReservations');
+const repo = require('../../infrastructure/repository/repositoryManager')('testdb');
+const RepositoryError = require('../../infrastructure/repository/errors/RepositoryError');
+const ENV = require('../../src/env');
 
 function restaurantReservationsEqual(actual, expected) {
     assert.strictEqual(actual.restId, expected.restId);

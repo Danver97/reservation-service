@@ -1,5 +1,5 @@
 const uuid = require('uuid/v4');
-const getTables = require('../../test-utils').getTables;
+const getTables = require('../../../test-utils').getTables;
 
 const defaultRestId = '52db11c3-ffed-489e-984b-ef2972f56d8f';
 const defaultUserId = 'c398ffa9-4cdd-4068-b3af-519b3b2e95b7';

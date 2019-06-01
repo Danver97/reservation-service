@@ -1,6 +1,6 @@
 const assert = require('assert');
 const uuid = require('uuid/v4');
-const orderCtrl = require('../../../infrastructure/denormalizers/mongodb/orderControl')('testdb');
+const orderCtrl = require('../../../../infrastructure/denormalizers/mongodb/orderControl')('testdb');
 
 const repo = orderCtrl.db;
 

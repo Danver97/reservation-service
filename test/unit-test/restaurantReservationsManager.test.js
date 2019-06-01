@@ -1,10 +1,10 @@
 const assert = require('assert');
-const Table = require('../domain/models/table');
-const Reservation = require('../domain/models/reservation');
-const RestaurantReservations = require('../domain/models/restaurantReservations');
-const repo = require('../infrastructure/repository/repositoryManager')('testdb');
-const reservationMgr = require('../domain/logic/restaurantReservationsManager')(repo);
-const assertStrictEqual = require('../lib/utils').assertStrictEqual;
+const Table = require('../../domain/models/table');
+const Reservation = require('../../domain/models/reservation');
+const RestaurantReservations = require('../../domain/models/restaurantReservations');
+const repo = require('../../infrastructure/repository/repositoryManager')('testdb');
+const reservationMgr = require('../../domain/logic/restaurantReservationsManager')(repo);
+const assertStrictEqual = require('../../lib/utils').assertStrictEqual;
 
 const parseHour = hourStr => {
     const h = hourStr.split(':');

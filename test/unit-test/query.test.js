@@ -1,12 +1,12 @@
 const assert = require('assert');
 const MongoClient = require('mongodb').MongoClient;
 const MongoMemoryServer = require('mongodb-memory-server').MongoMemoryServer;
-const queryFunc = require('../infrastructure/query');
-const QueryError = require('../infrastructure/query/query_error');
-const Table = require('../domain/models/table');
-const Reservation = require('../domain/models/reservation');
-const RestaurantReservations = require('../domain/models/restaurantReservations');
-const Utils = require('../lib/utils');
+const queryFunc = require('../../infrastructure/query');
+const QueryError = require('../../infrastructure/query/query_error');
+const Table = require('../../domain/models/table');
+const Reservation = require('../../domain/models/reservation');
+const RestaurantReservations = require('../../domain/models/restaurantReservations');
+const Utils = require('../../lib/utils');
 
 Utils.defineArrayFlat();
 Utils.defineArrayFlatMap();
