@@ -190,7 +190,7 @@ describe('MongoDB Denormalizer contract test', function () {
         });
     });
 
-    it.only('reservationRemoved is handled properly', async () => {
+    it('reservationRemoved is handled properly', async () => {
 
         const table = rr.getTables(6)[0];
         r.accepted(table);
@@ -224,4 +224,6 @@ describe('MongoDB Denormalizer contract test', function () {
             assert.deepStrictEqual(doc, newDoc);
         });
     });
+
+    after(() => interactor.publishPacts());
 });
