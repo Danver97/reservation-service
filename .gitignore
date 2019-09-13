@@ -5,4 +5,5 @@ coverage
 .eslintrc.json
 .brackets.json
 .env
+*.pem
 prova.js
