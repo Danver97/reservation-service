@@ -7,6 +7,9 @@ const ddbDataTypes = require('dynamodb-data-types').AttributeValue;
 function wrap(data) {
     return ddbDataTypes.wrap(data);
 }
+function wrap1(data) {
+    return ddbDataTypes.wrap1(data);
+}
 function unwrap(data) {
     return ddbDataTypes.unwrap(data);
 }
@@ -28,18 +31,18 @@ class DynamoOrderControlDb {
     async getOne(streamId) {
         const params = {
             Key: {
-                StreamId: wrap(streamId),
+                StreamId: wrap1(streamId),
             },
             TableName: this.tableName,
             ConsistentRead: true,
         };
         const response = await this.dynamodb.getItem(params).promise();
         const item = unwrap(response.Item);
-        return item;
+        return { streamId: item.StreamId, eventId: item.LastProcessedEventId };
     }
 
     async getMultiple(streamIds) {
-        const keys = streamIds.map(sId => ({ StreamId: wrap(sId) }));
+        const keys = streamIds.map(sId => ({ StreamId: wrap1(sId) }));
         const params = {
             RequestItems: {
                 [this.tableName]: {
@@ -49,25 +52,36 @@ class DynamoOrderControlDb {
             },
         };
         const response = await this.dynamodb.batchGetItem(params).promise();
-        const items = response.Responses[this.tableName].map(elem => unwrap(elem));
+        const items = response.Responses[this.tableName]
+            .map(elem => unwrap(elem))
+            .map(item => ({streamId: item.StreamId, eventId: item.LastProcessedEventId}));
         return items;
     }
 
     updateOne(streamId, lastEventId, newEventId) {
+        let conditionalExp;
+        const exprAttrs = {
+            ":lpei": wrap1(lastEventId),
+            ":npei": wrap1(newEventId || lastEventId + 1),
+        }
+        if (lastEventId === 0 && newEventId === 1) {
+            exprAttrs[':zero'] = wrap1(0);
+            delete exprAttrs[':lpei'];
+            conditionalExp = 'attribute_not_exists(#LPEI) OR #LPEI = :zero';
+        } else {
+            conditionalExp = '#LPEI = :lpei';
+        }
         const params = {
             ExpressionAttributeNames: {
                 "#LPEI": "LastProcessedEventId",
             },
-            ExpressionAttributeValues: {
-                ":lpei": wrap(lastEventId),
-                ":npei": wrap(newEventId || lastEventId + 1),
-            },
+            ExpressionAttributeValues: exprAttrs,
             Key: {
-                StreamId: wrap(streamId),
+                StreamId: wrap1(streamId),
             },
             ReturnValues: "ALL_NEW",
             TableName: this.tableName,
-            ConditionExpression: '#LPEI = :lpei',
+            ConditionExpression: conditionalExp,
             UpdateExpression: "SET #LPEI = :npei",
         };
         return this.dynamodb.updateItem(params).promise();

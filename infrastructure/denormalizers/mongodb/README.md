@@ -21,3 +21,6 @@ It needs some env variables to start.
 | StreamId | String | StreamId of the event stream |
 | LastProcessedEventId | Number | EventId of the last event processed |
 
+## Troubleshooting
+- In caso di deploy su DocumentDb provare a rimuovere l'opzione `useUnifiedTopology: true` nelle opzioni del construttore del client MongoDb. E' utilizzato per rimuovere un errore lanciato durante la connessione all'istanza EC2 MongoDb by Bitnami
+
