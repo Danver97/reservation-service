@@ -15,7 +15,8 @@ class Writer {
         this.url = url;
         this.dbName = dbName;
         this.collectionName = collectionName;
-        this.client = new mongodb.MongoClient(this.url, { useNewUrlParser: true });
+        // useUnifiedTopology: true necessario per mongodb by Bitnami. Not sure if really necessary.
+        this.client = new mongodb.MongoClient(this.url, { useNewUrlParser: true, useUnifiedTopology: true });
     }
 
     async connect() {

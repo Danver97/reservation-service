@@ -91,7 +91,7 @@ async function handler(e, ack) {
     if (!e)
         return;
     if (typeof handlersMap[e.message] === 'function') {
-        const lastEventId = (await dependencies.orderCtrl.getLastProcessedEvent(e.streamId)).eventId;
+        let lastEventId = (await dependencies.orderCtrl.getLastProcessedEvent(e.streamId)).eventId;
         lastEventId = (lastEventId === undefined || lastEventId === null) ? 0 : lastEventId;
 
         console.log(`Last EventId: ${lastEventId}
