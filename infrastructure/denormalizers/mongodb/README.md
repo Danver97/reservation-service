@@ -7,7 +7,7 @@ It needs some env variables to start.
 | Variable | Description |
 | --- | --- |
 | MONGODB_URL | MongoDb projection connection string |
-| MONGODB_DB | MongoDb db name | // meglio se MONGODB_DBNAME
+| MONGODB_DBNAME | MongoDb db name |
 | MONGODB_COLLECTION | MongoDb collection |
 | ORDER_CONTROL_DB | Order control db name (example: testdb, dynamodb) |
 | ORDER_CONTROL_TABLE | Name of the table used for the order control |
