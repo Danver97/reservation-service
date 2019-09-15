@@ -11,7 +11,7 @@ const writerFunc = require('./writer');
 const orderCtrlDb = process.env.ORDER_CONTROL_DB;
 const writerOptions = {
     url: process.env.MONGODB_URL,
-    db: process.env.MONGODB_DB,
+    db: process.env.MONGODB_DBNAME,
     collection: process.env.MONGODB_COLLECTION,
 };
 
