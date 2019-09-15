@@ -59,6 +59,7 @@ describe('MongoDB Denormalizer contract test', function () {
         rr = new RestaurantReservations(restId, testUtils.timeTable, testUtils.getTables(restId));
         r = new Reservation(userId, restId, reservationName, people, date, '15:00');
         r.id = resId;
+        r.resId = resId;
         eventContent.resetEventId();
         return repoReset();
     });

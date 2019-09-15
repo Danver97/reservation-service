@@ -32,6 +32,7 @@ class Reservation {
         }
         this.status = undefined;
         this.id = uuid();
+        this.resId = this.id;
         this.userId = userId;
         this.reservationName = reservationName;
         this.people = people;
@@ -48,7 +49,8 @@ class Reservation {
 
     static fromObject(obj) {
         const res = new Reservation(obj.userId, obj.restId, obj.reservationName, obj.people, obj.date, '15:00');
-        res.id = obj.id;
+        res.id = obj.id || obj.resId;
+        res.resId = obj.id || obj.resId;
         res.setStatus(obj.status);
         res.date = new Date(obj.date);
         if (res.statusCode === 1)
@@ -61,6 +63,11 @@ class Reservation {
         // res.created = new Date(obj.created);
         return res;
     }
+
+    /* set id(reservationId) {
+        this.id = reservationId;
+        this.resId = reservationId;
+    } */
 
     pending() {
         if (this.statusCode < 0)

@@ -109,7 +109,7 @@ function setUpRequest() {
 describe('Integration test', function() {
     const reservationEquals = (result, expected) => {
         for(let p in expected) {
-            if (p === 'id')
+            if (p === 'id' || p === 'resId')
                 continue;
             if (p === 'date')
                 assert.strictEqual(result[p].getTime(), expected[p].getTime());

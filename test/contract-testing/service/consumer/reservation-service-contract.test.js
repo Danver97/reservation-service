@@ -32,6 +32,7 @@ describe('Reservation Service Contract Testing', function () {
         rr = new RestaurantReservations(restId, testUtils.timeTable, testUtils.tables);
         r = new Reservation(userId, restId, reservationName, people, date, '15:00');
         r.id = resId;
+        r.resId = resId;
     });
 
     it('reservationCreated is handled properly', async () => {
