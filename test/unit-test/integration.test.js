@@ -125,9 +125,9 @@ describe('Integration test', function() {
         setUpRequest();
     });
 
-    it('get /', async function() {
+    it('get /reservation-service', async function() {
         await req
-            .get('/')
+            .get('/reservation-service')
             .expect(JSON.stringify({
                 service: 'reservation-service',
             }));
@@ -138,15 +138,15 @@ describe('Integration test', function() {
         const hour = '15:00';
         const resrv = new Reservation('15', '1', 'Pippo', 4, '2018-12-08', '15:00');
 
-        it('post /reservation', async function() {
+        it('post /reservation-service/reservation', async function() {
             await req
-                .post('/reservation')
+                .post('/reservation-service/reservation')
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
                 .send({ userId: resrv.userId })
                 .expect(400);
             await req
-                .post('/reservation')
+                .post('/reservation-service/reservation')
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
                 .send({ userId: resrv.userId })
@@ -157,7 +157,7 @@ describe('Integration test', function() {
                 .send({ hour })
                 .expect(400);
             await req
-                .post('/reservation')
+                .post('/reservation-service/reservation')
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
                 .send({ userId: resrv.userId })
@@ -178,16 +178,16 @@ describe('Integration test', function() {
                 .expect(200);
         });
 
-        it('get /reservation?resId=' + resrv.id, async function() {
+        it('get /reservation-service/reservation?resId=' + resrv.id, async function() {
             await writeRes(resrv);
             await req
-                .get('/reservation')
+                .get('/reservation-service/reservation')
                 .expect(400);
             await req
-                .get('/reservation?resId=18')
+                .get('/reservation-service/reservation?resId=18')
                 .expect(404);
             await req
-                .get('/reservation?resId=' + resrv.id)
+                .get('/reservation-service/reservation?resId=' + resrv.id)
                 .expect(res => {
                     const response = res.body;
                     response.date = new Date(response.date);
@@ -197,19 +197,19 @@ describe('Integration test', function() {
                 .expect(200);
         });
 
-        it('get /reservations?restId=1', async function() {
+        it('get /reservation-service/reservations?restId=1', async function() {
             await writeRR(rr1);
             await addResToRR(rr1, resrv, tables[0]);
 
             await req
-                .get('/reservations')
+                .get('/reservation-service/reservations')
                 .expect(400);
             await req
-                .get('/reservations?restId=10')
+                .get('/reservation-service/reservations?restId=10')
                 .expect(404);
 
             await req
-                .get(`/reservations?restId=${resrv.restId}`)
+                .get(`/reservation-service/reservations?restId=${resrv.restId}`)
                 .expect(res => {
                     assert.strictEqual(Array.isArray(res.body), true);
                     assert.strictEqual(res.body.length, 1);

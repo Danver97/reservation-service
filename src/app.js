@@ -17,11 +17,15 @@ function clientError(res, message, code) {
     res.json({ error: message });
 }
 
-app.get('/', (req, res) => {
+app.get('/reservation-service', (req, res) => {
     res.json({ service: 'reservation-service' });
 });
 
-app.get('/reservation', async (req, res) => {
+app.get('/reservation-service/healthcheck', (req, res) => {
+    res.json({ service: 'reservation-service', healthcheck: 'success' });
+})
+
+app.get('/reservation-service/reservation', async (req, res) => {
     const query = req.query;
     if (!query.resId) {
         clientError(res, 'Wrong query parameters.');
@@ -42,7 +46,7 @@ app.get('/reservation', async (req, res) => {
     }
 });
 
-app.post('/reservation', async (req, res) => {
+app.post('/reservation-service/reservation', async (req, res) => {
     const body = req.body;
     let reservation;
     try {
@@ -70,7 +74,7 @@ app.post('/reservation', async (req, res) => {
     }
 });
 
-app.get('/reservations', async (req, res) => {
+app.get('/reservation-service/reservations', async (req, res) => {
     const query = req.query;
     if (!query.restId) {
         clientError(res, 'Wrong query parameters.');
