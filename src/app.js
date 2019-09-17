@@ -23,7 +23,27 @@ app.get('/reservation-service', (req, res) => {
 
 app.get('/reservation-service/healthcheck', (req, res) => {
     res.json({ service: 'reservation-service', healthcheck: 'success' });
-})
+});
+
+app.post('/reservation-service/reservationDemo', (req, res) => {
+    const body = req.body;
+    /* const demoBody = {
+        "restId":"0eb893e2-c57c-4996-a5c5-0fd30da5be88",
+        "peopleNumber":2,
+        "userId":"testUserId",
+        "reservationName":"testReservationName",
+        "date":"2019-09-18T10:00:00.000Z"
+    } */
+    const dateRegExp = /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\dZ$/;
+    if (typeof body.restId === 'string'
+        && typeof body.peopleNumber === 'number'
+        && typeof body.userId === 'string'
+        && typeof body.reservationName === 'string'
+        && typeof body.date === 'string' && dateRegExp.test(body.date))
+        res.json({ result: 'success' });
+    else
+        clientError(res, 'Wrong body params');
+});
 
 app.get('/reservation-service/reservation', async (req, res) => {
     const query = req.query;

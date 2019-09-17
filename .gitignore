@@ -7,4 +7,6 @@ coverage
 .env
 *.pem
 prova.js
+prova.sh
+start.sh
 *.zip
