@@ -4,26 +4,51 @@ title: Reservation Service API
 version: v1
 baseUri: api.reservation_service.com/{version}
 schemas: 
+    UUID:
+        type: string
+        pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-4[0-9A-Fa-f]{3}-[89ABab][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}$
+    Table:
+        properties:
+            tableId: string
+            people: integer
     Reservation:
         properties:
-            restId: string
-            resId: string
+            restId: UUID
+            resId: UUID
+            userId: UUID
             people: integer
             date: datetime
             status: string
             table?: Table
 /reservation:
+    get:
+        description: Gets a resevation
+        headers:
+        queryParameters:
+            resId: 
+                description: The reservation id
+                required: true
+                type: UUID
+                example: 0553dec2-8e58-4639-ae0c-620e9022b3c6
+        responses:
+            200:
+                body:
+                    application/json:
+                        type: Reservation
+            404:
+                body:
+                    application/json:
+                        type: Reservation
     post:
         description: Creates a new reservation
         headers: 
         body: 
             application/json:
                 properties:
-                    restId: string
+                    restId: UUID
+                    userId: UUID
                     people: integer
                     date: datetime
-                    # userId MUST be added
-                    # userId: string
         responses: 
             200:
                 body:
