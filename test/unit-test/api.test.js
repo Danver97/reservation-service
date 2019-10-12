@@ -10,7 +10,7 @@ const Table = require('../../domain/models/table');
 const repo = require('../../infrastructure/repository/repositoryManager')();
 const reservationMgr = require('../../domain/logic/restaurantReservationsManager')(repo);
 const queryManagerFunc = require('../../infrastructure/query');
-const appFunc = require('../../src/app');
+const appFunc = require('../../infrastructure/api/api');
 const Utils = require('../../lib/utils');
 
 Utils.defineArrayFlatMap();
@@ -106,7 +106,7 @@ function setUpRequest() {
 }
 
 
-describe('Integration test', function() {
+describe('API unit test', function() {
     const reservationEquals = (result, expected) => {
         for(let p in expected) {
             if (p === 'id' || p === 'resId')

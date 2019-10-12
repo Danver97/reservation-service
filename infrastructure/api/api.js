@@ -1,8 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const Reservation = require('../domain/models/reservation');
-const QueryError = require('../infrastructure/query/query_error');
-const ReservationManagerError = require('../domain/errors/reservationManager_error');
+const Reservation = require('../../domain/models/reservation');
+const QueryError = require('../query/query_error');
+const ReservationManagerError = require('../../domain/errors/reservationManager_error');
 
 const app = express();
 let reservationMgr = null;
