@@ -45,16 +45,16 @@ app.post('/reservation-service/reservationDemo', (req, res) => {
         clientError(res, 'Wrong body params');
 });
 
-app.get('/reservation-service/reservation', async (req, res) => {
+app.get('/reservation-service/reservations', async (req, res) => {
     const query = req.query;
-    if (!query.resId) {
+    if (!query.restId) {
         clientError(res, 'Wrong query parameters.');
         return;
     }
     try {
-        const reserv = await queryMgr.getReservation(query.resId);
+        const reservs = await queryMgr.getReservations(query.restId);
         res.status(200);
-        res.json(reserv);
+        res.json(reservs);
     } catch (e) {
         if (e instanceof QueryError && e.code === 100) {
             res.status(404);
@@ -66,7 +66,7 @@ app.get('/reservation-service/reservation', async (req, res) => {
     }
 });
 
-app.post('/reservation-service/reservation', async (req, res) => {
+app.post('/reservation-service/reservations', async (req, res) => {
     const body = req.body;
     let reservation;
     try {
@@ -94,16 +94,16 @@ app.post('/reservation-service/reservation', async (req, res) => {
     }
 });
 
-app.get('/reservation-service/reservations', async (req, res) => {
-    const query = req.query;
-    if (!query.restId) {
+app.get('/reservation-service/reservations/:resId', async (req, res) => {
+    const params = req.params;
+    if (!params.resId) {
         clientError(res, 'Wrong query parameters.');
         return;
     }
     try {
-        const reservs = await queryMgr.getReservations(query.restId);
+        const reserv = await queryMgr.getReservation(params.resId);
         res.status(200);
-        res.json(reservs);
+        res.json(reserv);
     } catch (e) {
         if (e instanceof QueryError && e.code === 100) {
             res.status(404);
@@ -114,7 +114,6 @@ app.get('/reservation-service/reservations', async (req, res) => {
         res.json({ error: e });
     }
 });
-
 
 function exportFunc(reservationManager, queryManager) {
     if (!reservationManager || !queryManager)

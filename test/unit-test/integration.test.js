@@ -138,15 +138,15 @@ describe('Integration test', function() {
         const hour = '15:00';
         const resrv = new Reservation('15', '1', 'Pippo', 4, '2018-12-08', '15:00');
 
-        it('post /reservation-service/reservation', async function() {
+        it('post /reservation-service/reservations', async function() {
             await req
-                .post('/reservation-service/reservation')
+                .post('/reservation-service/reservations')
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
                 .send({ userId: resrv.userId })
                 .expect(400);
             await req
-                .post('/reservation-service/reservation')
+                .post('/reservation-service/reservations')
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
                 .send({ userId: resrv.userId })
@@ -157,7 +157,7 @@ describe('Integration test', function() {
                 .send({ hour })
                 .expect(400);
             await req
-                .post('/reservation-service/reservation')
+                .post('/reservation-service/reservations')
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
                 .send({ userId: resrv.userId })
@@ -178,16 +178,16 @@ describe('Integration test', function() {
                 .expect(200);
         });
 
-        it('get /reservation-service/reservation?resId=' + resrv.id, async function() {
+        it('get /reservation-service/reservations/' + resrv.id, async function() {
             await writeRes(resrv);
             await req
-                .get('/reservation-service/reservation')
+                .get('/reservation-service/reservations/')
                 .expect(400);
             await req
-                .get('/reservation-service/reservation?resId=18')
+                .get('/reservation-service/reservations/18')
                 .expect(404);
             await req
-                .get('/reservation-service/reservation?resId=' + resrv.id)
+                .get('/reservation-service/reservations/' + resrv.id)
                 .expect(res => {
                     const response = res.body;
                     response.date = new Date(response.date);
