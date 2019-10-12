@@ -1,7 +1,9 @@
 #%RAML 1.0
 ---
 title: Reservation Service API
+mediaType: application/json
 version: v1
+protocols: [ HTTP, HTTPS ]
 baseUri: api.reservation_service.com/{version}
 schemas: 
     UUID:
@@ -19,43 +21,8 @@ schemas:
             people: integer
             date: datetime
             status: string
-            table?: Table
-/reservation:
-    get:
-        description: Gets a resevation
-        headers:
-        queryParameters:
-            resId: 
-                description: The reservation id
-                required: true
-                type: UUID
-                example: 0553dec2-8e58-4639-ae0c-620e9022b3c6
-        responses:
-            200:
-                body:
-                    application/json:
-                        type: Reservation
-            404:
-                body:
-                    application/json:
-                        type: Reservation
-    post:
-        description: Creates a new reservation
-        headers: 
-        body: 
-            application/json:
-                properties:
-                    restId: UUID
-                    userId: UUID
-                    people: integer
-                    date: datetime
-        responses: 
-            200:
-                body:
-                    application/json:
-            400:
-                body:
-                    application/json:
+            table?: Table   
+
 /reservations:
     get:
         description: Get reservations of an user if userId is specified or the reservations of a restaurant if restId is specified
@@ -79,3 +46,67 @@ schemas:
             400:
                 body:
                     application/json:
+    post:
+        description: Creates a new reservation
+        headers: 
+        body: 
+            application/json:
+                properties:
+                    restId: UUID
+                    userId: UUID
+                    people: integer
+                    date: datetime
+        responses: 
+            200:
+                body:
+                    application/json:
+            400:
+                body:
+                    application/json:
+
+    /{resId}:
+        get:
+            description: Get the reservation by id
+            headers:
+            responses:
+                200:
+                    body:
+                        application/json:
+                            type: Reservation
+                400:
+                404:
+        put:
+            description: Update the reservation status
+            headers:
+            body:
+                application/json:
+                    properties:
+                        status: string
+
+            responses:
+                200:
+                    body:
+                        application/json:
+                            type: Reservation
+                400:
+                404:
+
+# /reservation:
+#     get:
+#         description: Gets a resevation
+#         headers:
+#         queryParameters:
+#             resId: 
+#                 description: The reservation id
+#                 required: true
+#                 type: UUID
+#                 example: 0553dec2-8e58-4639-ae0c-620e9022b3c6
+#         responses:
+#             200:
+#                 body:
+#                     application/json:
+#                         type: Reservation
+#             404:
+#                 body:
+#                     application/json:
+#                         type: Reservation
