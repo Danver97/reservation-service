@@ -10,6 +10,7 @@ function reservationCreated(reservation, cb) {
         throw new RepositoryError(`Missing the following parameters:${reservation ? '' : ' reservation'}`, RepositoryError.paramError);
         const payload = Object.assign({}, reservation);
         payload.resId = reservation.id;
+        delete payload.id;
     return this.save(reservation.id, reservation._revisionId, ReservationEvents.reservationCreated, payload, cb);
 }
 
@@ -81,6 +82,8 @@ function getReservation(resId, cb) {
             const payload = e.payload;
             switch (e.message) {
                 case ReservationEvents.reservationCreated:
+                    payload.id = payload.resId;
+                    delete payload.resId;
                     r = Reservation.fromObject(payload);
                     break;
                 case ReservationEvents.reservationConfirmed:
