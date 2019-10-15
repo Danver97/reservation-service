@@ -6,6 +6,9 @@ version: v1
 protocols: [ HTTP, HTTPS ]
 baseUri: api.reservation_service.com/{version}
 schemas: 
+    Error:
+        properties:
+            error: string
     UUID:
         type: string
         pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-4[0-9A-Fa-f]{3}-[89ABab][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}$
@@ -64,6 +67,7 @@ schemas:
             400:
                 body:
                     application/json:
+                        type: Error
 
     /{resId}:
         get:
@@ -75,22 +79,51 @@ schemas:
                         application/json:
                             type: Reservation
                 400:
-                404:
-        put:
-            description: Update the reservation status
-            headers:
-            body:
-                application/json:
-                    properties:
-                        status: string
-
-            responses:
-                200:
                     body:
                         application/json:
-                            type: Reservation
-                400:
+                            type: Error
                 404:
+                    body:
+                        application/json:
+                            type: Error
+        /status:
+            get:
+                description: Get the reservation status
+                headers:
+                responses:
+                    200:
+                        body:
+                            application/json:
+                                properties:
+                                    resId: UUID
+                                    status: string
+                    400:
+                        body:
+                            application/json:
+                                type: Error
+                    404:
+                        body:
+                            application/json:
+                                type: Error
+            put:
+                description: Update the reservation status
+                headers:
+                body:
+                    application/json:
+                        properties:
+                            restId?: UUID
+                            status: string
+
+                responses:
+                    200:
+                    400:
+                        body:
+                            application/json:
+                                type: Error
+                    404:
+                        body:
+                            application/json:
+                                type: Error
 
 # /reservation:
 #     get:

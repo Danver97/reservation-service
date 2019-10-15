@@ -47,18 +47,21 @@ app.post('/reservation-service/reservationDemo', (req, res) => {
 
 app.get('/reservation-service/reservations', async (req, res) => {
     const query = req.query;
-    if (!query.restId) {
+    if (!query.restId && !query.userId) {
         clientError(res, 'Wrong query parameters.');
         return;
     }
     try {
-        const reservs = await queryMgr.getReservations(query.restId);
+        let reservs;
+        if (query.restId)
+            reservs = await queryMgr.getReservations(query.restId);
+        else if (query.userId)
+            reservs = await queryMgr.getUserReservations(query.userId);
         res.status(200);
         res.json(reservs);
     } catch (e) {
         if (e instanceof QueryError && e.code === 100) {
-            res.status(404);
-            res.json({ error: 'Reservation not found' });
+            clientError(res, `${query.restId ? 'Restaurant' : 'User'} not found`, 404);
             return;
         }
         res.status(500);
@@ -84,8 +87,7 @@ app.post('/reservation-service/reservations', async (req, res) => {
         });
     } catch (e) {
         if (e instanceof ReservationManagerError && e.code === 100) {
-            res.status(400);
-            res.json({ error: 'The restaurant indicated in the reservation does not exist' });
+            clientError(res, 'The restaurant indicated in the reservation does not exist', 400);
             return;
         }
         console.log(e);
@@ -97,7 +99,7 @@ app.post('/reservation-service/reservations', async (req, res) => {
 app.get('/reservation-service/reservations/:resId', async (req, res) => {
     const params = req.params;
     if (!params.resId) {
-        clientError(res, 'Wrong query parameters.');
+        clientError(res, 'Missing resId parameters.');
         return;
     }
     try {
@@ -106,10 +108,63 @@ app.get('/reservation-service/reservations/:resId', async (req, res) => {
         res.json(reserv);
     } catch (e) {
         if (e instanceof QueryError && e.code === 100) {
-            res.status(404);
-            res.json({ error: 'Reservation not found' });
+            clientError(res, 'Reservation not found', 404);
             return;
         }
+        res.status(500);
+        res.json({ error: e });
+    }
+});
+
+app.get('/reservation-service/reservations/:resId/status', async (req, res) => {
+    const params = req.params;
+    if (!params.resId) {
+        clientError(res, 'Missing resId parameters.');
+        return;
+    }
+    try {
+        const reserv = await queryMgr.getReservation(params.resId);
+        res.status(200);
+        res.json({ resId: reserv.id, status: reserv.status });
+    } catch (e) {
+        if (e instanceof QueryError && e.code === 100) {
+            clientError(res, 'Reservation not found', 404);
+            return;
+        }
+        res.status(500);
+        res.json({ error: e });
+    }
+});
+
+app.put('/reservation-service/reservations/:resId/status', async (req, res) => {
+    const params = req.params;
+    if (!params.resId) {
+        clientError(res, 'Missing resId parameters.');
+        return;
+    }
+    const body = req.body;
+    try {
+        switch (body.status) {
+            /* case 'accepted':
+                if (!body.restId)
+                    clientError(res, 'Wrong body properties');
+                await reservationMgr.acceptReservation(body.restId, params.resId);
+                break; */
+            case 'cancelled':
+                await reservationMgr.reservationCancelled(params.resId);
+                break;
+            default:
+                clientError(res, 'Wrong body properties');
+                return;
+        }
+        res.status(200);
+        res.end();
+    } catch (e) {
+        if (e instanceof QueryError && e.code === 100) {
+            clientError(res, 'Reservation not found', 404);
+            return;
+        }
+        console.log(e);
         res.status(500);
         res.json({ error: e });
     }

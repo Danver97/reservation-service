@@ -1,4 +1,5 @@
 const assert = require('assert');
+const uuid = require('uuid/v4');
 const request = require('supertest');
 const MongoClient = require('mongodb').MongoClient;
 const MongoMemoryServer = require('mongodb-memory-server').MongoMemoryServer;
@@ -220,6 +221,74 @@ describe('API unit test', function() {
                     assert.deepStrictEqual(response, expected);
                 })
                 .expect(200);
+        });
+
+        it('get /reservation-service/reservations?userId=Pippo', async function() {
+
+            await req
+                .get('/reservation-service/reservations')
+                .expect(400);
+            await req
+                .get('/reservation-service/reservations?userId=abc')
+                .expect(res => {
+                    assert.ok(Array.isArray(res.body));
+                    assert.strictEqual(res.body.length, 0);
+                })
+                .expect(200);
+
+            await req
+                .get(`/reservation-service/reservations?userId=${resrv.userId}`)
+                .expect(res => {
+                    assert.strictEqual(Array.isArray(res.body), true);
+                    assert.strictEqual(res.body.length, 1);
+                    const response = res.body[0];
+                    response.date = new Date(response.date);
+                    response.people = parseInt(response.people, 10);
+                    const expected = JSON.parse(JSON.stringify(resrv));
+                    expected.date = new Date(expected.date);
+                    delete response.resId;
+                    delete expected.resId;
+                    assert.deepStrictEqual(response, expected);
+                })
+                .expect(200);
+        });
+
+        it(`get /reservation-service/reservations/${resrv.id}/status`, async function() {
+            await req
+                .get('/reservation-service/reservations/aaaaaaa/status')
+                .expect(404);
+            await req
+                .get(`/reservation-service/reservations/${resrv.id}/status`)
+                .expect(res => {
+                    const response = res.body;
+                    const expected = {
+                        resId: resrv.id,
+                        status: resrv.status,
+                    };
+                    assert.deepStrictEqual(response, expected);
+                })
+                .expect(200);
+        });
+
+        it(`put /reservation-service/reservations/${resrv.id}/status`, async function() {
+            await req
+                .put('/reservation-service/reservations/aaaaaaa/status')
+                .expect(400);
+
+            // The restaurant accept it
+            /* await req
+                .put(`/reservation-service/reservations/${resrv.id}/status`)
+                .send({ status: 'accepted', restId: resrv.restId })
+                .expect(200); */
+            
+            // The user cancel it
+            await req
+                .put(`/reservation-service/reservations/${resrv.id}/status`)
+                .send({ status: 'cancelled' })
+                .expect(200);
+            // Checks on the Event Store that the write operation happened
+            const updatedRes = await repo.getReservation(resrv.id);
+            assert.strictEqual(updatedRes.status, 'cancelled');
         });
     });
 
