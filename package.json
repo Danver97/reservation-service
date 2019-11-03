@@ -13,7 +13,7 @@
   "author": "Christian Paesante",
   "license": "ISC",
   "dependencies": {
-    "@danver97/event-sourcing": "^2.1.3",
+    "@danver97/event-sourcing": "^2.1.5",
     "aws-sdk": "^2.336.0",
     "body-parser": "^1.18.3",
     "dotenv": "^6.0.0",
