@@ -10,10 +10,10 @@ function exportFunc(manager, broker) {
         await broker.destroyEvent(e);
     }
 
-    function handleMultiEvents(err, events) {
+    async function handleMultiEvents(err, events) {
         if (err)
             throw err;
-        events.forEach(handleAndRemove);
+        await Promise.all(events.map(handleAndRemove));
     }
 
     return handleMultiEvents;

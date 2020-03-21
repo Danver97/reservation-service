@@ -1,6 +1,6 @@
 const assert = require('assert');
 const uuid = require('uuid/v4');
-const broker = require('@danver97/event-sourcing/eventBroker')['testbroker'];
+const EventBroker = require('@danver97/event-sourcing/eventBroker')['testbroker'];
 const Event = require('@danver97/event-sourcing/event');
 const repo = require('../../infrastructure/repository/repositoryManager')('testdb');
 const manager = require('../../domain/logic/restaurantReservationsManager')(repo);
@@ -8,6 +8,9 @@ const brokerHandlerFunc = require('../../infrastructure/messaging/eventHandler/b
 const Reservation = require('../../domain/models/reservation');
 const RestaurantReservations = require('../../domain/models/restaurantReservations');
 const Table = require('../../domain/models/table');
+
+const broker = new EventBroker({ eventBrokerName: 'provaBroker' });
+let brokerHandler;
 
 const dayTimeTable = {
     morning: {
@@ -43,6 +46,18 @@ const pollInterval = 10;
 let pollId = null;
 
 const waitAsync = ms => new Promise((resolve, reject) => setTimeout(resolve, ms));
+
+async function processEvents(broker, brokerHandler) {
+    if (process.env.TEST === 'integration') {
+        await waitAsync(processEventTime);
+        return;
+    }
+    let events = await broker.getEvent({ number: 10 });
+    if (Array.isArray(events)) {
+        await brokerHandler(null, events);
+    }
+
+}
 
 describe('eventHandlerManager unit test', function () {
 
@@ -88,6 +103,7 @@ describe('eventHandlerManager unit test', function () {
         beforeEach(async () => {
             await repo.reset();
             await manager.restaurantReservationsCreated(rr);
+            await processEvents(broker, brokerHandler);
         });
 
         it('check reservationCreated transaction', async function () {
