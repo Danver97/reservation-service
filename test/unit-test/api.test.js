@@ -12,6 +12,7 @@ const repo = require('../../infrastructure/repository/repositoryManager')();
 const reservationMgr = require('../../domain/logic/restaurantReservationsManager')(repo);
 const queryManagerFunc = require('../../infrastructure/query');
 const appFunc = require('../../infrastructure/api/api');
+const testApiUtils = require('./api.test.utils');
 const Utils = require('../../lib/utils');
 
 Utils.defineArrayFlatMap();
@@ -91,21 +92,37 @@ async function setUpEventStore() {
     await repo.restaurantReservationsCreated(rr1);
     await repo.restaurantReservationsCreated(rr2);
 }
-async function setUpMongo() {
+async function setUpProjection() {
     const connString = await mongod.getConnectionString();
-    mongodb = new MongoClient(connString, { useNewUrlParser: true });
+    const mongoOptions = {
+        url: connString,
+        db: 'Reservation',
+        collection: 'Reservation',
+    };
+    mongodb = new MongoClient(mongoOptions.url, { useNewUrlParser: true });
     await mongodb.connect();
-    collection = mongodb.db('Reservation').collection('Reservation');
+    collection = mongodb.db(mongoOptions.db).collection(mongoOptions.collection);
+    await testApiUtils.setUpDenormalizer(mongoOptions);
+    return mongoOptions;
 }
-async function setUpQuery() {
-    const connString = await mongod.getConnectionString();
-    queryMgr = await queryManagerFunc(connString, 'Reservation', 'Reservation');
+async function setUpQuery(mongoOptions) {
+    queryMgr = await queryManagerFunc(mongoOptions.url, mongoOptions.db, mongoOptions.collection);
 }
 function setUpRequest() {
     app = appFunc(reservationMgr, queryMgr)
     req = request(app);
 }
 
+async function setUpData(rr, res) {
+    await reservationMgr.restaurantReservationsCreated(rr);
+    await reservationMgr.reservationCreated(res);
+}
+
+async function cleanUpData() {
+    repo.reset();
+    await testApiUtils.reset();
+    await collection.deleteMany({});
+}
 
 describe('API unit test', function() {
     const reservationEquals = (result, expected) => {
@@ -119,19 +136,153 @@ describe('API unit test', function() {
         }
     };
 
+    let rr3 = new RestaurantReservations('3', timeTable, tables);
+    let res1 = new Reservation('pippo', rr3.restId, 'pippo', 4, '2018-07-15', '15:00');
+
     before(async () => {
         await setUpEventStore();
-        await setUpMongo();
-        await setUpQuery();
+        const mongoOptions = await setUpProjection();
+        await setUpQuery(mongoOptions);
         setUpRequest();
     });
+
+    beforeEach(async () => {
+        rr3 = new RestaurantReservations('3', timeTable, tables);
+        res1 = new Reservation('pippo', rr3.restId, 'pippo', 4, '2018-07-15', '15:00');
+        await setUpData(rr3, res1);
+        await testApiUtils.processEvents();
+    });
+    afterEach(() => cleanUpData());
 
     it('GET\t/reservation-service', async function() {
         await req.get('/reservation-service')
             .expect({ service: 'reservation-service' });
+    });    
+
+    it('POST\t/reservation-service/reservations', async function() {
+        const date = '2018-12-08';
+        const hour = '15:00';
+        const resrv = new Reservation('15', rr3.restId, 'Pippo', 4, '2018-12-08', '15:00');
+        await req.post('/reservation-service/reservations')
+            .set('Content-Type', 'application/x-www-url-encoded')
+            .type('form')
+            .send({ userId: resrv.userId })
+            .expect(400);
+        await req.post('/reservation-service/reservations')
+            .set('Content-Type', 'application/x-www-url-encoded')
+            .type('form')
+            .send({
+                userId: resrv.userId,
+                restId: 'noRestaurantReservationsId',
+                reservationName: resrv.reservationName,
+                people: resrv.people,
+                date,
+                hour,
+            })
+            .expect(404);
+        await req.post('/reservation-service/reservations')
+            .set('Content-Type', 'application/x-www-url-encoded')
+            .type('form')
+            .send({
+                userId: resrv.userId,
+                restId: resrv.restId,
+                reservationName: resrv.reservationName,
+                people: resrv.people,
+                date,
+                hour,
+            })
+            .expect(res => {
+                const response = res.body;
+                assert.strictEqual(response.message, 'success');
+                assert.doesNotThrow(() => {
+                    resrv.id = response.resId;
+                    if(!response.resId)
+                        throw new Error('No resId');
+                }, Error);
+            })
+            .expect(200);
     });
 
-    context('Context: Reservation {userId: \'15\', restaurantId: \'1\', reservationName: \'Pippo\', people: 4, date: \'2018-12-08\', hour: \'15:00\'}', function () {
+    it(`GET\t/reservation-service/reservations/${res1.id}`, async function() {
+        // await writeRes(res1);
+        await req.get('/reservation-service/reservations/')
+            .expect(400);
+        await req.get('/reservation-service/reservations/18')
+            .expect(404);
+        await req.get('/reservation-service/reservations/' + res1.id)
+            .expect(res => {
+                const response = res.body;
+                response.date = new Date(response.date);
+                response.people = parseInt(response.people, 10);
+                reservationEquals(response, res1);
+            })
+            .expect(200);
+    });
+
+    it(`GET\t/reservation-service/reservations?userId=${res1.userId}`, async function() {
+
+        await req.get('/reservation-service/reservations')
+            .expect(400);
+        await req.get('/reservation-service/reservations?userId=abc')
+            .expect(res => {
+                assert.ok(Array.isArray(res.body));
+                assert.strictEqual(res.body.length, 0);
+            })
+            .expect(200);
+
+        await req.get(`/reservation-service/reservations?userId=${res1.userId}`)
+            .expect(res => {
+                assert.strictEqual(Array.isArray(res.body), true);
+                assert.strictEqual(res.body.length, 1);
+                const response = res.body[0];
+                response.date = new Date(response.date);
+                response.people = parseInt(response.people, 10);
+                const expected = JSON.parse(JSON.stringify(res1));
+                expected.date = new Date(expected.date);
+                delete response._id;
+                delete response._revisionId;
+                delete response.resId;
+                delete expected.resId;
+                assert.deepStrictEqual(response, expected);
+            })
+            .expect(200);
+    });
+
+    it(`GET\t/reservation-service/reservations/${res1.id}/status`, async function() {
+        await req.get('/reservation-service/reservations/aaaaaaa/status')
+            .expect(404);
+        await req.get(`/reservation-service/reservations/${res1.id}/status`)
+            .expect(res => {
+                const response = res.body;
+                const expected = {
+                    resId: res1.id,
+                    status: res1.status,
+                };
+                assert.deepStrictEqual(response, expected);
+            })
+            .expect(200);
+    });
+
+    it(`PUT\t/reservation-service/reservations/${res1.id}/status`, async function() {
+        await req.put('/reservation-service/reservations/aaaaaaa/status')
+            .expect(400);
+
+        // The restaurant accept it
+        /* await req
+            .put(`/reservation-service/reservations/${res1.id}/status`)
+            .send({ status: 'accepted', restId: res1.restId })
+            .expect(200); */
+        
+        // The user cancel it
+        await req.put(`/reservation-service/reservations/${res1.id}/status`)
+            .send({ status: 'cancelled' })
+            .expect(200);
+        // Checks on the Event Store that the write operation happened
+        const updatedRes = await repo.getReservation(res1.id);
+        assert.strictEqual(updatedRes.status, 'cancelled');
+    });
+
+    /* context.skip('Context: Reservation {userId: \'15\', restaurantId: \'1\', reservationName: \'Pippo\', people: 4, date: \'2018-12-08\', hour: \'15:00\'}', function () {
         const date = '2018-12-08';
         const hour = '15:00';
         const resrv = new Reservation('15', '1', 'Pippo', 4, '2018-12-08', '15:00');
@@ -262,10 +413,10 @@ describe('API unit test', function() {
                 .expect(400);
 
             // The restaurant accept it
-            /* await req
-                .put(`/reservation-service/reservations/${resrv.id}/status`)
-                .send({ status: 'accepted', restId: resrv.restId })
-                .expect(200); */
+            // await req
+            //     .put(`/reservation-service/reservations/${resrv.id}/status`)
+            //     .send({ status: 'accepted', restId: resrv.restId })
+            //     .expect(200);
             
             // The user cancel it
             await req.put(`/reservation-service/reservations/${resrv.id}/status`)
@@ -275,7 +426,7 @@ describe('API unit test', function() {
             const updatedRes = await repo.getReservation(resrv.id);
             assert.strictEqual(updatedRes.status, 'cancelled');
         });
-    });
+    }); */
 
     after(async () => {
         await mongodb.close();

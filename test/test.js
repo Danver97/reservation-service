@@ -1,2 +1,2 @@
 require('./unit.test');
-require('./contract.test');
+// require('./contract.test');

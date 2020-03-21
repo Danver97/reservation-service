@@ -87,6 +87,12 @@ function dontAcknoledge(akcFunc) {
     return acknoledgeUtil(akcFunc, false);
 }
 
+function log(obj) {
+    const doit = false;
+    if (doit)
+        console.log(obj)
+}
+
 async function handler(e, ack) {
     if (!e)
         return;
@@ -94,13 +100,13 @@ async function handler(e, ack) {
         let lastEventId = (await dependencies.orderCtrl.getLastProcessedEvent(e.streamId)).eventId;
         lastEventId = (lastEventId === undefined || lastEventId === null) ? 0 : lastEventId;
 
-        console.log(`Last EventId: ${lastEventId}
+        log(`Last EventId: ${lastEventId}
         Expected EventId: ${lastEventId + 1}
         Current EventId: ${e.eventId}`);
         // If it is and old event
         if (e.eventId <= lastEventId) {
             // Removes it from the queue without processing it
-            console.log(`Current EId is lower or equals that lastEId.
+            log(`Current EId is lower or equals that lastEId.
             Current event is an old event. Will be removed without processing it.`);
             await acknoledge(ack);
             return;
@@ -108,9 +114,9 @@ async function handler(e, ack) {
         // If it is a too young event
         if (e.eventId > lastEventId + 1) {
             // Ignore it
-            console.log(`Current EId is bigger that expected EId
+            log(`Current EId is bigger that expected EId
             Current event is a future event. Will be ignored without removing it from queue.`);
-            console.log('Expected eventId:', lastEventId + 1, 'Found:', e.eventId);
+            log(`Expected eventId: ${lastEventId + 1} Found: ${e.eventId}`);
             await dontAcknoledge(ack);
             return;
         }
@@ -118,7 +124,7 @@ async function handler(e, ack) {
         // If it is the next event that needs to be processed
         if (e.eventId === lastEventId + 1) {
             // Process it
-            console.log(`Current EId is equal the expected EId
+            log(`Current EId is equal the expected EId
             Current event is the expected event. Will be processed.`);
             await handlersMap[e.message](e);
             await dependencies.orderCtrl.updateLastProcessedEvent(e.streamId, lastEventId, e.eventId);
