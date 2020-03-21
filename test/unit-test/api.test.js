@@ -126,12 +126,9 @@ describe('API unit test', function() {
         setUpRequest();
     });
 
-    it('get /reservation-service', async function() {
-        await req
-            .get('/reservation-service')
-            .expect(JSON.stringify({
-                service: 'reservation-service',
-            }));
+    it('GET\t/reservation-service', async function() {
+        await req.get('/reservation-service')
+            .expect({ service: 'reservation-service' });
     });
 
     context('Context: Reservation {userId: \'15\', restaurantId: \'1\', reservationName: \'Pippo\', people: 4, date: \'2018-12-08\', hour: \'15:00\'}', function () {
@@ -139,34 +136,35 @@ describe('API unit test', function() {
         const hour = '15:00';
         const resrv = new Reservation('15', '1', 'Pippo', 4, '2018-12-08', '15:00');
 
-        it('post /reservation-service/reservations', async function() {
-            await req
-                .post('/reservation-service/reservations')
+        it('POST\t/reservation-service/reservations', async function() {
+            await req.post('/reservation-service/reservations')
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
                 .send({ userId: resrv.userId })
                 .expect(400);
-            await req
-                .post('/reservation-service/reservations')
+            await req.post('/reservation-service/reservations')
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
-                .send({ userId: resrv.userId })
-                .send({ restId: 'noRestaurantReservationsId' })
-                .send({ reservationName: resrv.reservationName })
-                .send({ people: resrv.people })
-                .send({ date })
-                .send({ hour })
+                .send({
+                    userId: resrv.userId,
+                    restId: 'noRestaurantReservationsId',
+                    reservationName: resrv.reservationName,
+                    people: resrv.people,
+                    date,
+                    hour,
+                })
                 .expect(404);
-            await req
-                .post('/reservation-service/reservations')
+            await req.post('/reservation-service/reservations')
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
-                .send({ userId: resrv.userId })
-                .send({ restId: resrv.restId })
-                .send({ reservationName: resrv.reservationName })
-                .send({ people: resrv.people })
-                .send({ date })
-                .send({ hour })
+                .send({
+                    userId: resrv.userId,
+                    restId: resrv.restId,
+                    reservationName: resrv.reservationName,
+                    people: resrv.people,
+                    date,
+                    hour,
+                })
                 .expect(res => {
                     const response = res.body;
                     assert.strictEqual(response.message, 'success');
@@ -179,16 +177,13 @@ describe('API unit test', function() {
                 .expect(200);
         });
 
-        it('get /reservation-service/reservations/' + resrv.id, async function() {
+        it(`GET\t/reservation-service/reservations/${resrv.id}`, async function() {
             await writeRes(resrv);
-            await req
-                .get('/reservation-service/reservations/')
+            await req.get('/reservation-service/reservations/')
                 .expect(400);
-            await req
-                .get('/reservation-service/reservations/18')
+            await req.get('/reservation-service/reservations/18')
                 .expect(404);
-            await req
-                .get('/reservation-service/reservations/' + resrv.id)
+            await req.get('/reservation-service/reservations/' + resrv.id)
                 .expect(res => {
                     const response = res.body;
                     response.date = new Date(response.date);
@@ -198,19 +193,16 @@ describe('API unit test', function() {
                 .expect(200);
         });
 
-        it('get /reservation-service/reservations?restId=1', async function() {
+        it('GET\t/reservation-service/reservations?restId=1', async function() {
             await writeRR(rr1);
             await addResToRR(rr1, resrv, tables[0]);
 
-            await req
-                .get('/reservation-service/reservations')
+            await req.get('/reservation-service/reservations')
                 .expect(400);
-            await req
-                .get('/reservation-service/reservations?restId=10')
+            await req.get('/reservation-service/reservations?restId=10')
                 .expect(404);
 
-            await req
-                .get(`/reservation-service/reservations?restId=${resrv.restId}`)
+            await req.get(`/reservation-service/reservations?restId=${resrv.restId}`)
                 .expect(res => {
                     assert.strictEqual(Array.isArray(res.body), true);
                     assert.strictEqual(res.body.length, 1);
@@ -223,21 +215,18 @@ describe('API unit test', function() {
                 .expect(200);
         });
 
-        it('get /reservation-service/reservations?userId=Pippo', async function() {
+        it(`GET\t/reservation-service/reservations?userId=${resrv.userId}`, async function() {
 
-            await req
-                .get('/reservation-service/reservations')
+            await req.get('/reservation-service/reservations')
                 .expect(400);
-            await req
-                .get('/reservation-service/reservations?userId=abc')
+            await req.get('/reservation-service/reservations?userId=abc')
                 .expect(res => {
                     assert.ok(Array.isArray(res.body));
                     assert.strictEqual(res.body.length, 0);
                 })
                 .expect(200);
 
-            await req
-                .get(`/reservation-service/reservations?userId=${resrv.userId}`)
+            await req.get(`/reservation-service/reservations?userId=${resrv.userId}`)
                 .expect(res => {
                     assert.strictEqual(Array.isArray(res.body), true);
                     assert.strictEqual(res.body.length, 1);
@@ -253,12 +242,10 @@ describe('API unit test', function() {
                 .expect(200);
         });
 
-        it(`get /reservation-service/reservations/${resrv.id}/status`, async function() {
-            await req
-                .get('/reservation-service/reservations/aaaaaaa/status')
+        it(`GET\t/reservation-service/reservations/${resrv.id}/status`, async function() {
+            await req.get('/reservation-service/reservations/aaaaaaa/status')
                 .expect(404);
-            await req
-                .get(`/reservation-service/reservations/${resrv.id}/status`)
+            await req.get(`/reservation-service/reservations/${resrv.id}/status`)
                 .expect(res => {
                     const response = res.body;
                     const expected = {
@@ -270,9 +257,8 @@ describe('API unit test', function() {
                 .expect(200);
         });
 
-        it(`put /reservation-service/reservations/${resrv.id}/status`, async function() {
-            await req
-                .put('/reservation-service/reservations/aaaaaaa/status')
+        it(`PUT\t/reservation-service/reservations/${resrv.id}/status`, async function() {
+            await req.put('/reservation-service/reservations/aaaaaaa/status')
                 .expect(400);
 
             // The restaurant accept it
@@ -282,8 +268,7 @@ describe('API unit test', function() {
                 .expect(200); */
             
             // The user cancel it
-            await req
-                .put(`/reservation-service/reservations/${resrv.id}/status`)
+            await req.put(`/reservation-service/reservations/${resrv.id}/status`)
                 .send({ status: 'cancelled' })
                 .expect(200);
             // Checks on the Event Store that the write operation happened
