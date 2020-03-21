@@ -104,9 +104,14 @@ function setUpRequest() {
     app = appFunc(reservationMgr, queryMgr)
     req = request(app);
 }
-
+async function setUpData(res) {
+    await reservationMgr.reservationCreated(res)
+}
 
 describe('Integration test', function() {
+    const hour = '15:00';
+    const date = '2018-12-08';
+    let resrv = new Reservation('15', '1', 'Pippo', 4, '2018-12-08', '15:00');
     const reservationEquals = (result, expected) => {
         for(let p in expected) {
             if (p === 'id')
@@ -125,28 +130,105 @@ describe('Integration test', function() {
         setUpRequest();
     });
 
-    it('get /', async function() {
-        await req
-            .get('/')
-            .expect(JSON.stringify({
-                service: 'reservation-service',
-            }));
+    this.beforeEach(async () => {
+        resrv = new Reservation('15', '1', 'Pippo', 4, '2018-12-08', '15:00');
+        await setUpData(resrv);
     });
 
-    context('Context: Reservation {userId: \'15\', restaurantId: \'1\', reservationName: \'Pippo\', people: 4, date: \'2018-12-08\', hour: \'15:00\'}', function () {
+    it('GET\t/', async function() {
+        await req.get('/')
+            .expect({ service: 'reservation-service' });
+    });
+
+    
+    it('POST\t/reservation', async function() {
+        await req.post('/reservation')
+            .set('Content-Type', 'application/x-www-url-encoded')
+            .type('form')
+            .send({ userId: resrv.userId })
+            .expect(400);
+        await req.post('/reservation')
+            .set('Content-Type', 'application/x-www-url-encoded')
+            .type('form')
+            .send({
+                userId: resrv.userId,
+                restId: 'noRestaurantReservationsId',
+                reservationName: resrv.reservationName,
+                people: resrv.people,
+                date,
+                hour,
+            })
+            .expect(400);
+        await req.post('/reservation')
+            .set('Content-Type', 'application/x-www-url-encoded')
+            .type('form')
+            .send({
+                userId: resrv.userId,
+                restId: resrv.restId,
+                reservationName: resrv.reservationName,
+                people: resrv.people,
+                date,
+                hour,
+            })
+            .expect(res => {
+                const response = res.body;
+                assert.strictEqual(response.message, 'success');
+                assert.strictEqual(typeof response.resId, 'string');
+                assert.notStrictEqual(response.resId.length, 0);
+            })
+            .expect(200);
+    });
+
+    it(`GET\t/reservation?resId=${resrv.id}`, async function() {
+        await writeRes(resrv);
+        await req.get('/reservation')
+            .expect(400);
+        await req.get('/reservation?resId=18')
+            .expect(404);
+        await req.get(`/reservation?resId=${resrv.id}`)
+            .expect(res => {
+                const response = res.body;
+                response.date = new Date(response.date);
+                response.people = parseInt(response.people, 10);
+                reservationEquals(response, resrv);
+            })
+            .expect(200);
+    });
+
+    it(`GET\t/reservations?restId=${resrv.restId}`, async function() {
+        await writeRR(rr1);
+        await addResToRR(rr1, resrv, tables[0]);
+
+        await req.get('/reservations')
+            .expect(400);
+        await req.get('/reservations?restId=10')
+            .expect(404);
+
+        await req.get(`/reservations?restId=${resrv.restId}`)
+            .expect(res => {
+                assert.strictEqual(Array.isArray(res.body), true);
+                assert.strictEqual(res.body.length, 1);
+                const response = res.body[0];
+                response.date = new Date(response.date);
+                response.people = parseInt(response.people, 10);
+                const expected = resToBeAdded(resrv, tables[0]);
+                assert.deepStrictEqual(response, expected);
+            })
+            .expect(200);
+    });
+
+    context.skip('Context: Reservation {userId: \'15\', restaurantId: \'1\', reservationName: \'Pippo\', people: 4, date: \'2018-12-08\', hour: \'15:00\'}', function () {
         const date = '2018-12-08';
         const hour = '15:00';
         const resrv = new Reservation('15', '1', 'Pippo', 4, '2018-12-08', '15:00');
 
         it('post /reservation', async function() {
-            await req
-                .post('/reservation')
+            await req.post('/reservation')
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
                 .send({ userId: resrv.userId })
                 .expect(400);
-            await req
-                .post('/reservation')
+            await req.post('/reservation')
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
                 .send({ userId: resrv.userId })
@@ -156,8 +238,7 @@ describe('Integration test', function() {
                 .send({ date })
                 .send({ hour })
                 .expect(400);
-            await req
-                .post('/reservation')
+            await req.post('/reservation')
                 .set('Content-Type', 'application/x-www-url-encoded')
                 .type('form')
                 .send({ userId: resrv.userId })
