@@ -140,7 +140,6 @@ describe('Integration test', function() {
             .expect({ service: 'reservation-service' });
     });
 
-    
     it('POST\t/reservation', async function() {
         await req.post('/reservation')
             .set('Content-Type', 'application/x-www-url-encoded')
