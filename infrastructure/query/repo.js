@@ -6,18 +6,18 @@ let mongoCollection = null;
 
 function getReservation(id, cb) {
     if (!id)
-        throw new QueryError(`Missing the following parameters:${id ? '' : ' id'}`, QueryError.paramError);
+        throw QueryError.paramError(`Missing the following parameters:${id ? '' : ' id'}`);
     return Promisify(async () => {
         const doc = await mongoCollection.findOne({ _id: id });
         if (!doc)
-            throw new QueryError('Document not found', QueryError.notFound);
+            throw QueryError.notFoundError('Document not found');
         return Reservation.fromObject(doc);
     }, cb);
 }
 
 function getUserReservations(userId, cb) {
     if (!userId)
-        throw new QueryError(`Missing the following parameters:${userId ? '' : ' userId'}`, QueryError.paramError);
+        throw QueryError.paramError(`Missing the following parameters:${userId ? '' : ' userId'}`);
     return Promisify(async () => {
         const docs = await mongoCollection.find({ userId }).toArray();
         return docs.map(d => Reservation.fromObject(d));
@@ -26,29 +26,29 @@ function getUserReservations(userId, cb) {
 
 function getReservations(restId, cb) {
     if (!restId)
-        throw new QueryError(`Missing the following parameters:${restId ? '' : ' restId'}`, QueryError.paramError);
+        throw QueryError.paramError(`Missing the following parameters:${restId ? '' : ' restId'}`);
     return Promisify(async () => {
         const docs = await mongoCollection.findOne({ _id: restId, restId }, { projection: { reservations: 1 } });
         if (!docs)
-            throw new QueryError('Document not found', QueryError.notFound);
+            throw QueryError.notFoundError('Document not found');
         return docs.reservations;
     }, cb);
 }
 
 function getRestaurantReservations(restId, cb) {
     if (!restId)
-        throw new QueryError(`Missing the following parameters:${restId ? '' : ' restId'}`, QueryError.paramError);
+        throw QueryError.paramError(`Missing the following parameters:${restId ? '' : ' restId'}`);
     return Promisify(async () => {
         const doc = await mongoCollection.findOne({ _id: restId, restId });
         if (!doc)
-            throw new QueryError('Document not found', QueryError.notFound);
+            throw QueryError.notFoundError('Document not found');
         return doc;
     }, cb);
 }
 
 function exportFunc(mongodbCollection) {
     if (!mongodbCollection)
-        throw new QueryError(`Missing the following parameters:${mongodbCollection ? '' : ' mongodbCollection'}`, QueryError.paramError);
+        throw QueryError.paramError(`Missing the following parameters:${mongodbCollection ? '' : ' mongodbCollection'}`);
     mongoCollection = mongodbCollection;
     return {
         getReservation,

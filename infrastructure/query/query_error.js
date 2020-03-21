@@ -2,12 +2,12 @@ const ExtendableError = require('../../lib/extendable_error');
 
 const errorsTypes = {
     paramError: {
-        code: 0,
+        code: 'paramError',
         name: 'paramError',
     },
-    notFound: {
-        code: 100,
-        name: 'notFound',
+    notFoundError: {
+        code: 'notFoundError',
+        name: 'notFoundError',
     },
 };
 
@@ -23,12 +23,20 @@ class QueryError extends ExtendableError {
         return errorsTypes;
     }
 
-    static get paramError() {
+    static paramError(msg) {
+        return new QueryError(msg, QueryError.paramErrorCode);
+    }
+
+    static notFoundError(msg) {
+        return new QueryError(msg, QueryError.notFoundErrorCode);
+    }
+
+    static get paramErrorCode() {
         return errorsTypes.paramError.code;
     }
 
-    static get notFound() {
-        return errorsTypes.notFound.code;
+    static get notFoundErrorCode() {
+        return errorsTypes.notFoundError.code;
     }
 }
 

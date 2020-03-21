@@ -6,7 +6,7 @@ let mongo;
 
 async function exportFunc(mongoConnString, dbName, collectionName) {
     if (!mongoConnString)
-        throw new QueryError(`Missing the following parameters:${mongoConnString ? '' : ' mongoConnString'}`, QueryError.paramError);
+        throw QueryError.paramError(`Missing the following parameters:${mongoConnString ? '' : ' mongoConnString'}`);
     mongo = new MongoClient(mongoConnString, { useNewUrlParser: true });
     await mongo.connect();
     return repoFunc(mongo.db(dbName).collection(collectionName));

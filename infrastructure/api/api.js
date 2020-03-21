@@ -60,7 +60,7 @@ app.get('/reservation-service/reservations', async (req, res) => {
         res.status(200);
         res.json(reservs);
     } catch (e) {
-        if (e instanceof QueryError && e.code === 100) {
+        if (e instanceof QueryError && e.code === QueryError.notFoundErrorCode) {
             clientError(res, `${query.restId ? 'Restaurant' : 'User'} not found`, 404);
             return;
         }
@@ -107,7 +107,7 @@ app.get('/reservation-service/reservations/:resId', async (req, res) => {
         res.status(200);
         res.json(reserv);
     } catch (e) {
-        if (e instanceof QueryError && e.code === 100) {
+        if (e instanceof QueryError && e.code === QueryError.notFoundErrorCode) {
             clientError(res, 'Reservation not found', 404);
             return;
         }
@@ -127,7 +127,7 @@ app.get('/reservation-service/reservations/:resId/status', async (req, res) => {
         res.status(200);
         res.json({ resId: reserv.id, status: reserv.status });
     } catch (e) {
-        if (e instanceof QueryError && e.code === 100) {
+        if (e instanceof QueryError && e.code === QueryError.notFoundErrorCode) {
             clientError(res, 'Reservation not found', 404);
             return;
         }
@@ -160,7 +160,7 @@ app.put('/reservation-service/reservations/:resId/status', async (req, res) => {
         res.status(200);
         res.end();
     } catch (e) {
-        if (e instanceof QueryError && e.code === 100) {
+        if (e instanceof QueryError && e.code === QueryError.notFoundErrorCode) {
             clientError(res, 'Reservation not found', 404);
             return;
         }
