@@ -7,7 +7,7 @@ const RepositoryError = require('./errors/RepositoryError');
 // Reservation
 function reservationCreated(reservation, cb) {
     if (!reservation)
-        throw new RepositoryError(`Missing the following parameters:${reservation ? '' : ' reservation'}`, RepositoryError.paramError);
+        throw RepositoryError.paramError(`Missing the following parameters:${reservation ? '' : ' reservation'}`);
         const payload = Object.assign({}, reservation);
         payload.resId = reservation.id;
         delete payload.id;
@@ -16,7 +16,7 @@ function reservationCreated(reservation, cb) {
 
 function reservationConfirmed(reservation, cb) {
     if (!reservation)
-        throw new RepositoryError(`Missing the following parameters:${reservation ? '' : ' reservation'}`, RepositoryError.paramError);
+        throw RepositoryError.paramError(`Missing the following parameters:${reservation ? '' : ' reservation'}`);
     const payload = {
         restId: reservation.restId,
         resId: reservation.id,
@@ -29,14 +29,14 @@ function reservationConfirmed(reservation, cb) {
 
 function reservationRejected(reservation, cb) {
     if (!reservation)
-        throw new RepositoryError(`Missing the following parameters:${reservation ? '' : ' reservation'}`, RepositoryError.paramError);
+        throw RepositoryError.paramError(`Missing the following parameters:${reservation ? '' : ' reservation'}`);
     const payload = { restId: reservation.restId, resId: reservation.id, status: 'rejected' };
     return this.save(reservation.id, reservation._revisionId || 0, ReservationEvents.reservationRejected, payload, cb);
 }
 
 function reservationCancelled(reservation, cb) {
     if (!reservation)
-        throw new RepositoryError(`Missing the following parameters:${reservation ? '' : ' reservation'}`, RepositoryError.paramError);
+        throw RepositoryError.paramError(`Missing the following parameters:${reservation ? '' : ' reservation'}`);
     const payload = { restId: reservation.restId, resId: reservation.id, status: 'cancelled' };
     return this.save(reservation.id, reservation._revisionId || 0, ReservationEvents.reservationCancelled, payload, cb);
 }
@@ -44,18 +44,14 @@ function reservationCancelled(reservation, cb) {
 // RestaurantReservations
 function restaurantReservationsCreated(rr, cb) {
     if (!rr)
-        throw new RepositoryError(`Missing the following parameters:${rr ? '' : ' rr'}`, RepositoryError.paramError);
+        throw RepositoryError.paramError(`Missing the following parameters:${rr ? '' : ' rr'}`);
     return this.save(rr.restId, rr._revisionId || 0, ReservationEvents.restaurantReservationsCreated,
         { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables }, cb);
 }
 
 function reservationAdded(rr, reservation, cb) {
-    if (!rr || !reservation) {
-        throw new RepositoryError(
-            `Missing the following parameters:${rr ? '' : ' rr'}${reservation ? '' : ' reservation'}`,
-            RepositoryError.paramError,
-        );
-    }
+    if (!rr || !reservation)
+        throw RepositoryError.paramError(`Missing the following parameters:${rr ? '' : ' rr'}${reservation ? '' : ' reservation'}`);
     const payload = Object.assign({}, reservation);
     payload.resId = reservation.id;
     return this.save(rr.restId, rr._revisionId || 0, ReservationEvents.reservationAdded, payload, cb);
@@ -63,10 +59,7 @@ function reservationAdded(rr, reservation, cb) {
 
 function reservationRemoved(rr, resId, cb) {
     if (!rr || !resId) {
-        throw new RepositoryError(
-            `Missing the following parameters:${rr ? '' : ' rr'}${resId ? '' : ' resId'}`,
-            RepositoryError.paramError,
-        );
+        throw RepositoryError.paramError(`Missing the following parameters:${rr ? '' : ' rr'}${resId ? '' : ' resId'}`);
     }
     return this.save(rr.restId, rr._revisionId || 0, ReservationEvents.reservationRemoved, { restId: rr.restId, resId }, cb);
 }
@@ -74,7 +67,7 @@ function reservationRemoved(rr, resId, cb) {
 // Getters
 function getReservation(resId, cb) {
     if (!resId)
-        throw new RepositoryError(`Missing the following parameters:${resId ? '' : ' resId'}`, RepositoryError.paramError);
+        throw RepositoryError.paramError(`Missing the following parameters:${resId ? '' : ' resId'}`);
     return Promisify(async () => {
         const stream = await this.getStream(resId);
         let r;
@@ -99,7 +92,7 @@ function getReservation(resId, cb) {
             }
         });
         if (!r)
-            throw new RepositoryError(`No such reservation with resId = ${resId}`, RepositoryError.eventStreamDoesNotExist);
+            throw RepositoryError.eventStreamDoesNotExistError(`No such reservation with resId = ${resId}`);
         r._revisionId = stream.length;
         // console.log(r);
         return r;
@@ -108,7 +101,7 @@ function getReservation(resId, cb) {
 
 function getReservations(restId, cb) {
     if (!restId)
-        throw new RepositoryError(`Missing the following parameters:${restId ? '' : ' restId'}`, RepositoryError.paramError);
+        throw RepositoryError.paramError(`Missing the following parameters:${restId ? '' : ' restId'}`);
     return Promisify(async () => {
         const stream = await this.getStream(restId);
         let rr;
@@ -128,7 +121,7 @@ function getReservations(restId, cb) {
             }
         });
         if (!rr)
-            throw new RepositoryError(`No such restaurant reservations with restId = ${restId}`, RepositoryError.eventStreamDoesNotExist);
+            throw RepositoryError.eventStreamDoesNotExistError(`No such restaurant reservations with restId = ${restId}`);
         rr._revisionId = stream.length;
         // console.log(rr);
         return rr;

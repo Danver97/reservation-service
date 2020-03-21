@@ -2,33 +2,35 @@ const ExtendableError = require('../../../lib/extendable_error');
 
 const errorsTypes = {
     paramError: {
-        code: 0,
+        code: 'paramError',
         name: 'paramError',
     },
-    eventStreamDoesNotExist: {
-        code: 100,
-        name: 'eventStreamDoesNotExist',
+    eventStreamDoesNotExistError: {
+        code: 'eventStreamDoesNotExistError',
+        name: 'eventStreamDoesNotExistError',
     },
 };
 
 class RepositoryError extends ExtendableError {
-    /* constructor(message, errorCode) {
-        let code = errorCode;
-        if (typeof code === 'object')
-            code = code.code;
-        super(message, code);
-    } */
 
     static get errors() {
         return errorsTypes;
     }
 
-    static get paramError() {
+    static paramError(msg) {
+        return new RepositoryError(msg, RepositoryError.paramErrorCode);
+    }
+
+    static eventStreamDoesNotExistError(msg) {
+        return new RepositoryError(msg, RepositoryError.eventStreamDoesNotExistErrorCode);
+    }
+
+    static get paramErrorCode() {
         return errorsTypes.paramError.code;
     }
 
-    static get eventStreamDoesNotExist() {
-        return errorsTypes.eventStreamDoesNotExist.code;
+    static get eventStreamDoesNotExistErrorCode() {
+        return errorsTypes.eventStreamDoesNotExistError.code;
     }
 }
 
