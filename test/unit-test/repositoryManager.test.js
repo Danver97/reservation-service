@@ -10,10 +10,10 @@ const ENV = require('../../src/env');
 
 function restaurantReservationsEqual(actual, expected) {
     assert.strictEqual(actual.restId, expected.restId);
-    assert.strictEqual(JSON.stringify(actual.timeTable), JSON.stringify(expected.timeTable));
-    assert.strictEqual(JSON.stringify(actual.reservationsTableId), JSON.stringify(expected.reservationsTableId));
-    assert.strictEqual(JSON.stringify(actual.tablesMap), JSON.stringify(expected.tablesMap));
-    assert.strictEqual(JSON.stringify(actual.tables), JSON.stringify(expected.tables));
+    assert.deepStrictEqual(actual.timeTable, expected.timeTable);
+    assert.deepStrictEqual(actual.reservationsTableId, expected.reservationsTableId);
+    assert.deepStrictEqual(actual.tablesMap, expected.tablesMap);
+    assert.deepStrictEqual(actual.tables, expected.tables);
 }
 
 describe('RepositoryManager unit test', function() {
@@ -49,6 +49,8 @@ describe('RepositoryManager unit test', function() {
         assert.throws(() => repo.restaurantReservationsCreated(), RepositoryError);
         await repo.restaurantReservationsCreated(rr);
         const result = await repo.getReservations(rr.restId);
+        rr.tables = rr.tables.sort((a, b) => a.id <= b.id ? -1 : 1);
+        result.tables = result.tables.sort((a, b) => a.id <= b.id ? -1 : 1);
         assertStrictEqual(result, rr);
     });
 
@@ -73,6 +75,7 @@ describe('RepositoryManager unit test', function() {
         assert.throws(() => repo.reservationRejected(), RepositoryError);
         let newRes = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
         await repo.reservationCreated(newRes);
+        newRes = await repo.getReservation(newRes.id);
         newRes.rejected();
         await repo.reservationRejected(newRes);
         const result = await repo.getReservation(newRes.id);

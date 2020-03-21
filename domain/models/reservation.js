@@ -83,8 +83,8 @@ class Reservation {
     accepted(table, effectiveDate) {
         this.setTable(table);
         this.confirmed();
-        if (effectiveDate)
-            this.date = effectiveDate;
+        if (effectiveDate && Date.parse(effectiveDate) !== NaN)
+            this.date = new Date(effectiveDate);
     }
 
     confirmed() {

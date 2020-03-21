@@ -11,7 +11,7 @@ function reservationCreated(reservation, cb) {
         const payload = Object.assign({}, reservation);
         payload.resId = reservation.id;
         delete payload.id;
-    return this.save(reservation.id, reservation._revisionId, ReservationEvents.reservationCreated, payload, cb);
+    return this.save(reservation.id, reservation._revisionId || 0, ReservationEvents.reservationCreated, payload, cb);
 }
 
 function reservationConfirmed(reservation, cb) {
@@ -24,28 +24,28 @@ function reservationConfirmed(reservation, cb) {
         table: reservation.table,
         date: reservation.date,
     };
-    return this.save(reservation.id, reservation._revisionId, ReservationEvents.reservationConfirmed, payload, cb);
+    return this.save(reservation.id, reservation._revisionId || 0, ReservationEvents.reservationConfirmed, payload, cb);
 }
 
 function reservationRejected(reservation, cb) {
     if (!reservation)
         throw new RepositoryError(`Missing the following parameters:${reservation ? '' : ' reservation'}`, RepositoryError.paramError);
     const payload = { restId: reservation.restId, resId: reservation.id, status: 'rejected' };
-    return this.save(reservation.id, reservation._revisionId, ReservationEvents.reservationRejected, payload, cb);
+    return this.save(reservation.id, reservation._revisionId || 0, ReservationEvents.reservationRejected, payload, cb);
 }
 
 function reservationCancelled(reservation, cb) {
     if (!reservation)
         throw new RepositoryError(`Missing the following parameters:${reservation ? '' : ' reservation'}`, RepositoryError.paramError);
     const payload = { restId: reservation.restId, resId: reservation.id, status: 'cancelled' };
-    return this.save(reservation.id, reservation._revisionId, ReservationEvents.reservationCancelled, payload, cb);
+    return this.save(reservation.id, reservation._revisionId || 0, ReservationEvents.reservationCancelled, payload, cb);
 }
 
 // RestaurantReservations
 function restaurantReservationsCreated(rr, cb) {
     if (!rr)
         throw new RepositoryError(`Missing the following parameters:${rr ? '' : ' rr'}`, RepositoryError.paramError);
-    return this.save(rr.restId, rr._revisionId, ReservationEvents.restaurantReservationsCreated,
+    return this.save(rr.restId, rr._revisionId || 0, ReservationEvents.restaurantReservationsCreated,
         { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables }, cb);
 }
 
@@ -58,7 +58,7 @@ function reservationAdded(rr, reservation, cb) {
     }
     const payload = Object.assign({}, reservation);
     payload.resId = reservation.id;
-    return this.save(rr.restId, rr._revisionId, ReservationEvents.reservationAdded, payload, cb);
+    return this.save(rr.restId, rr._revisionId || 0, ReservationEvents.reservationAdded, payload, cb);
 }
 
 function reservationRemoved(rr, resId, cb) {
@@ -68,7 +68,7 @@ function reservationRemoved(rr, resId, cb) {
             RepositoryError.paramError,
         );
     }
-    return this.save(rr.restId, rr._revisionId, ReservationEvents.reservationRemoved, { restId: rr.restId, resId }, cb);
+    return this.save(rr.restId, rr._revisionId || 0, ReservationEvents.reservationRemoved, { restId: rr.restId, resId }, cb);
 }
 
 // Getters
