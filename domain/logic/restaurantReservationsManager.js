@@ -22,7 +22,7 @@ class ReservationManager {
                 await this.repo.reservationCreated(reservation);
             } catch (e) {
                 if (e instanceof RepositoryError && e.code === RepositoryError.eventStreamDoesNotExist)
-                    throw new ReservationManagerError('Restaurant doesn\'t exist', ReservationManagerError.restaurantDoesNotExist);
+                    throw ReservationManagerError.restaurantDoesNotExistError('Restaurant doesn\'t exist');
                 error();
             }
             return reservation;

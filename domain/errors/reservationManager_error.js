@@ -2,33 +2,35 @@ const ExtendableError = require('../../lib/extendable_error');
 
 const errorsTypes = {
     paramError: {
-        code: 0,
+        code: 'paramError',
         name: 'paramError',
     },
-    restaurantDoesNotExist: {
-        code: 100,
-        name: 'restaurantDoesNotExist',
+    restaurantDoesNotExistError: {
+        code: 'restaurantDoesNotExistError',
+        name: 'restaurantDoesNotExistError',
     },
 };
 
 class ReservationManagerError extends ExtendableError {
-    /* constructor(message, errorCode) {
-        let code = errorCode;
-        if (typeof code === 'object')
-            code = code.code;
-        super(message, code);
-    } */
 
     static get errors() {
         return errorsTypes;
     }
 
-    static get paramError() {
+    static paramError(msg) {
+        return new ReservationManagerError(msg, ReservationManagerError.paramErrorCode);
+    }
+
+    static restaurantDoesNotExistError(msg) {
+        return new ReservationManagerError(msg, ReservationManagerError.restaurantDoesNotExistErrorCode);
+    }
+
+    static get paramErrorCode() {
         return errorsTypes.paramError.code;
     }
 
-    static get restaurantDoesNotExist() {
-        return errorsTypes.restaurantDoesNotExist.code;
+    static get restaurantDoesNotExistErrorCode() {
+        return errorsTypes.restaurantDoesNotExistError.code;
     }
 }
 

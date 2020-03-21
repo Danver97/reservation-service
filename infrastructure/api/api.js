@@ -86,7 +86,7 @@ app.post('/reservation-service/reservations', async (req, res) => {
             resId: reservation.id,
         });
     } catch (e) {
-        if (e instanceof ReservationManagerError && e.code === 100) {
+        if (e instanceof ReservationManagerError && e.code === ReservationManagerError.restaurantDoesNotExistErrorCode) {
             clientError(res, 'The restaurant indicated in the reservation does not exist', 400);
             return;
         }
