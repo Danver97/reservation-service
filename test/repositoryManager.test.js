@@ -10,10 +10,10 @@ const ENV = require('../src/env');
 
 function restaurantReservationsEqual(actual, expected) {
     assert.strictEqual(actual.restId, expected.restId);
-    assert.deepStrictEqual(actual.timeTable, expected.timeTable);
-    assert.deepStrictEqual(actual.reservationsTableId, expected.reservationsTableId);
-    assert.deepStrictEqual(actual.tablesMap, expected.tablesMap);
-    assert.deepStrictEqual(actual.tables, expected.tables);
+    assert.strictEqual(JSON.stringify(actual.timeTable), JSON.stringify(expected.timeTable));
+    assert.strictEqual(JSON.stringify(actual.reservationsTableId), JSON.stringify(expected.reservationsTableId));
+    assert.strictEqual(JSON.stringify(actual.tablesMap), JSON.stringify(expected.tablesMap));
+    assert.strictEqual(JSON.stringify(actual.tables), JSON.stringify(expected.tables));
 }
 
 describe('RepositoryManager unit test', function() {
@@ -48,8 +48,6 @@ describe('RepositoryManager unit test', function() {
     it('check if restaurantReservationsCreated works', async function () {
         await repo.restaurantReservationsCreated(rr);
         const result = await repo.getReservations(rr.restId);
-        rr.tables = rr.tables.sort((a, b) => a.id <= b.id ? -1 : 1);
-        result.tables = result.tables.sort((a, b) => a.id <= b.id ? -1 : 1);
         assertStrictEqual(result, rr);
     });
 
@@ -117,16 +115,21 @@ describe('RepositoryManager unit test', function() {
 
     it('check if getReservations works', async function () {
         assert.throws(() => repo.getReservations(), RepositoryError);
-        await assert.rejects(() => repo.getReservations('noneid'), RepositoryError);
-        
+        try {
+            await repo.getReservations('noneid');
+        } catch (e) {
+            assert.throws(() => { throw e; }, Error);
+        }
         const result = await repo.getReservations(rr.restId);
-        rr.tables = rr.tables.sort((a, b) => a.id <= b.id ? -1 : 1);
-        result.tables = result.tables.sort((a, b) => a.id <= b.id ? -1 : 1);
         restaurantReservationsEqual(result, rr);
     });
 
     it('check if getReservation works', async function () {
         assert.throws(() => repo.getReservation(), RepositoryError);
-        await assert.rejects(() => repo.getReservation('noneid'), RepositoryError);
+        try {
+            await repo.getReservation('noneid');
+        } catch (e) {
+            assert.throws(() => { throw e; }, Error);
+        }
     });
 });
