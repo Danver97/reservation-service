@@ -156,7 +156,7 @@ describe('API unit test', function() {
                 .send({ people: resrv.people })
                 .send({ date })
                 .send({ hour })
-                .expect(400);
+                .expect(404);
             await req
                 .post('/reservation-service/reservations')
                 .set('Content-Type', 'application/x-www-url-encoded')

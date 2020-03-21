@@ -1,8 +1,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const Reservation = require('../../domain/models/reservation');
+const ApiError = require('./api.error');
 const QueryError = require('../query/query_error');
 const ReservationManagerError = require('../../domain/errors/reservationManager_error');
+const errorHandler = require('./api_error_handler');
 
 const app = express();
 let reservationMgr = null;
@@ -17,15 +19,15 @@ function clientError(res, message, code) {
     res.json({ error: message });
 }
 
-app.get('/reservation-service', (req, res) => {
+app.get('/reservation-service', (req, res, next) => {
     res.json({ service: 'reservation-service' });
 });
 
-app.get('/reservation-service/healthcheck', (req, res) => {
+app.get('/reservation-service/healthcheck', (req, res, next) => {
     res.json({ service: 'reservation-service', healthcheck: 'success' });
 });
 
-app.post('/reservation-service/reservationDemo', (req, res) => {
+app.post('/reservation-service/reservationDemo', (req, res, next) => {
     const body = req.body;
     /* const demoBody = {
         "restId":"0eb893e2-c57c-4996-a5c5-0fd30da5be88",
@@ -45,10 +47,10 @@ app.post('/reservation-service/reservationDemo', (req, res) => {
         clientError(res, 'Wrong body params');
 });
 
-app.get('/reservation-service/reservations', async (req, res) => {
+app.get('/reservation-service/reservations', async (req, res, next) => {
     const query = req.query;
     if (!query.restId && !query.userId) {
-        clientError(res, 'Wrong query parameters.');
+        next(ApiError.paramError('Wrong query parameters.'));
         return;
     }
     try {
@@ -60,22 +62,18 @@ app.get('/reservation-service/reservations', async (req, res) => {
         res.status(200);
         res.json(reservs);
     } catch (e) {
-        if (e instanceof QueryError && e.code === QueryError.reservationsNotFoundErrorCode) {
-            clientError(res, `${query.restId ? 'Restaurant' : 'User'} not found`, 404);
-            return;
-        }
-        res.status(500);
-        res.json({ error: e });
+        next(e);
+        return;
     }
 });
 
-app.post('/reservation-service/reservations', async (req, res) => {
+app.post('/reservation-service/reservations', async (req, res, next) => {
     const body = req.body;
     let reservation;
     try {
         reservation = new Reservation(body.userId, body.restId, body.reservationName, body.people, body.date, body.hour);
     } catch (e) {
-        clientError(res, 'Wrong body parameters for reservation.');
+        next(ApiError.paramError('Wrong body parameters for reservation.'));
         return;
     }
     try {
@@ -86,21 +84,15 @@ app.post('/reservation-service/reservations', async (req, res) => {
             resId: reservation.id,
         });
     } catch (e) {
-        console.log(e);
-        if (e instanceof ReservationManagerError && e.code === ReservationManagerError.restaurantDoesNotExistErrorCode) {
-            clientError(res, 'The restaurant indicated in the reservation does not exist', 400);
-            return;
-        }
-        console.log(e);
-        res.status(500);
-        res.json({ error: e });
+        next(e);
+        return;
     }
 });
 
-app.get('/reservation-service/reservations/:resId', async (req, res) => {
+app.get('/reservation-service/reservations/:resId', async (req, res, next) => {
     const params = req.params;
     if (!params.resId) {
-        clientError(res, 'Missing resId parameters.');
+        next(ApiError.paramError('Missing resId parameters.'));
         return;
     }
     try {
@@ -108,19 +100,15 @@ app.get('/reservation-service/reservations/:resId', async (req, res) => {
         res.status(200);
         res.json(reserv);
     } catch (e) {
-        if (e instanceof QueryError && e.code === QueryError.reservationNotFoundErrorCode) {
-            clientError(res, 'Reservation not found', 404);
-            return;
-        }
-        res.status(500);
-        res.json({ error: e });
+        next(e);
+        return;
     }
 });
 
-app.get('/reservation-service/reservations/:resId/status', async (req, res) => {
+app.get('/reservation-service/reservations/:resId/status', async (req, res, next) => {
     const params = req.params;
     if (!params.resId) {
-        clientError(res, 'Missing resId parameters.');
+        next(ApiError.paramError('Missing resId parameters.'));
         return;
     }
     try {
@@ -128,19 +116,15 @@ app.get('/reservation-service/reservations/:resId/status', async (req, res) => {
         res.status(200);
         res.json({ resId: reserv.id, status: reserv.status });
     } catch (e) {
-        if (e instanceof QueryError && e.code === QueryError.reservationNotFoundErrorCode) {
-            clientError(res, 'Reservation not found', 404);
-            return;
-        }
-        res.status(500);
-        res.json({ error: e });
+        next(e);
+        return;
     }
 });
 
-app.put('/reservation-service/reservations/:resId/status', async (req, res) => {
+app.put('/reservation-service/reservations/:resId/status', async (req, res, next) => {
     const params = req.params;
     if (!params.resId) {
-        clientError(res, 'Missing resId parameters.');
+        next(ApiError.paramError('Missing resId parameters.'));
         return;
     }
     const body = req.body;
@@ -161,15 +145,12 @@ app.put('/reservation-service/reservations/:resId/status', async (req, res) => {
         res.status(200);
         res.end();
     } catch (e) {
-        if (e instanceof QueryError && e.code === QueryError.notFoundErrorCode) {
-            clientError(res, 'Reservation not found', 404);
-            return;
-        }
-        console.log(e);
-        res.status(500);
-        res.json({ error: e });
+        next(e);
+        return;
     }
 });
+
+app.use(errorHandler);
 
 function exportFunc(reservationManager, queryManager) {
     if (!reservationManager || !queryManager)
