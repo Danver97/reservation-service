@@ -11,24 +11,24 @@ const statusCodes = {
 function parseHour(hour) {
     const h = hour.split(':');
     if (!h[1])
-        throw new ReservationError('Invalid Reservation object hour parameter.');
+        throw ReservationError.paramError('Invalid Reservation object hour parameter.');
     const h1 = parseInt(h[0], 10);
     const m1 = parseInt(h[1], 10);
     if (Number.isNaN(h1) || Number.isNaN(m1))
-        throw new ReservationError('Invalid Reservation object hour parameter.');
+        throw ReservationError.paramError('Invalid Reservation object hour parameter.');
     return { h: h1, m: m1 };
 }
 
 class Reservation {
     constructor(userId, restaurantId, reservationName, people, date, hour) {
         if (!userId || !reservationName || !people || !restaurantId || !date || !hour) {
-            throw new ReservationError(`Invalid Reservation object constructor parameters. Missing the following parameters:
+            throw ReservationError.paramError(`Invalid Reservation object constructor parameters. Missing the following parameters:
                 ${userId ? '' : ' userId'}
                 ${reservationName ? '' : ' reservationName'}
                 ${people ? '' : ' people'}
                 ${restaurantId ? '' : ' restaurantId'}
                 ${date ? '' : ' date'}
-                ${hour ? '' : ' hour'}`, ReservationError.paramError);
+                ${hour ? '' : ' hour'}`);
         }
         this.status = undefined;
         this.id = uuid();
@@ -48,6 +48,8 @@ class Reservation {
     }
 
     static fromObject(obj) {
+        if (!obj)
+            throw ReservationError.paramError('Missing \'obj\' parameter');
         const res = new Reservation(obj.userId, obj.restId, obj.reservationName, obj.people, obj.date, '15:00');
         res.id = obj.id || obj.resId;
         res.resId = obj.id || obj.resId;
@@ -64,20 +66,11 @@ class Reservation {
         return res;
     }
 
-    /* set id(reservationId) {
-        this.id = reservationId;
-        this.resId = reservationId;
-    } */
-
     pending() {
         if (this.statusCode < 0)
             this.setStatus('pending');
-        else {
-            throw new ReservationError(
-                `This reservation is already ${this.status} and can't be set into a pending state.`,
-                ReservationError.statusChangeError,
-            );
-        }
+        else
+            throw ReservationError.statusChangeError(`This reservation is already ${this.status} and can't be set into a pending state.`);
     }
 
     accepted(table, effectiveDate) {
@@ -90,36 +83,22 @@ class Reservation {
     confirmed() {
         if (this.statusCode === 0)
             this.setStatus('confirmed');
-        else {
-            throw new ReservationError(
-                `This reservation is already ${this.status} and can't be set into a confirmed state.`,
-                ReservationError.statusChangeError,
-            );
-        }
+        else
+            throw ReservationError.statusChangeError(`This reservation is already ${this.status} and can't be set into a confirmed state.`);
     }
 
     rejected() {
         if (this.statusCode === 0)
             this.setStatus('rejected');
-        else {
-            throw new ReservationError(
-                `This reservation is already ${this.status} and can't be set into a rejected state.`,
-                ReservationError.statusChangeError,
-            );
-        }
-        // this.setTable(null, null);
+        else
+            throw ReservationError.statusChangeError(`This reservation is already ${this.status} and can't be set into a rejected state.`);
     }
 
     cancelled() {
         if (this.statusCode <= 2)
             this.setStatus('cancelled');
-        else {
-            throw new ReservationError(
-                `This reservation is already ${this.status} and can't be set into a cancelled state.`,
-                ReservationError.statusChangeError,
-            );
-        }
-        // this.setTable(null, null);
+        else
+            throw ReservationError.statusChangeError(`This reservation is already ${this.status} and can't be set into a cancelled state.`);
     }
 
     setStatus(status) {
@@ -129,12 +108,11 @@ class Reservation {
 
     setTable(table) {
         if (!table)
-            throw new ReservationError('Table required.', ReservationError.paramError);
+            throw ReservationError.paramError('Table required.', ReservationError.paramError);
         if (!table.id || !table.people)
-            throw new ReservationError(`Invalid table object. Missing${table.id ? '' : ' id'}${table.people ? '' : ' people'}`);
+            throw ReservationError.paramError(`Invalid table object. Missing${table.id ? '' : ' id'}${table.people ? '' : ' people'}`);
         if (this.people > table.people) {
-            throw new ReservationError(`Invalid Reservation table: the assigned table (${table.people} people)
-            is too little for ${this.people} people.`, ReservationError.tooSmallTableError);
+            throw ReservationError.tooSmallTableError(`Invalid Reservation table: the assigned table (${table.people} people) is too little for ${this.people} people.`);
         }
         this.table = { id: table.id, people: table.people };
     }

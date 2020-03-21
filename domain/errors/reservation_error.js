@@ -2,40 +2,46 @@ const ExtendableError = require('../../lib/extendable_error');
 
 const errorsTypes = {
     paramError: {
-        code: 0,
+        code: 'paramError',
         name: 'paramError',
     },
     statusChangeError: {
-        code: 100,
+        code: 'statusChangeError',
         name: 'statusChangeError',
     },
     tooSmallTableError: {
-        code: 101,
+        code: 'tooSmallTableError',
         name: 'tooSmallTableError',
     },
 };
 
 class ReservationError extends ExtendableError {
-     /* constructor(message, errorCode) {
-        let code = errorCode;
-        if (typeof code === 'object')
-            code = code.code;
-        super(message, code);
-    } */
 
     static get errors() {
         return errorsTypes;
     }
 
-    static get paramError() {
+    static paramError(msg) {
+        return new ReservationError(msg, ReservationError.paramErrorCode);
+    }
+
+    static statusChangeError(msg) {
+        return new ReservationError(msg, ReservationError.statusChangeErrorCode);
+    }
+
+    static tooSmallTableError(msg) {
+        return new ReservationError(msg, ReservationError.tooSmallTableErrorCode);
+    }
+
+    static get paramErrorCode() {
         return errorsTypes.paramError.code;
     }
 
-    static get statusChangeError() {
+    static get statusChangeErrorCode() {
         return errorsTypes.statusChangeError.code;
     }
 
-    static get tooSmallTableError() {
+    static get tooSmallTableErrorCode() {
         return errorsTypes.tooSmallTableError.code;
     }
 }
