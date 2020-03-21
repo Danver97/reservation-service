@@ -2,19 +2,19 @@ const ExtendableError = require('../../lib/extendable_error');
 
 const errorsTypes = {
     paramError: {
-        code: 0,
+        code: 'paramError',
         name: 'paramError',
     },
     reservationAlreadyAddedError: {
-        code: 100,
+        code: 'reservationAlreadyAddedError',
         name: 'reservationAlreadyAddedError',
     },
     reservationStatusError: {
-        code: 101,
+        code: 'reservationStatusError',
         name: 'reservationStatusError',
     },
     reservationNotFoundError: {
-        code: 102,
+        code: 'reservationNotFoundError',
         name: 'reservationNotFoundError',
     },
 };
@@ -31,19 +31,35 @@ class RestaurantReservationError extends ExtendableError {
         return errorsTypes;
     }
 
-    static get paramError() {
+    static paramError(msg) {
+        return new RestaurantReservationError(msg, RestaurantReservationError.paramErrorCode);
+    }
+
+    static reservationAlreadyAddedError(msg) {
+        return new RestaurantReservationError(msg, RestaurantReservationError.reservationAlreadyAddedErrorCode);
+    }
+
+    static reservationStatusError(msg) {
+        return new RestaurantReservationError(msg, RestaurantReservationError.reservationStatusErrorCode);
+    }
+
+    static reservationNotFoundError(msg) {
+        return new RestaurantReservationError(msg, RestaurantReservationError.reservationNotFoundErrorCode);
+    }
+
+    static get paramErrorCode() {
         return errorsTypes.paramError.code;
     }
 
-    static get reservationAlreadyAddedError() {
+    static get reservationAlreadyAddedErrorCode() {
         return errorsTypes.reservationAlreadyAddedError.code;
     }
 
-    static get reservationStatusError() {
+    static get reservationStatusErrorCode() {
         return errorsTypes.reservationStatusError.code;
     }
 
-    static get reservationNotFoundError() {
+    static get reservationNotFoundErrorCode() {
         return errorsTypes.reservationNotFoundError.code;
     }
 }
