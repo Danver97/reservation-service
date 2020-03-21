@@ -10,7 +10,7 @@ function getReservation(id, cb) {
     return Promisify(async () => {
         const doc = await mongoCollection.findOne({ _id: id });
         if (!doc)
-            throw QueryError.notFoundError('Document not found');
+            throw QueryError.reservationNotFoundError('reservation not found');
         return Reservation.fromObject(doc);
     }, cb);
 }
@@ -30,7 +30,7 @@ function getReservations(restId, cb) {
     return Promisify(async () => {
         const docs = await mongoCollection.findOne({ _id: restId, restId }, { projection: { reservations: 1 } });
         if (!docs)
-            throw QueryError.notFoundError('Document not found');
+            throw QueryError.reservationsNotFoundError('reservations not found');
         return docs.reservations;
     }, cb);
 }
@@ -41,7 +41,7 @@ function getRestaurantReservations(restId, cb) {
     return Promisify(async () => {
         const doc = await mongoCollection.findOne({ _id: restId, restId });
         if (!doc)
-            throw QueryError.notFoundError('Document not found');
+            throw QueryError.restaurantReservationsNotFoundError('restaurantReservations document not found');
         return doc;
     }, cb);
 }
