@@ -2,7 +2,7 @@ const assert = require('assert');
 const Table = require('../../domain/models/table');
 const Reservation = require('../../domain/models/reservation');
 const RestaurantReservations = require('../../domain/models/restaurantReservations');
-const repo = require('../../infrastructure/repository/repositoryManager')('testdb');
+const repo = require('../../infrastructure/repository/repositoryManager')('testdb', { eventStoreName: 'prova2'});
 const reservationMgr = require('../../domain/logic/restaurantReservationsManager')(repo);
 const assertStrictEqual = require('../../lib/utils').assertStrictEqual;
 
@@ -46,7 +46,7 @@ describe('RestaurantReservationManager unit test', function () {
         new Table(5, 1, 4),
         new Table(6, 1, 6),
     ];
-    const rr = new RestaurantReservations(1, timeTable, tables);
+    const rr = new RestaurantReservations('1', timeTable, tables);
     let res;
 
     const tomorrow = new Date(Date.now());
@@ -56,7 +56,7 @@ describe('RestaurantReservationManager unit test', function () {
     const expectedDate = new Date(tomorrow);
 
     before(async () => {
-        repo.reset();
+        await repo.reset();
         await repo.restaurantReservationsCreated(rr);
     });
 
