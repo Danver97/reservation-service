@@ -4,6 +4,7 @@ const Reservation = require('../../domain/models/reservation');
 const RestaurantReservations = require('../../domain/models/restaurantReservations');
 const RepositoryError = require('./errors/RepositoryError');
 const Event = require('@danver97/event-sourcing/event');
+const EventStoreError = require('@danver97/event-sourcing/eventStore/errors/event_store.error');
 
 class RepositoryManager {
     constructor(db) {
@@ -14,8 +15,15 @@ class RepositoryManager {
         return new RepositoryManagerTransaction(this.db);
     }
 
-    save(streamId, eventId = 0, message, payload, cb) {
-        return this.db.save(streamId, eventId, message, payload, cb);
+    async save(streamId, eventId = 0, message, payload) {
+        try {
+            await this.db.save(streamId, eventId, message, payload);
+        } catch (err) {
+            if (err instanceof EventStoreError
+                && (e.code === EventStoreError.streamRevisionNotSyncErrorCode || e.code === EventStoreError.eventAlreadyExistsErrorCode))
+                throw RepositoryError.optimisticLockError();
+            throw err;
+        }
     }
         
     // Reservation
@@ -204,13 +212,18 @@ class RepositoryManagerTransaction extends RepositoryManager {
     constructor(db) {
         super(db);
         this.buffer = [];
+        this.streamRevisions = {};
     }
     save(streamId, eventId = 0, message, payload, cb) {
-        this.buffer.push(new Event(streamId, eventId, message, payload));
+        if (eventId === 0)
+            this.streamRevisions[streamId] = 0;
+        this.streamRevisions[streamId]++;
+        this.buffer.push(new Event(streamId, eventId || this.streamRevisions[streamId], message, payload));
     }
 
     commit() {
-        this.db.saveEventsTransactionally(this.buffer);
+        console.log(this.buffer.map(e => ({ streamId: e.streamId, eventId: e.eventId })))
+        return this.db.saveEventsTransactionally(this.buffer);
     }
 }
 
