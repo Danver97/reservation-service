@@ -64,7 +64,7 @@ describe('RepositoryManager unit test', function() {
 
         const rr2 = new RestaurantReservations(uuid(), timeTable, tables);
         await repo.restaurantReservationsCreated(rr2);
-        const events = await repo.getStream(rr2.restId);
+        const events = await repo.db.getStream(rr2.restId);
         const lastEvent = events[events.length - 1];
 
         assert.strictEqual(lastEvent.streamId, rr2.restId);
@@ -80,7 +80,7 @@ describe('RepositoryManager unit test', function() {
         const rr = new RestaurantReservations(uuid(), timeTable, tables);
         const payload1 = { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables };
         const e1 = new Event(rr.restId, 1, reservationEvents.restaurantReservationsCreated, payload1);
-        await repo.saveEvent(e1);
+        await repo.db.saveEvent(e1);
         rr._revisionId = 1;
 
         // Update
@@ -88,7 +88,7 @@ describe('RepositoryManager unit test', function() {
         await repo.reservationCreated(res2);
 
         // Assertions
-        const events = await repo.getStream(res2.resId);
+        const events = await repo.db.getStream(res2.resId);
         const lastEvent = events[events.length - 1];
         
         assert.strictEqual(lastEvent.streamId, res2.resId);
@@ -106,7 +106,7 @@ describe('RepositoryManager unit test', function() {
         const payload2 = Object.assign({}, res);
         delete payload2.id;
         const e2 = new Event(res.resId, 1, reservationEvents.reservationCreated, payload2);
-        await repo.saveEvent(e2);
+        await repo.db.saveEvent(e2);
         res._revisionId = 1;
 
         // Update
@@ -114,7 +114,7 @@ describe('RepositoryManager unit test', function() {
         await repo.reservationConfirmed(res);
 
         // Assertions
-        const events = await repo.getStream(res.resId);
+        const events = await repo.db.getStream(res.resId);
         const lastEvent = events[events.length - 1];
         
         assert.strictEqual(lastEvent.streamId, res.resId);
@@ -131,7 +131,7 @@ describe('RepositoryManager unit test', function() {
         const payload3 = Object.assign({}, rejectedRes);
         delete payload3.id;
         const e3 = new Event(rejectedRes.resId, 1, reservationEvents.reservationCreated, payload3);
-        await repo.saveEvent(e3);
+        await repo.db.saveEvent(e3);
         rejectedRes._revisionId = 1;
 
         // Update
@@ -139,7 +139,7 @@ describe('RepositoryManager unit test', function() {
         await repo.reservationRejected(rejectedRes);
 
         // Assertions
-        const events = await repo.getStream(rejectedRes.resId);
+        const events = await repo.db.getStream(rejectedRes.resId);
         const lastEvent = events[events.length - 1];
 
         assert.strictEqual(lastEvent.streamId, rejectedRes.resId);
@@ -155,7 +155,7 @@ describe('RepositoryManager unit test', function() {
         const rr = new RestaurantReservations(uuid(), timeTable, tables);
         const payload1 = { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables };
         const e1 = new Event(rr.restId, 1, reservationEvents.restaurantReservationsCreated, payload1);
-        await repo.saveEvent(e1);
+        await repo.db.saveEvent(e1);
         rr._revisionId = 1;
 
         const res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
@@ -166,7 +166,7 @@ describe('RepositoryManager unit test', function() {
         await repo.reservationAdded(rr, res);
 
         // Assertions
-        const events = await repo.getStream(rr.restId);
+        const events = await repo.db.getStream(rr.restId);
         const lastEvent = events[events.length - 1];
         
         assert.strictEqual(lastEvent.streamId, rr.restId);
@@ -184,11 +184,11 @@ describe('RepositoryManager unit test', function() {
         const payload2 = Object.assign({}, res);
         delete payload2.id;
         const e2 = new Event(res.resId, 1, reservationEvents.reservationCreated, payload2);
-        await repo.saveEvent(e2);
+        await repo.db.saveEvent(e2);
         res._revisionId = 1;
 
         res.accepted(tables[0]);
-        await repo.saveEvent(new Event(res.resId, 2, reservationEvents.reservationConfirmed, { resId: res.resId, date: res.date.toISOString(), restId: res.restId, status: 'confirmed', table: res.table }));
+        await repo.db.saveEvent(new Event(res.resId, 2, reservationEvents.reservationConfirmed, { resId: res.resId, date: res.date.toISOString(), restId: res.restId, status: 'confirmed', table: res.table }));
         res._revisionId = 2;
 
         // Update
@@ -196,7 +196,7 @@ describe('RepositoryManager unit test', function() {
         await repo.reservationCancelled(res);        
         
         // Assertions
-        const events = await repo.getStream(res.resId);
+        const events = await repo.db.getStream(res.resId);
         const lastEvent = events[events.length - 1];
         
         assert.strictEqual(lastEvent.streamId, res.resId);
@@ -212,13 +212,13 @@ describe('RepositoryManager unit test', function() {
         const rr = new RestaurantReservations(uuid(), timeTable, tables);
         const payload1 = { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables };
         const e1 = new Event(rr.restId, 1, reservationEvents.restaurantReservationsCreated, payload1);
-        await repo.saveEvent(e1);
+        await repo.db.saveEvent(e1);
         rr._revisionId = 1;
         
         const res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
         res.accepted(tables[0]);
         rr.reservationAdded(res);
-        await repo.saveEvent(new Event(rr.restId, 2, reservationEvents.reservationAdded, toJSON(res)));
+        await repo.db.saveEvent(new Event(rr.restId, 2, reservationEvents.reservationAdded, toJSON(res)));
         rr._revisionId = 2;
 
         // Update
@@ -226,7 +226,7 @@ describe('RepositoryManager unit test', function() {
         await repo.reservationRemoved(rr, res.id);
 
         // Assertions
-        const events = await repo.getStream(rr.restId);
+        const events = await repo.db.getStream(rr.restId);
         const lastEvent = events[events.length - 1];
         
         assert.strictEqual(lastEvent.streamId, rr.restId);
@@ -244,17 +244,17 @@ describe('RepositoryManager unit test', function() {
         const rr = new RestaurantReservations(uuid(), timeTable, tables);
         const payload1 = { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables };
         const e1 = new Event(rr.restId, 1, reservationEvents.restaurantReservationsCreated, payload1);
-        await repo.saveEvent(e1);
+        await repo.db.saveEvent(e1);
         rr._revisionId = 1;
         
         const res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
         res.accepted(tables[0]);
         rr.reservationAdded(res);
-        await repo.saveEvent(new Event(rr.restId, 2, reservationEvents.reservationAdded, toJSON(res)));
+        await repo.db.saveEvent(new Event(rr.restId, 2, reservationEvents.reservationAdded, toJSON(res)));
         rr._revisionId = 2;
         
         rr.reservationRemoved(res.id);
-        await repo.saveEvent(new Event(rr.restId, 3, reservationEvents.reservationRemoved, { resId: res.resId, restId: rr.restId}));
+        await repo.db.saveEvent(new Event(rr.restId, 3, reservationEvents.reservationRemoved, { resId: res.resId, restId: rr.restId}));
         rr._revisionId = 3;
         
         // "Update"
