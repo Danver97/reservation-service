@@ -124,7 +124,7 @@ async function cleanUpData() {
     await collection.deleteMany({});
 }
 
-describe('API unit test', function() {
+describe('API unit test', function() {+56
     const reservationEquals = (result, expected) => {
         for(let p in expected) {
             if (p === 'id' || p === 'resId')
@@ -215,6 +215,28 @@ describe('API unit test', function() {
                 response.date = new Date(response.date);
                 response.people = parseInt(response.people, 10);
                 reservationEquals(response, res1);
+            })
+            .expect(200);
+    });
+
+    it.skip(`GET\t/reservation-service/reservations?restId=${rr3.restId}`, async function() {
+        /* await writeRR(rr1);
+        await addResToRR(rr1, resrv, tables[0]); */
+
+        await req.get('/reservation-service/reservations')
+            .expect(400);
+        await req.get('/reservation-service/reservations?restId=10')
+            .expect(404);
+
+        await req.get(`/reservation-service/reservations?restId=${rr3.restId}`)
+            .expect(res => {
+                assert.strictEqual(Array.isArray(res.body), true);
+                assert.strictEqual(res.body.length, 1);
+                const response = res.body[0];
+                response.date = new Date(response.date);
+                response.people = parseInt(response.people, 10);
+                const expected = resToBeAdded(resrv, tables[0]);
+                assert.deepStrictEqual(response, expected);
             })
             .expect(200);
     });

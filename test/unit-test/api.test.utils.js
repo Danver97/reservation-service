@@ -3,6 +3,7 @@ const TestEventBroker = require('@danver97/event-sourcing/eventBroker')['testbro
 const dMongoHandlerFunc = require('../../infrastructure/denormalizers/mongodb/handler');
 const dMongoWriterFunc = require('../../infrastructure/denormalizers/mongodb/writer');
 const dMongoOrderCtrlFunc = require('../../infrastructure/denormalizers/mongodb/orderControl');
+const brokerHandlerFunc = require('../../infrastructure/messaging/eventHandler/brokerHandler');
 
 const testbroker = new TestEventBroker({ eventBrokerName: 'testBroker' });
 
@@ -13,6 +14,9 @@ const endpoint = process.env.CLOUD === 'aws' ? undefined : 'http://localhost:456
 
 const dMongoOrderCtrl = dMongoOrderCtrlFunc(ordCtrlDB, { tableName: orderControlTableName, endpoint });
 let dMongoHandler;
+let brokerHandler;
+
+const waitAsync = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 async function setUpDenormalizer(mongoOptions) {
     const dMongoWriter = await dMongoWriterFunc(mongoOptions);
@@ -22,7 +26,7 @@ async function setUpDenormalizer(mongoOptions) {
     return dMongoHandler;
 }
 
-async function processEvents() {
+async function processEvents(processEventTime) {
     if (process.env.TEST === 'integration') {
         await waitAsync(processEventTime);
         return;
