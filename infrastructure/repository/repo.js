@@ -222,7 +222,7 @@ class RepositoryManagerTransaction extends RepositoryManager {
     }
 
     commit() {
-        console.log(this.buffer.map(e => ({ streamId: e.streamId, eventId: e.eventId })))
+        // console.log(this.buffer.map(e => ({ streamId: e.streamId, eventId: e.eventId })))
         return this.db.saveEventsTransactionally(this.buffer);
     }
 }
