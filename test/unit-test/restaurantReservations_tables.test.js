@@ -27,14 +27,12 @@ describe('RestaurantReservations unit test', function () {
     const tomorrow = new Date(Date.now());
     tomorrow.setDate(tomorrow.getDate() + 1);
     const id = uuid();
-    const threshold = 50;
-    const rr = new RestaurantReservations({ restId: id, timeTable, threshold });
+    const rr = new RestaurantReservations(id, timeTable, tables);
 
     it('check if constructor works', function () {
         assert.throws(() => new RestaurantReservations(), RestaurantReservationsError);
         assert.strictEqual(rr.restId, id);
-        assert.deepStrictEqual(rr.timeTable, timeTable);
-        assert.deepStrictEqual(rr.threshold, threshold);
+        assert.strictEqual(JSON.stringify(rr.timeTable), JSON.stringify(timeTable));
     });
 
     it('check if setTimeTable works', function () {
@@ -50,10 +48,10 @@ describe('RestaurantReservations unit test', function () {
         assert.throws(() => rr.reservationAdded({}), RestaurantReservationsError);
         res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
         assert.throws(() => rr.reservationAdded(res), RestaurantReservationsError);
-        res.accepted();
+        res.accepted(tables[0]);
         rr.reservationAdded(res);
         assert.throws(() => rr.reservationAdded(res), RestaurantReservationsError);
-        // assert.strictEqual(JSON.stringify(rr.getTables(2)[0].getReservations()), JSON.stringify([res]));
+        assert.strictEqual(JSON.stringify(rr.getTables(2)[0].getReservations()), JSON.stringify([res]));
         const res2 = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
         res2.cancelled();
         assert.throws(() => rr.reservationAdded(res2), RestaurantReservationsError);
@@ -64,6 +62,6 @@ describe('RestaurantReservations unit test', function () {
         assert.throws(() => rr.reservationRemoved({}), RestaurantReservationsError);
         rr.reservationRemoved(res.id);
         assert.throws(() => rr.reservationRemoved(res.id), RestaurantReservationsError);
-        // assert.strictEqual(JSON.stringify(rr.getTables(2)[0].getReservations()), JSON.stringify([]));
+        assert.strictEqual(JSON.stringify(rr.getTables(2)[0].getReservations()), JSON.stringify([]));
     });
 });

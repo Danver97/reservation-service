@@ -10,40 +10,22 @@ function min(m) {
 }
 
 class RestaurantReservations {
-    /**
-     * @constructor
-     * @param {object} options 
-     * @param {string} options.restId 
-     * @param {object} options.timeTable 
-     * @param {Table[]} options.tables 
-     * @param {number} options.threshold 
-     */
-    constructor(options = {}) {
-        const { restId, timeTable, tables, threshold } = options;
-        this._checkConstrParams(restId, timeTable, tables, threshold);
-        this.restId = restId;
-        this.setTimeTable(timeTable);
-        if (tables) this.setTables(tables);
-        this.reservationMap = {};
-        this.threshold = threshold;
-        this.timeSlotsPeople = {};
-    }
-
-    _checkConstrParams(restId, timeTable, tables, threshold) {
-        if (!restId || !timeTable || !threshold) {
+    constructor(restId, timeTable, tables) {
+        if (!restId || !timeTable || !tables) {
             throw RestaurantReservationError.paramError(`Invalid Reservation object constructor parameters. Missing the following parameters:
                 ${restId ? '' : ' restId'}
                 ${timeTable ? '' : ' timeTable'}
-                ${threshold ? '' : ' threshold'}`);
+                ${tables ? '' : ' tables'}`);
         }
-        if (typeof restId !== 'string')
-            throw RestaurantReservationError.paramError(`'restId' must be a string`);
-        if (typeof timeTable !== 'object')
-            throw RestaurantReservationError.paramError(`'timeTable' must be an instance of TimeTable`);
-        if (tables && !Array.isArray(tables))
-            throw RestaurantReservationError.paramError(`'tables' must be an array of Tables`);
-        if (typeof threshold !== 'number')
-            throw RestaurantReservationError.paramError(`'threshold' must be a number`);
+        this.restId = restId;
+        this.setTimeTable(timeTable);
+        this.reservationsTableId = {};
+        this.setTables(tables);
+        this.reservationMap = {};
+        this.threshold = 20;
+        this.byNumberConfig = {
+            buckets: {},
+        }
     }
 
     setTimeTable(timeTable) {
@@ -68,7 +50,7 @@ class RestaurantReservations {
         let cursor = reservation.date.getTime();
         // Checks if the threshold is not broken in the timeslots covered by the reservation
         while (cursor < endOfRes) {
-            if (this.timeSlotsPeople[cursor] + reservation.people > this.threshold)
+            if (this.byNumberConfig.buckets[cursor] + reservation.people > this.threshold)
                 throw new RestaurantReservationError();
             cursor += min(slotLength);
         }
@@ -76,7 +58,7 @@ class RestaurantReservations {
         cursor = reservation.date.getTime();
         // Adds the peoples in the timeslots covered by the reservation
         while (cursor < endOfRes) {
-            this.timeSlotsPeople[cursor] += reservation.people;
+            this.byNumberConfig.buckets[cursor] += reservation.people;
             cursor += min(slotLength);
         }
         this.reservationMap[reservation.id] = reservation;
@@ -90,10 +72,26 @@ class RestaurantReservations {
         let cursor = reservation.date.getTime();
         // Removes the peoples in the timeslots covered by the reservation
         while (cursor < endOfRes) {
-            this.timeSlotsPeople[cursor] -= reservation.people;
-            cursor += min(slotLength);
+            this.byNumberConfig.buckets[cursor] -= reservation.people;
+            cursor += min(slotLength);;
         }
         delete this.reservationMap[reservation.id];
+    }
+
+    _addByTables(reservation) {
+        if (this.reservationsTableId[reservation.id])
+            throw RestaurantReservationError.reservationAlreadyAddedError(`Reservation with id ${reservation.id} already added`);
+        const t = this.tablesMap[reservation.table.id];
+        t.addReservation(reservation);
+        this.reservationsTableId[reservation.id] = t.id;
+    }
+
+    _removeByTables(resId) {
+        if (!this.reservationsTableId[resId])
+            throw RestaurantReservationError.reservationNotFoundError(`Reservation with id ${resId} not found`);
+        const t = this.tablesMap[this.reservationsTableId[resId]];
+        t.removeReservation(resId);
+        delete this.reservationsTableId[resId];
     }
 
     reservationAdded(reservation) { // O(1)
@@ -103,8 +101,8 @@ class RestaurantReservations {
             throw RestaurantReservationError.paramError("'reservation' must be instance of Reservation class");
         if (reservation.status !== 'confirmed')
             throw RestaurantReservationError.reservationStatusError(`Reservation must be in a 'confirmed' status. Status found: ${reservation.status}`);
-        // this._addByTables(reservation);
-        this._addByNumber(reservation);
+        this._addByTables(reservation);
+        // this._addByNumber(reservation);
     }
 
     reservationRemoved(resId) { // O(1)
@@ -113,8 +111,7 @@ class RestaurantReservations {
         const type = typeof resId;
         if (type !== 'number' && type !== 'string')
             throw RestaurantReservationError.paramError(`'resId' must be string or number. Found: ${type}`);
-        // this._removeByTables(resId);
-        this._removeByNumber(resId);
+        this._removeByTables(resId);
     }
 
     getTables(people = 0) { // O(N) - N: total tables
@@ -128,3 +125,20 @@ class RestaurantReservations {
 }
 
 module.exports = RestaurantReservations;
+
+const buckets = {};
+const resMap = {};
+
+function min(m) {
+    return m * 60 * 1000;
+}
+
+function addRes(res) {
+    const endOfRes = res.date.getTime() + min(resLength);
+    const cursor = res.date.getTime();
+    while (cursor < endOfRes) {
+        buckets[cursor] += res.people;
+        cursor += slotLength;
+    }
+    resMap[res.id] = res;
+}

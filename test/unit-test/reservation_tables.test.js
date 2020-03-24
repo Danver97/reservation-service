@@ -31,9 +31,11 @@ describe('Reservation class unit test', function () {
     });
 
     it('check if accepted() works', function () {
-        res.accepted();
-        assert.strictEqual(res.status, 'confirmed');
-        assert.throws(() => res.accepted(), ReservationError);
+        res.accepted(table, effDate);
+        assert.strictEqual(res.table.id, 1);
+        assert.strictEqual(res.table.people, 4);
+        assert.strictEqual(res.date.toLocaleString(), effDate.toLocaleString());
+        assert.throws(() => res.accepted(table, effDate), ReservationError);
     });
 
     it('check if accepted() called again throws ReservationError', function () {

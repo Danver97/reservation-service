@@ -73,8 +73,11 @@ class Reservation {
             throw ReservationError.statusChangeError(`This reservation is already ${this.status} and can't be set into a pending state.`);
     }
 
-    accepted() {
+    accepted(table, effectiveDate) {
+        this.setTable(table);
         this.confirmed();
+        if (effectiveDate && Date.parse(effectiveDate) !== NaN)
+            this.date = new Date(effectiveDate);
     }
 
     confirmed() {
