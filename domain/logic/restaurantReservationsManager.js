@@ -15,56 +15,57 @@ class ReservationManager {
         this.repo = repo;
     }
 
-    reservationCreated(reservation, cb) {
+    _optimisticLocking(action, cb) {
         return optimisticLocking(async error => {
             try {
-                await this.repo.getReservations(reservation.restId)
-                await this.repo.reservationCreated(reservation);
+                const result = await action();
+                return result;
             } catch (e) {
+                if (e instanceof RepositoryError && e.code === RepositoryError.optimisticLockErrorCode) {
+                    error();
+                    return;
+                }
                 if (e instanceof RepositoryError && e.code === RepositoryError.eventStreamDoesNotExistErrorCode)
                     throw ReservationManagerError.restaurantDoesNotExistError('Restaurant doesn\'t exist');
-                error();
+                if (e instanceof ReservationError)
+                    console.log('Reservation already cancelled');
+                throw e;
             }
+        });
+    }
+
+    reservationCreated(reservation, cb) {
+        return this._optimisticLocking(async () => {
+            const rr = await this.repo.getReservations(reservation.restId);
+            const t = this.repo.startTransaction();
+            t.reservationCreated(reservation);
+            // t.reservationCreated(reservation);
+            await t.commit();
             return reservation;
         }, cb);
     }
     
     reservationConfirmed(resId, table, effectiveDate, cb) {
-        return optimisticLocking(async error => {
+        return this._optimisticLocking(async () => {
             const r = await this.repo.getReservation(resId);
-            try {
-                r.accepted(table, effectiveDate);
-                await this.repo.reservationConfirmed(r);
-            } catch (e) {
-                if (e instanceof ReservationError)
-                    console.log('Reservation already cancelled');
-                else // RepositoryError
-                    error();
-            }
+            r.accepted(table, effectiveDate);
+            await this.repo.reservationConfirmed(r);
             return r;
         }, cb);
     }
     
     reservationCancelled(resId, cb) {
-        return optimisticLocking(async error => {
+        return this._optimisticLocking(async () => {
             const r = await this.repo.getReservation(resId);
             r.cancelled();
-            try {
-                await this.repo.reservationCancelled(r);
-            } catch (e) {
-                error();
-            }
+            await this.repo.reservationCancelled(r);
             return r;
         }, cb);
     }
     
     restaurantReservationsCreated(rr, cb) {
-        return optimisticLocking(async error => {
-            try {
-                await this.repo.restaurantReservationsCreated(rr);
-            } catch (e) {
-                error();
-            }
+        return optimisticLocking(async () => {
+            await this.repo.restaurantReservationsCreated(rr);
             return rr;
         }, cb);
     }
@@ -133,20 +134,24 @@ class ReservationManager {
             effectiveDate: effectiveDate ? new Date(effectiveDate) : null,
         };
     }
+
+    async _acceptReservation(rr, r) {
+        const tables = rr.getTables(r.people);
+        const result = this.computeTable(tables, r);
+        if (result.table) {
+            r.accepted(result.table, result.effectiveDate);
+            await this.repo.reservationAdded(rr, r);
+        } else
+            r.rejected();
+        return r;
+    }
     
     acceptReservation(restId, resId) {
         return Promisify(async () => {
             // let r = reservation;
             const rr = await this.repo.getReservations(restId);
             const r = await this.repo.getReservation(resId);
-            const tables = rr.getTables(r.people);
-            const result = this.computeTable(tables, r);
-            if (result.table) {
-                r.accepted(result.table, result.effectiveDate);
-                await this.repo.reservationAdded(rr, r);
-            } else
-                r.rejected();
-            return r;
+            return await this._acceptReservation(rr, r);
         });
     }
     
@@ -159,6 +164,50 @@ class ReservationManager {
         });
     }
 }
+
+
+/* function resCreated(res) {
+    const rr = repo.getRR();
+    switch (rr.acceptPolicy) {
+        case 'manual':
+            manual(rr, res);
+            break;
+        case 'auto_number':
+            auto_number(rr, res);
+            break;
+        case 'auto_tables':
+            auto_tables(rr, res);
+            break;
+    }
+}
+
+function manual(rr, res) {
+    repo.resCreated(res);
+}
+function auto_number(rr, res) {
+    const t = repo.startTransaction();
+    t.resCreated(res);
+    try {
+        rr.add(res);
+        t.resConfirmed(res);
+        t.resAdded(res);
+    } catch (e) {
+        t.resReject(res);
+    }
+    t.commit();
+}
+function auto_tables(rr, res) {
+    const t = repo.startTransaction();
+    t.resCreated(res);
+    try {
+        rr.add(res);
+        t.resConfirmed(res);
+        t.resAdded(res);
+    } catch (e) {
+        t.resReject(res);
+    }
+    t.commit();
+} */
 
 function exportFunc(db) {
     repo = db;
