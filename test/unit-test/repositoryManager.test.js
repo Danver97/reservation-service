@@ -41,12 +41,12 @@ describe('RepositoryManager unit test', function() {
         new Table(5, 1, 4),
         new Table(6, 1, 6),
     ];
-
+    const threshold = 20;
 
     const tomorrow = new Date(Date.now());
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const rrDefault = new RestaurantReservations(uuid(), timeTable, tables);
+    const rrDefault = new RestaurantReservations({ restId: uuid(), timeTable, tables, threshold });
     // let res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
     // let rejectedRes = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');;
 
@@ -62,7 +62,7 @@ describe('RepositoryManager unit test', function() {
     it('check if restaurantReservationsCreated works', async function () {
         assert.throws(() => repo.restaurantReservationsCreated(), RepositoryError);
 
-        const rr2 = new RestaurantReservations(uuid(), timeTable, tables);
+        const rr2 = new RestaurantReservations({ restId: uuid(), timeTable, tables, threshold });
         await repo.restaurantReservationsCreated(rr2);
         const events = await repo.db.getStream(rr2.restId);
         const lastEvent = events[events.length - 1];
@@ -70,14 +70,14 @@ describe('RepositoryManager unit test', function() {
         assert.strictEqual(lastEvent.streamId, rr2.restId);
         assert.strictEqual(lastEvent.eventId, 1);
         assert.strictEqual(lastEvent.message, reservationEvents.restaurantReservationsCreated);
-        assert.deepStrictEqual(lastEvent.payload, toJSON({ restId: rr2.restId, timeTable: rr2.timeTable, tables: rr2.tables }));
+        assert.deepStrictEqual(lastEvent.payload, toJSON({ restId: rr2.restId, timeTable: rr2.timeTable, tables: rr2.tables, threshold: rr2.threshold }));
     });
 
     it('check if reservationCreated works', async function () {
         assert.throws(() => repo.reservationCreated(), RepositoryError);
 
         // Preset
-        const rr = new RestaurantReservations(uuid(), timeTable, tables);
+        const rr = new RestaurantReservations({ restId: uuid(), timeTable, tables, threshold });
         const payload1 = { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables };
         const e1 = new Event(rr.restId, 1, reservationEvents.restaurantReservationsCreated, payload1);
         await repo.db.saveEvent(e1);
@@ -110,7 +110,7 @@ describe('RepositoryManager unit test', function() {
         res._revisionId = 1;
 
         // Update
-        res.accepted(tables[0]);
+        res.accepted(); // res.accepted(tables[0]);
         await repo.reservationConfirmed(res);
 
         // Assertions
@@ -120,7 +120,7 @@ describe('RepositoryManager unit test', function() {
         assert.strictEqual(lastEvent.streamId, res.resId);
         assert.strictEqual(lastEvent.eventId, 2);
         assert.strictEqual(lastEvent.message, reservationEvents.reservationConfirmed);
-        assert.deepStrictEqual(lastEvent.payload, { resId: res.resId, date: res.date.toISOString(), restId: res.restId, status: 'confirmed', table: res.table });
+        assert.deepStrictEqual(lastEvent.payload, { resId: res.resId, date: res.date.toISOString(), restId: res.restId, status: 'confirmed' }); // , table: res.table
     });
 
     it('check if reservationRejected works', async function () {
@@ -152,7 +152,7 @@ describe('RepositoryManager unit test', function() {
         assert.throws(() => repo.reservationAdded(), RepositoryError);
 
         // Presets
-        const rr = new RestaurantReservations(uuid(), timeTable, tables);
+        const rr = new RestaurantReservations({ restId: uuid(), timeTable, tables, threshold });
         const payload1 = { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables };
         const e1 = new Event(rr.restId, 1, reservationEvents.restaurantReservationsCreated, payload1);
         await repo.db.saveEvent(e1);
@@ -209,7 +209,7 @@ describe('RepositoryManager unit test', function() {
         assert.throws(() => repo.reservationRemoved(), RepositoryError);
 
         // Preset
-        const rr = new RestaurantReservations(uuid(), timeTable, tables);
+        const rr = new RestaurantReservations({ restId: uuid(), timeTable, tables, threshold });
         const payload1 = { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables };
         const e1 = new Event(rr.restId, 1, reservationEvents.restaurantReservationsCreated, payload1);
         await repo.db.saveEvent(e1);
@@ -241,8 +241,8 @@ describe('RepositoryManager unit test', function() {
 
         
         // Preset
-        const rr = new RestaurantReservations(uuid(), timeTable, tables);
-        const payload1 = { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables };
+        const rr = new RestaurantReservations({ restId: uuid(), timeTable, tables, threshold });
+        const payload1 = { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables, threshold: rr.threshold };
         const e1 = new Event(rr.restId, 1, reservationEvents.restaurantReservationsCreated, payload1);
         await repo.db.saveEvent(e1);
         rr._revisionId = 1;

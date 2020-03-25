@@ -25,7 +25,7 @@ class RepositoryManager {
             throw err;
         }
     }
-        
+
     // Reservation
     reservationCreated(reservation, cb) {
         if (!reservation)
@@ -85,7 +85,7 @@ class RepositoryManager {
 
         const payloadAdded = Object.assign({}, reservation);
         payloadAdded.resId = reservation.id;
-        const reservationAddedEvent =  new Event(rr.restId, rr._revisionId, ReservationEvents.reservationAdded, payloadAdded);
+        const reservationAddedEvent = new Event(rr.restId, rr._revisionId, ReservationEvents.reservationAdded, payloadAdded);
         return this.saveEventsTransactionally([reservationCreatedEvent, reservationConfirmedEvent, reservationAddedEvent], cb);
     }
 
@@ -102,7 +102,7 @@ class RepositoryManager {
         const reservationConfirmedEvent = new Event(reservation.id, reservation._revisionId, ReservationEvents.reservationConfirmed, payloadConfirmed);
         const payloadAdded = Object.assign({}, reservation);
         payloadAdded.resId = reservation.id;
-        const reservationAddedEvent =  new Event(rr.restId, rr._revisionId, ReservationEvents.reservationAdded, payloadAdded);
+        const reservationAddedEvent = new Event(rr.restId, rr._revisionId, ReservationEvents.reservationAdded, payloadAdded);
         return this.saveEventsTransactionally([reservationConfirmedEvent, reservationAddedEvent], cb);
     }
 
@@ -112,7 +112,7 @@ class RepositoryManager {
         const payloadCancelled = { restId: reservation.restId, resId: reservation.id, status: 'cancelled' };
         const reservationCancelledEvent = new Event(reservation.id, reservation._revisionId, ReservationEvents.reservationCancelled, payloadCancelled);
         const payloadRemoved = { restId: rr.restId, resId }
-        const reservationRemovedEvent =  new Event(rr.restId, rr._revisionId, ReservationEvents.reservationRemoved, payloadRemoved);
+        const reservationRemovedEvent = new Event(rr.restId, rr._revisionId, ReservationEvents.reservationRemoved, payloadRemoved);
         return this.saveEventsTransactionally([reservationCancelledEvent, reservationRemovedEvent], cb);
     }
 
@@ -121,7 +121,7 @@ class RepositoryManager {
         if (!rr)
             throw RepositoryError.paramError(`Missing the following parameters:${rr ? '' : ' rr'}`);
         return this.save(rr.restId, rr._revisionId, ReservationEvents.restaurantReservationsCreated,
-            { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables }, cb);
+            { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables, threshold: rr.threshold }, cb);
     }
 
     reservationAdded(rr, reservation, cb) {
@@ -184,7 +184,12 @@ class RepositoryManager {
                 const payload = e.payload;
                 switch (e.message) {
                     case ReservationEvents.restaurantReservationsCreated:
-                        rr = new RestaurantReservations(payload.restId, payload.timeTable, payload.tables);
+                        rr = new RestaurantReservations({
+                            restId: payload.restId,
+                            timeTable: payload.timeTable,
+                            tables: payload.tables,
+                            threshold: payload.threshold,
+                        });
                         break;
                     case ReservationEvents.reservationAdded:
                         rr.reservationAdded(Reservation.fromObject(payload));

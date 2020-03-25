@@ -55,7 +55,7 @@ class Reservation {
         res.resId = obj.id || obj.resId;
         res.setStatus(obj.status);
         res.date = new Date(obj.date);
-        if (res.statusCode === 1)
+        if (res.statusCode === 1 && obj.table)
             res.setTable(obj.table);
 
         Object.keys(obj).forEach(k => {
