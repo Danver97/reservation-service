@@ -192,10 +192,11 @@ class RepositoryManager {
                         });
                         break;
                     case ReservationEvents.reservationAdded:
-                        rr.reservationAdded(Reservation.fromObject(payload));
+                        payload.status = Reservation.statuses.pending;
+                        rr.acceptReservation(Reservation.fromObject(payload));
                         break;
                     case ReservationEvents.reservationRemoved:
-                        rr.reservationRemoved(payload.resId);
+                        rr.removeReservation(payload.resId);
                         break;
                     default:
                 }

@@ -159,10 +159,9 @@ describe('RepositoryManager unit test', function() {
         rr._revisionId = 1;
 
         const res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
-        res.accepted(tables[0]);
 
         // Update
-        rr.reservationAdded(res);
+        rr.acceptReservation(res);
         await repo.reservationAdded(rr, res);
 
         // Assertions
@@ -216,13 +215,12 @@ describe('RepositoryManager unit test', function() {
         rr._revisionId = 1;
         
         const res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
-        res.accepted(tables[0]);
-        rr.reservationAdded(res);
+        rr.acceptReservation(res);
         await repo.db.saveEvent(new Event(rr.restId, 2, reservationEvents.reservationAdded, toJSON(res)));
         rr._revisionId = 2;
 
         // Update
-        rr.reservationRemoved(res.id);
+        rr.removeReservation(res.id);
         await repo.reservationRemoved(rr, res.id);
 
         // Assertions
@@ -248,12 +246,11 @@ describe('RepositoryManager unit test', function() {
         rr._revisionId = 1;
         
         const res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
-        res.accepted(tables[0]);
-        rr.reservationAdded(res);
+        rr.acceptReservation(res);
         await repo.db.saveEvent(new Event(rr.restId, 2, reservationEvents.reservationAdded, toJSON(res)));
         rr._revisionId = 2;
         
-        rr.reservationRemoved(res.id);
+        rr.removeReservation(res.id);
         await repo.db.saveEvent(new Event(rr.restId, 3, reservationEvents.reservationRemoved, { resId: res.resId, restId: rr.restId}));
         rr._revisionId = 3;
         
