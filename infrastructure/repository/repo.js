@@ -6,6 +6,10 @@ const RepositoryError = require('./errors/RepositoryError');
 const Event = require('@danver97/event-sourcing/event');
 const EventStoreError = require('@danver97/event-sourcing/eventStore/errors/event_store.error');
 
+function toJSON(obj) {
+    return JSON.parse(JSON.stringify(obj));
+}
+
 class RepositoryManager {
     constructor(db) {
         this.db = db;
@@ -120,8 +124,10 @@ class RepositoryManager {
     restaurantReservationsCreated(rr, cb) {
         if (!rr)
             throw RepositoryError.paramError(`Missing the following parameters:${rr ? '' : ' rr'}`);
+        // const payload = { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables, threshold: rr.threshold };
+        const payload = toJSON(rr);
         return this.save(rr.restId, rr._revisionId, ReservationEvents.restaurantReservationsCreated,
-            { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables, threshold: rr.threshold }, cb);
+            payload, cb);
     }
 
     reservationAdded(rr, reservation, cb) {
@@ -196,12 +202,7 @@ class RepositoryManager {
                 const payload = e.payload;
                 switch (e.message) {
                     case ReservationEvents.restaurantReservationsCreated:
-                        rr = new RestaurantReservations({
-                            restId: payload.restId,
-                            timeTable: payload.timeTable,
-                            tables: payload.tables,
-                            threshold: payload.threshold,
-                        });
+                        rr = new RestaurantReservations(payload);
                         break;
                     case ReservationEvents.reservationAdded:
                         payload.status = Reservation.statuses.pending;
