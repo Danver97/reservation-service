@@ -69,8 +69,7 @@ class RestaurantReservations {
         if (typeof restId !== 'string')
             throw RestaurantReservationError.paramError(`'restId' must be a string`);
         this._checkTimeTable(timeTable);
-        if (!acceptationModes[acceptationMode])
-            throw RestaurantReservationError.paramError(`'acceptationMode' not valid. Must be one of the following: ${Object.keys(acceptationModes)}`);
+        this._checkAcceptationMode(acceptationMode);
 
         this._checkTables(tables);
         if (typeof threshold !== 'number')
@@ -87,6 +86,11 @@ class RestaurantReservations {
     _checkTables(tables) {
         if (!Array.isArray(tables))
             throw RestaurantReservationError.paramError(`'tables' must be an array of Tables`);
+    }
+
+    _checkAcceptationMode(mode) {
+        if (!acceptationModes[mode])
+            throw RestaurantReservationError.paramError(`'acceptationMode' not valid. Must be one of the following: ${Object.keys(acceptationModes)}`);
     }
 
     _checkReservation(res) {
@@ -195,6 +199,8 @@ class RestaurantReservations {
         // Adds the peoples in the timeslots covered by the reservation
         cursor = res.date.getTime();
         while (cursor < endOfRes) {
+            if (!this.timeSlotsPeople[cursor] || isNaN(this.timeSlotsPeople[cursor]))
+                this.timeSlotsPeople[cursor] = 0;
             this.timeSlotsPeople[cursor] += res.people;
             cursor += min(slotLength);
         }
@@ -241,6 +247,29 @@ class RestaurantReservations {
         this._removeReservationUtility(resId);
     }
 
+    changeAcceptationMode(newMode) {
+        this._checkAcceptationMode(newMode);
+
+        const currentMode = this.acceptationMode;
+        this.acceptationMode = newMode;
+
+        // Inits or cleans up datastructures
+        switch(newMode) {
+            case acceptationModes.MANUAL:
+                if (currentMode === acceptationModes.AUTO_THRESHOLD)
+                    delete this.timeSlotsPeople;
+                break;
+            case acceptationModes.AUTO_THRESHOLD:
+                if (currentMode === acceptationModes.MANUAL)
+                    this.timeSlotsPeople = {};
+                break;
+        }
+
+        // Builds the necessary datastructures in order to be ready to check the next incoming reservation
+        const reservations = Object.values(this.reservationMap);
+        this.reservationMap = {};
+        reservations.forEach(r => this._acceptReservationUtility(r, true));
+    }
 
     // Legacy methods
 

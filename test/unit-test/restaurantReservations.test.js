@@ -119,7 +119,7 @@ describe('RestaurantReservations unit test', function () {
                 threshold: 15,
                 maxReservationSize: 5,
             });
-        })
+        });
 
         it('check if acceptReservation & acceptReservationManually works', function () {
             assert.throws(() => rr.acceptReservation(), RestaurantReservationsError);
@@ -176,6 +176,50 @@ describe('RestaurantReservations unit test', function () {
             rr.acceptReservation(res2);
             rr.removeReservation(res2.id);
             assert.doesNotThrow(() => rr.acceptReservation(res3), Error);
+        });
+    });
+
+    it('check changeAcceptationMode works', function () {
+        // acceptationMode: RestaurantReservations.acceptationModes.AUTO_THRESHOLD,
+        const rr = new RestaurantReservations({
+            restId: id,
+            timeTable,
+            threshold: 15,
+            maxReservationSize: 5,
+        });
+        assert.throws(() => rr.changeAcceptationMode(), RestaurantReservationsError);
+        assert.throws(() => rr.changeAcceptationMode('nonExistingMode'), RestaurantReservationsError);
+
+        const res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
+        const res2 = new Reservation('pippo', rr.restId, 'pippo', 5, tomorrow.toLocaleDateString(), '15:00');
+        const res3 = new Reservation('pippo', rr.restId, 'pippo', 6, tomorrow.toLocaleDateString(), '15:00');
+        const res4 = new Reservation('pippo', rr.restId, 'pippo', 5, tomorrow.toLocaleDateString(), '15:00');
+
+        rr.reservationMap = {
+            [res.id]: res,
+            [res2.id]: res2,
+            [res3.id]: res3,
+            [res4.id]: res4,
+        };
+
+        rr.changeAcceptationMode(RestaurantReservations.acceptationModes.AUTO_THRESHOLD);
+
+        const totPeople = res.people + res2.people + res3.people + res4.people;
+        assert.strictEqual(rr.timeSlotsPeople[res.date.getTime()], totPeople);
+        assert.deepStrictEqual(rr.reservationMap, {
+            [res.id]: res,
+            [res2.id]: res2,
+            [res3.id]: res3,
+            [res4.id]: res4,
+        });
+        
+        rr.changeAcceptationMode(RestaurantReservations.acceptationModes.MANUAL);
+        assert.strictEqual(rr.timeSlotsPeople, undefined);
+        assert.deepStrictEqual(rr.reservationMap, {
+            [res.id]: res,
+            [res2.id]: res2,
+            [res3.id]: res3,
+            [res4.id]: res4,
         });
     });
 });
