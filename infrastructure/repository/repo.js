@@ -140,6 +140,12 @@ class RepositoryManager {
     }
 
     // Getters
+    /**
+     * Rebuilds a Reservation from stream of events
+     * @param {string} resId Reservation id
+     * @param {function} cb Asynchronous callback
+     * @returns {Reservation}
+     */
     getReservation(resId, cb) {
         if (!resId)
             throw RepositoryError.paramError(`Missing the following parameters:${resId ? '' : ' resId'}`);
@@ -174,6 +180,12 @@ class RepositoryManager {
         }, cb);
     }
 
+    /**
+     * Rebuilds a RestaurantReservations from stream of events
+     * @param {string} restId RestaurantReservations id
+     * @param {function} cb Asynchronous callback
+     * @returns {RestaurantReservations}
+     */
     getReservations(restId, cb) {
         if (!restId)
             throw RepositoryError.paramError(`Missing the following parameters:${restId ? '' : ' restId'}`);
