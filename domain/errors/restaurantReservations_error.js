@@ -17,6 +17,14 @@ const errorsTypes = {
         code: 'reservationNotFoundError',
         name: 'reservationNotFoundError',
     },
+    reservationNotAcceptableError: {
+        code: 'reservationNotAcceptableError',
+        name: 'reservationNotAcceptableError',
+    },
+    resTooBigForAutoAcceptError: {
+        code: 'resTooBigForAutoAcceptError',
+        name: 'resTooBigForAutoAcceptError',
+    },
 };
 
 class RestaurantReservationError extends ExtendableError {
@@ -47,6 +55,14 @@ class RestaurantReservationError extends ExtendableError {
         return new RestaurantReservationError(msg, RestaurantReservationError.reservationNotFoundErrorCode);
     }
 
+    static reservationNotAcceptableError(msg) {
+        return new RestaurantReservationError(msg, RestaurantReservationError.reservationNotAcceptableErrorCode);
+    }
+
+    static resTooBigForAutoAcceptError(msg) {
+        return new RestaurantReservationError(msg, RestaurantReservationError.resTooBigForAutoAcceptErrorCode);
+    }
+
     static get paramErrorCode() {
         return errorsTypes.paramError.code;
     }
@@ -61,6 +77,14 @@ class RestaurantReservationError extends ExtendableError {
 
     static get reservationNotFoundErrorCode() {
         return errorsTypes.reservationNotFoundError.code;
+    }
+
+    static get reservationNotAcceptableErrorCode() {
+        return errorsTypes.reservationNotAcceptableError.code;
+    }
+
+    static get resTooBigForAutoAcceptErrorCode() {
+        return errorsTypes.resTooBigForAutoAcceptError.code;
     }
 }
 

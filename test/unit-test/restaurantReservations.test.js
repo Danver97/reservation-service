@@ -23,47 +23,159 @@ describe('RestaurantReservations unit test', function () {
         new Table(5, 1, 4),
         new Table(6, 1, 6),
     ];
-    let res;
     const tomorrow = new Date(Date.now());
     tomorrow.setDate(tomorrow.getDate() + 1);
     const id = uuid();
-    const threshold = 50;
-    const rr = new RestaurantReservations({ restId: id, timeTable, threshold });
 
     it('check if constructor works', function () {
         assert.throws(() => new RestaurantReservations(), RestaurantReservationsError);
-        assert.strictEqual(rr.restId, id);
+        assert.throws(() => new RestaurantReservations({ restId: 1, timeTable: {} }), RestaurantReservationsError);
+        assert.throws(() => new RestaurantReservations({ restId: '1', timeTable: '{}' }), RestaurantReservationsError);
+        assert.throws(() => new RestaurantReservations({ restId: '1', timeTable: '{}' }), RestaurantReservationsError);
+        assert.throws(() => new RestaurantReservations({ restId: '1', timeTable: {}, tables: 1 }), RestaurantReservationsError);
+        assert.throws(() => new RestaurantReservations({ restId: '1', timeTable: {}, tables: [], threshold: 'asdas' }), RestaurantReservationsError);
+        assert.throws(() => new RestaurantReservations({ restId: '1', timeTable: {}, tables: [], threshold: 20, acceptationMode: 'asf' }), RestaurantReservationsError);
+        assert.throws(() => new RestaurantReservations({ restId: '1', timeTable: {}, tables: [], threshold: 20, acceptationMode: RestaurantReservations.acceptationModes.MANUAL, reservationLength: 'string' }), RestaurantReservationsError);
+        assert.throws(() => new RestaurantReservations({ restId: '1', timeTable: {}, tables: [], threshold: 20, acceptationMode: RestaurantReservations.acceptationModes.MANUAL, reservationLength: 33 }), RestaurantReservationsError);
+
+        const rr = new RestaurantReservations({ restId: '1', timeTable });
+        assert.strictEqual(rr.restId, '1');
         assert.deepStrictEqual(rr.timeTable, timeTable);
-        assert.deepStrictEqual(rr.threshold, threshold);
+        assert.deepStrictEqual(rr.tables, []);
+        assert.strictEqual(rr.threshold, 20);
+        assert.strictEqual(rr.acceptationMode, RestaurantReservations.acceptationModes.MANUAL);
+        assert.strictEqual(rr.reservationLength, 60);
+
+        const rr2 = new RestaurantReservations({ restId: '1', timeTable, tables: [], threshold: 30, acceptationMode: RestaurantReservations.acceptationModes.AUTO_THRESHOLD, reservationLength: 90 });
+
+        assert.strictEqual(rr2.restId, '1');
+        assert.deepStrictEqual(rr2.timeTable, timeTable);
+        assert.deepStrictEqual(rr2.tables, []);
+        assert.strictEqual(rr2.threshold, 30);
+        assert.strictEqual(rr2.acceptationMode, RestaurantReservations.acceptationModes.AUTO_THRESHOLD);
+        assert.strictEqual(rr2.reservationLength, 90);
     });
 
     it('check if setTimeTable works', function () {
+        const rr = new RestaurantReservations({ restId: id, timeTable });
         assert.throws(() => rr.setTimeTable(), RestaurantReservationsError);
+
+        rr.setTimeTable(timeTable);
+        assert.deepStrictEqual(rr.timeTable, timeTable);
     });
 
     it('check if setTables works', function () {
+        const rr = new RestaurantReservations({ restId: id, timeTable });
         assert.throws(() => rr.setTables(), RestaurantReservationsError);
+
+        rr.setTables(tables);
+        tables.sort((a, b) => (a.people <= b.people ? -1 : 1));
+        assert.deepStrictEqual(rr.tables, tables);
     });
 
-    it('check if reservationAdded works', function () {
-        assert.throws(() => rr.reservationAdded(), RestaurantReservationsError);
-        assert.throws(() => rr.reservationAdded({}), RestaurantReservationsError);
-        res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
-        assert.throws(() => rr.reservationAdded(res), RestaurantReservationsError);
-        res.accepted();
-        rr.reservationAdded(res);
-        assert.throws(() => rr.reservationAdded(res), RestaurantReservationsError);
-        // assert.strictEqual(JSON.stringify(rr.getTables(2)[0].getReservations()), JSON.stringify([res]));
-        const res2 = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
-        res2.cancelled();
-        assert.throws(() => rr.reservationAdded(res2), RestaurantReservationsError);
+    context(`Acceptation mode: ${RestaurantReservations.acceptationModes.MANUAL}`, function () {
+        let rr;
+
+        this.beforeEach(() => {
+            rr = new RestaurantReservations({ restId: id, timeTable });
+        });
+
+        it('check if acceptReservation works', function () {
+            assert.throws(() => rr.acceptReservation(), RestaurantReservationsError);
+            assert.throws(() => rr.acceptReservation({}), RestaurantReservationsError);
+
+            const res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
+            rr.acceptReservation(res);
+            assert.deepEqual(rr.reservationMap, { [res.id]: res });
+            assert.throws(() => rr.acceptReservation(res), RestaurantReservationsError);
+
+            const res2 = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
+            res2.cancelled();
+            assert.throws(() => rr.acceptReservation(res2), RestaurantReservationsError);
+        });
+
+        it('check if removeReservation works', function () {
+            assert.throws(() => rr.removeReservation(), RestaurantReservationsError);
+            assert.throws(() => rr.removeReservation({}), RestaurantReservationsError);
+
+            const res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
+            assert.throws(() => rr.removeReservation(res.id), RestaurantReservationsError);
+
+            rr.reservationMap = { [res.id]: res };
+            rr.removeReservation(res.id)
+            assert.deepEqual(rr.reservationMap, {});
+            // assert.strictEqual(JSON.stringify(rr.getTables(2)[0].getReservations()), JSON.stringify([]));
+        });
     });
 
-    it('check if reservationRemoved works', function () {
-        assert.throws(() => rr.reservationRemoved(), RestaurantReservationsError);
-        assert.throws(() => rr.reservationRemoved({}), RestaurantReservationsError);
-        rr.reservationRemoved(res.id);
-        assert.throws(() => rr.reservationRemoved(res.id), RestaurantReservationsError);
-        // assert.strictEqual(JSON.stringify(rr.getTables(2)[0].getReservations()), JSON.stringify([]));
+    context(`Acceptation mode: ${RestaurantReservations.acceptationModes.AUTO_THRESHOLD}`, function () {
+        let rr;
+
+        this.beforeEach(() => {
+            rr = new RestaurantReservations({
+                restId: id,
+                timeTable,
+                acceptationMode: RestaurantReservations.acceptationModes.AUTO_THRESHOLD,
+                threshold: 15,
+                maxReservationSize: 5,
+            });
+        })
+
+        it('check if acceptReservation & acceptReservationManually works', function () {
+            assert.throws(() => rr.acceptReservation(), RestaurantReservationsError);
+            assert.throws(() => rr.acceptReservation({}), RestaurantReservationsError);
+            
+
+            const res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
+            res.cancelled();
+            assert.throws(() => rr.acceptReservation(res), RestaurantReservationsError);
+
+            const res2 = new Reservation('pippo', rr.restId, 'pippo', 5, tomorrow.toLocaleDateString(), '15:00');
+            rr.acceptReservation(res2);
+            assert.deepEqual(rr.reservationMap[res2.id], res2);
+            assert.throws(() => rr.acceptReservation(res2), RestaurantReservationsError);
+
+            const res3 = new Reservation('pippo', rr.restId, 'pippo', 6, tomorrow.toLocaleDateString(), '15:00');
+            assert.throws(() => rr.acceptReservation(res3), RestaurantReservationsError);
+            
+            rr.acceptReservationManually(res3);
+            assert.deepEqual(rr.reservationMap[res3.id], res3);
+
+            const res4 = new Reservation('pippo', rr.restId, 'pippo', 5, tomorrow.toLocaleDateString(), '15:00');
+            assert.throws(() => rr.acceptReservation(res4), RestaurantReservationsError);
+
+            const res5 = new Reservation('pippo', rr.restId, 'pippo', 5, tomorrow.toLocaleDateString(), '15:45');
+            assert.throws(() => rr.acceptReservation(res5), RestaurantReservationsError);
+
+            const res6 = new Reservation('pippo', rr.restId, 'pippo', 5, tomorrow.toLocaleDateString(), '16:00');
+            rr.acceptReservation(res6);
+            assert.deepEqual(rr.reservationMap[res6.id], res6);
+        });
+
+        it('check if removeReservation works', function () {
+            rr = new RestaurantReservations({
+                restId: id,
+                timeTable,
+                acceptationMode: RestaurantReservations.acceptationModes.AUTO_THRESHOLD,
+                threshold: 5,
+                maxReservationSize: 5,
+            });
+            assert.throws(() => rr.removeReservation(), RestaurantReservationsError);
+            assert.throws(() => rr.removeReservation({}), RestaurantReservationsError);
+
+            const res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
+            assert.throws(() => rr.removeReservation(res.id), RestaurantReservationsError);
+
+            rr.acceptReservation(res);
+            rr.removeReservation(res.id);
+            assert.deepEqual(rr.reservationMap, {});
+
+
+            const res2 = new Reservation('pippo', rr.restId, 'pippo', 5, tomorrow.toLocaleDateString(), '15:00');
+            const res3 = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
+            rr.acceptReservation(res2);
+            rr.removeReservation(res2.id);
+            assert.doesNotThrow(() => rr.acceptReservation(res3), Error);
+        });
     });
 });
