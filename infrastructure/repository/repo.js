@@ -234,13 +234,14 @@ class RepositoryManagerTransaction extends RepositoryManager {
         this.streamRevisions = {};
     }
     save(streamId, eventId = 0, message, payload, cb) {
-        if (eventId === 0)
+        if (eventId === 0 && !this.streamRevisions[streamId])
             this.streamRevisions[streamId] = 0;
         this.streamRevisions[streamId]++;
         this.buffer.push(new Event(streamId, eventId || this.streamRevisions[streamId], message, payload));
     }
 
     commit() {
+        console.log(this.buffer)
         // console.log(this.buffer.map(e => ({ streamId: e.streamId, eventId: e.eventId })))
         return this.db.saveEventsTransactionally(this.buffer);
     }
