@@ -20,7 +20,7 @@ class RepositoryManager {
             await this.db.save(streamId, eventId, message, payload);
         } catch (err) {
             if (err instanceof EventStoreError
-                && (e.code === EventStoreError.streamRevisionNotSyncErrorCode || e.code === EventStoreError.eventAlreadyExistsErrorCode))
+                && (err.code === EventStoreError.streamRevisionNotSyncErrorCode || err.code === EventStoreError.eventAlreadyExistsErrorCode))
                 throw RepositoryError.optimisticLockError();
             throw err;
         }
