@@ -1,11 +1,18 @@
 const uuid = require('uuid/v4');
 const ReservationError = require('../errors/reservation_error');
 
+const statuses = {
+    pending: 'pending',
+    confirmed: 'confirmed',
+    rejected: 'rejected',
+    cancelled: 'cancelled',
+};
+
 const statusCodes = {
-    pending: 0,
-    confirmed: 1,
-    rejected: 2,
-    cancelled: 3,
+    [statuses.pending]: 0,
+    [statuses.confirmed]: 1,
+    [statuses.rejected]: 2,
+    [statuses.cancelled]: 3,
 };
 
 function parseHour(hour) {
@@ -45,6 +52,10 @@ class Reservation {
         this.statusCode = -1;
         this.status = 'created';
         this.pending();
+    }
+
+    static get statuses() {
+        return Object.assign({}, statuses);
     }
 
     static fromObject(obj) {
@@ -99,6 +110,8 @@ class Reservation {
     }
 
     setStatus(status) {
+        if (!statuses[status])
+            throw ReservationError.statusChangeError(`status ${status} does not exits.`);
         this.status = status;
         this.statusCode = statusCodes[status];
     }
