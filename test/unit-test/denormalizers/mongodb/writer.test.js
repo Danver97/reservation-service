@@ -38,7 +38,7 @@ describe('writer unit test', function () {
 
     it('check if restarantReservationCreated works', async function () {
         const e = new Event(rr.restId, 1, 'restaurantCreated', rr);
-        await writer.restaurantReservationsCreated(e.payload);
+        await writer.restaurantReservationsCreated(e);
         const doc = await collection.findOne({ _id: rr.restId });
         assert.deepStrictEqual(doc, rr);
     });
@@ -48,7 +48,7 @@ describe('writer unit test', function () {
 
         // Update done
         const e = new Event(res.resId, 1, 'reservationCreated', res);
-        await writer.reservationCreated(e.payload);
+        await writer.reservationCreated(e);
 
         // Assertions
         const doc = await collection.findOne({ _id: res.resId });
@@ -65,8 +65,8 @@ describe('writer unit test', function () {
         res.status = 'confirmed';
 
         // Update done
-        const e = new Event(res.resId, 2, 'reservationConfirmed', { table: res.table, status: res.status });
-        await writer.reservationConfirmed(res.resId, e.eventId - 1, e.payload);
+        const e = new Event(res.resId, 2, 'reservationConfirmed', { resId: res.resId, restId: res.restId, table: res.table, status: res.status });
+        await writer.reservationConfirmed(e);
 
         // Assertions
         const doc = await collection.findOne({ _id: res.resId });
@@ -82,8 +82,8 @@ describe('writer unit test', function () {
         res.status = 'rejected';
 
         // Update done
-        const e = new Event(res.resId, 2, 'reservationRejected', { status: res.status });
-        await writer.reservationRejected(res.resId, e.eventId - 1, res.status);
+        const e = new Event(res.resId, 2, 'reservationRejected', { resId: res.resId, restId: res.restId, status: res.status });
+        await writer.reservationRejected(e);
 
         // Assertions
         const doc = await collection.findOne({ _id: res.resId });
@@ -101,8 +101,8 @@ describe('writer unit test', function () {
         res.status = 'cancelled';
 
         // Update done
-        const e = new Event(res.resId, 3, 'reservationCancelled', { status: res.status });
-        await writer.reservationCancelled(res.resId, e.eventId - 1, res.status);
+        const e = new Event(res.resId, 3, 'reservationCancelled', { resId: res.resId, restId: res.restId, status: res.status });
+        await writer.reservationCancelled(e);
 
         // Assertions
         const doc = await collection.findOne({ _id: res.resId });

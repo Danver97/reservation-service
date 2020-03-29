@@ -4,51 +4,6 @@ const dependencies = {
     projector: null,
 };
 
-function reservationCreated(e, cb) {
-    return Promisify(async () => {
-        const reservation = e.payload;
-        await dependencies.projector.reservationCreated(reservation);
-    }, cb);
-}
-
-function reservationConfirmed(e, cb) {
-    return Promisify(async () => {
-        const resId = e.payload.resId;
-        await dependencies.projector.reservationConfirmed(resId, e.eventId - 1, e.payload);
-    }, cb);
-}
-
-function reservationRejected(e, cb) {
-    return Promisify(async () => {
-        const resId = e.payload.resId;
-        const status = e.payload.status;
-        await dependencies.projector.reservationRejected(resId, e.eventId - 1, status);
-    }, cb);
-}
-
-function reservationCancelled(e, cb) {
-    return Promisify(async () => {
-        const resId = e.payload.resId;
-        const status = e.payload.status;
-        await dependencies.projector.reservationCancelled(resId, e.eventId - 1, status);
-    }, cb);
-}
-
-function restaurantReservationsCreated(e, cb) {
-    return Promisify(async () => {
-        const rr = e.payload;
-        await dependencies.projector.restaurantReservationsCreated(rr);
-    }, cb);
-}
-
-const handlersMap = {
-    reservationCreated,
-    reservationConfirmed,
-    reservationRejected,
-    reservationCancelled,
-    restaurantReservationsCreated,
-};
-
 async function acknoledgeUtil(ackFunc, ack) {
     if (ack && typeof ackFunc === 'function') {
         await ackFunc();
@@ -78,9 +33,9 @@ function log(obj) {
 async function handler(e, ack) {
     if (!e)
         return;
-    if (typeof handlersMap[e.message] !== 'function')
+    if (typeof dependencies.projector[e.message] !== 'function')
         acknoledge(e);
-    else if (typeof handlersMap[e.message] === 'function') {
+    else if (typeof dependencies.projector[e.message] === 'function') {
         let lastEventId = (await dependencies.orderCtrl.getLastProcessedEvent(e.streamId)).eventId;
         lastEventId = (lastEventId === undefined || lastEventId === null) ? 0 : lastEventId;
 
@@ -110,7 +65,7 @@ async function handler(e, ack) {
             // Process it
             log(`Current EId is equal the expected EId
             Current event is the expected event. Will be processed.`);
-            await handlersMap[e.message](e);
+            await dependencies.projector[e.message](e);
             await dependencies.orderCtrl.updateLastProcessedEvent(e.streamId, lastEventId, e.eventId);
             await acknoledge(ack);
         }

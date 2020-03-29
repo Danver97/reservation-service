@@ -58,14 +58,17 @@ class Writer {
         }, cb);
     }
 
-    reservationCreated(reservation, cb) {
+    reservationCreated(e, cb) {
+        const reservation = e.payload;
         reservation._id = reservation.resId;
         return Promisify(async () => {
             await this.collection.insertOne(reservation);
         }, cb);
     }
 
-    reservationConfirmed(resId, _revisionId, payload, cb) {
+    reservationConfirmed(e, cb) {
+        const payload = e.payload;
+        const resId = payload.resId;
         const status = payload.status;
         const table = payload.table;
         return Promisify(async () => {
@@ -76,19 +79,24 @@ class Writer {
         }, cb);
     }
 
-    reservationRejected(resId, _revisionId, status, cb) {
+    reservationRejected(e, cb) {
+        const resId = e.payload.resId;
+        const status = e.payload.status;
         return Promisify(async () => {
             await this.collection.updateOne({ _id: resId }, { $set: { status } });
         }, cb);
     }
 
-    reservationCancelled(resId, _revisionId, status, cb) {
+    reservationCancelled(e, cb) {
+        const resId = e.payload.resId;
+        const status = e.payload.status;
         return Promisify(async () => {
             await this.collection.updateOne({ _id: resId }, { $set: { status } });
         }, cb);
     }
 
-    restaurantReservationsCreated(restaurantReservations, cb) {
+    restaurantReservationsCreated(e, cb) {
+        const restaurantReservations = e.payload;
         restaurantReservations._id = restaurantReservations.restId;
         restaurantReservations._revisionId = 1;
         restaurantReservations.reservations = [];

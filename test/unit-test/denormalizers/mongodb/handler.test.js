@@ -103,7 +103,6 @@ describe('handler unit test', function () {
         assert.deepStrictEqual(doc, res);
     });
 
-
     it('check if reservationCancelled event is handled properly', async function () {
         // Preset
         res.table = { id: 15, people: 4 };
