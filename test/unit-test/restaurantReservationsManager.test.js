@@ -4,7 +4,7 @@ const Reservation = require('../../domain/models/reservation');
 const RestaurantReservations = require('../../domain/models/restaurantReservations');
 const repo = require('../../infrastructure/repository/repositoryManager')('testdb', { eventStoreName: 'prova2'});
 const reservationMgr = require('../../domain/logic/restaurantReservationsManager')(repo);
-const assertStrictEqual = require('../../lib/utils').assertStrictEqual;
+const assertDeepStrictEqual = require('../../lib/utils').assertStrictEqual;
 
 const parseHour = hourStr => {
     const h = hourStr.split(':');
@@ -28,6 +28,21 @@ const assertStrictEqualHour = (actual, expected) => {
     assert.strictEqual(JSON.stringify(actual), JSON.stringify(expected));
 };
 
+const assertRestaurantContainsRes = async (res) => {
+    let rr_result = await repo.getReservations(res.restId);
+    assertDeepStrictEqual(rr_result.reservationMap[res.id], res);
+}
+
+const assertRestaurantDoesNotContainsRes = async (res) => {
+    let rr_result = await repo.getReservations(res.restId);
+    assert.deepStrictEqual(rr_result.reservationMap[res.id], undefined);
+}
+
+const assertReservationExistsAndEquals = async (res) => {
+    let result = await repo.getReservation(res.id);
+    assertDeepStrictEqual(result, res);
+}
+
 describe('RestaurantReservationManager unit test', function () {
     const timeTable = {
         Monday: '7:00-18:00',
@@ -46,7 +61,9 @@ describe('RestaurantReservationManager unit test', function () {
         new Table(5, 1, 4),
         new Table(6, 1, 6),
     ];
-    const rr = new RestaurantReservations('1', timeTable, tables);
+    let rr = new RestaurantReservations({ restId: '1', timeTable });
+    let rr2 = new RestaurantReservations({ restId: '2', timeTable, acceptationMode: RestaurantReservations.acceptationModes.AUTO_THRESHOLD });
+    let rr3 = new RestaurantReservations({ restId: '3', timeTable, acceptationMode: RestaurantReservations.acceptationModes.AUTO_THRESHOLD, threshold: 5, maxReservationSize: 2 });
     let res;
 
     const tomorrow = new Date(Date.now());
@@ -55,116 +72,92 @@ describe('RestaurantReservationManager unit test', function () {
     tomorrow.setMilliseconds(0);
     const expectedDate = new Date(tomorrow);
 
-    before(async () => {
+    beforeEach(async () => {
+        rr = new RestaurantReservations({ restId: '1', timeTable });
+        rr2 = new RestaurantReservations({ restId: '2', timeTable, acceptationMode: RestaurantReservations.acceptationModes.AUTO_THRESHOLD });
+        rr3 = new RestaurantReservations({ restId: '3', timeTable, acceptationMode: RestaurantReservations.acceptationModes.AUTO_THRESHOLD, threshold: 5, maxReservationSize: 2 });
         await repo.reset();
         await repo.restaurantReservationsCreated(rr);
+        await repo.restaurantReservationsCreated(rr2);
+        await repo.restaurantReservationsCreated(rr3);
     });
 
     it('check if reservationCreated works', async function () {
-        res = new Reservation('pippo', rr.restId, 'pippo', 2, tomorrow.toLocaleDateString(), '15:00');
-        assertStrictEqual(await reservationMgr.reservationCreated(res), res);
-        const result = await repo.getReservation(res.id);
-        assertStrictEqual(result, res);
+        const res = new Reservation('pippo', rr.restId, 'pippo', 2, tomorrow.toLocaleDateString(), '15:00');
+        assert.deepStrictEqual(await reservationMgr.reservationCreated(res), res);
+        assert.strictEqual(res.status, Reservation.statuses.pending);
+        await assertReservationExistsAndEquals(res);
+        await assertRestaurantDoesNotContainsRes(res);
+
+        const res2 = new Reservation('pippo', rr2.restId, 'pippo', 2, tomorrow.toLocaleDateString(), '15:00');
+        assert.deepStrictEqual(await reservationMgr.reservationCreated(res2), res2);
+        assert.strictEqual(res2.status, Reservation.statuses.confirmed);
+        await assertReservationExistsAndEquals(res2);
+        await assertRestaurantContainsRes(res2);
+
+        let res3 = new Reservation('pippo', rr3.restId, 'pippo', 4, tomorrow.toLocaleDateString(), '15:00');
+        assert.deepStrictEqual(await reservationMgr.reservationCreated(res3), res3);
+        assert.strictEqual(res3.status, Reservation.statuses.pending);
+        await assertReservationExistsAndEquals(res3);
+        await assertRestaurantDoesNotContainsRes(res3);
+
+        res3 = new Reservation('pippo', rr3.restId, 'pippo', 6, tomorrow.toLocaleDateString(), '15:00');
+        assert.deepStrictEqual(await reservationMgr.reservationCreated(res3), res3);
+        assert.strictEqual(res3.status, Reservation.statuses.pending);
+        await assertReservationExistsAndEquals(res3);
+        await assertRestaurantDoesNotContainsRes(res3);
     });
 
-    it('check if reservationConfirmed works', async function () {
-        res.accepted(tables[0]);
-        assertStrictEqual(await reservationMgr.reservationConfirmed(res.id, res.table, res.date), res);
+    it('check if acceptReservation works', async function () {
+        const res = new Reservation('pippo', rr.restId, 'pippo', 2, tomorrow.toLocaleDateString(), '15:00');
+        const t = repo.startTransaction();
+        t.reservationCreated(res);
+        await t.commit();
+
+        res.confirmed();
+        assertDeepStrictEqual(await reservationMgr.acceptReservation(res.restId, res.id), res);
         const result = await repo.getReservation(res.id);
-        assertStrictEqual(result, res);
+        assertDeepStrictEqual(result, res);
+        await assertRestaurantContainsRes(res);
+        
+        
+        const res3 = new Reservation('pippo', rr3.restId, 'pippo', 6, tomorrow.toLocaleDateString(), '15:00');
+        const t2 = repo.startTransaction();
+        t2.reservationCreated(res3);
+        await t2.commit();
+        
+        res3.confirmed();
+        assertDeepStrictEqual(await reservationMgr.acceptReservation(res3.restId, res3.id), res3);
+        const result2 = await repo.getReservation(res3.id);
+        assertDeepStrictEqual(result2, res3);
+        await assertRestaurantContainsRes(res3);
     });
 
     it('check if reservationCancelled works', async function () {
+        const res = new Reservation('pippo', rr.restId, 'pippo', 2, tomorrow.toLocaleDateString(), '15:00');
+        const t = repo.startTransaction();
+        t.reservationCreated(res);
+        await t.commit();
+
         res.cancelled();
-        assertStrictEqual(await reservationMgr.reservationCancelled(res.id), res);
+        assertDeepStrictEqual(await reservationMgr.reservationCancelled(res.id), res);
         const result = await repo.getReservation(res.id);
-        assertStrictEqual(result, res);
-    });
-
-    it('check if acceptReservation works (single table)', async function () {
-        res = new Reservation('pippo', rr.restId, 'pippo', 6, tomorrow.toLocaleDateString(), '15:00');
-        await repo.reservationCreated(res);
-        assertStrictEqualHour((await reservationMgr.acceptReservation(rr.restId, res.id)).date, setHour(expectedDate, '15:00'));
-        // success 15:00
-
-        const failedRes = new Reservation('pippo', rr.restId, 'pippo', 6, tomorrow.toLocaleDateString(), '15:00');
-        await repo.reservationCreated(failedRes);
-        assert.strictEqual((await reservationMgr.acceptReservation(rr.restId, failedRes.id)).status, 'rejected');
-        // failure
-
-        const shiftedRes = new Reservation('pippo', rr.restId, 'pippo', 6, tomorrow.toLocaleDateString(), '15:45');
-        await repo.reservationCreated(shiftedRes);
-        assertStrictEqualHour((await reservationMgr.acceptReservation(rr.restId, shiftedRes.id)).date, setHour(expectedDate, '16:00'));
-        // success shift to 16:00
-
-        const newRes = new Reservation('pippo', rr.restId, 'pippo', 6, tomorrow.toLocaleDateString(), '18:00');
-        await repo.reservationCreated(newRes);
-        assertStrictEqualHour((await reservationMgr.acceptReservation(rr.restId, newRes.id)).date, setHour(expectedDate, '18:00'));
-        // success 18:00
-
-        const middleFailedRes = new Reservation('pippo', rr.restId, 'pippo', 6, tomorrow.toLocaleDateString(), '16:30');
-        await repo.reservationCreated(middleFailedRes);
-        assert.strictEqual((await reservationMgr.acceptReservation(rr.restId, middleFailedRes.id)).status, 'rejected');
-        // failure
-
-        const middleShiftedRes = new Reservation('pippo', rr.restId, 'pippo', 6, tomorrow.toLocaleDateString(), '17:15');
-        await repo.reservationCreated(middleShiftedRes);
-        assertStrictEqualHour((await reservationMgr.acceptReservation(rr.restId, middleShiftedRes.id)).date, setHour(expectedDate, '17:00'));
-        // success shift to 17:00
-    });
-
-    it('check if acceptReservation works (multiple tables)', async function () {
-        const reser1 = new Reservation('pippo', rr.restId, 'pippo', 4, tomorrow.toLocaleDateString(), '15:00');
-        await repo.reservationCreated(reser1);
-        assertStrictEqualHour((await reservationMgr.acceptReservation(rr.restId, reser1.id)).date, setHour(expectedDate, '15:00'));
-        // success 15:00
-        const reser2 = new Reservation('pippo', rr.restId, 'pippo', 4, tomorrow.toLocaleDateString(), '15:00');
-        await repo.reservationCreated(reser2);
-        assertStrictEqualHour((await reservationMgr.acceptReservation(rr.restId, reser2.id)).date, setHour(expectedDate, '15:00'));
-        // success 15:00
-        const reser3 = new Reservation('pippo', rr.restId, 'pippo', 4, tomorrow.toLocaleDateString(), '15:00');
-        await repo.reservationCreated(reser3);
-        assertStrictEqualHour((await reservationMgr.acceptReservation(rr.restId, reser3.id)).date, setHour(expectedDate, '15:00'));
-        // success 15:00
-        const failedRes = new Reservation('pippo', rr.restId, 'pippo', 4, tomorrow.toLocaleDateString(), '15:00');
-        await repo.reservationCreated(failedRes);
-        assert.strictEqual((await reservationMgr.acceptReservation(rr.restId, failedRes.id)).status, 'rejected');
-        // failure
-
-
-        let moreRes = new Reservation('pippo', rr.restId, 'pippo', 4, tomorrow.toLocaleDateString(), '17:00');
-        await repo.reservationCreated(moreRes);
-        assertStrictEqualHour((await reservationMgr.acceptReservation(rr.restId, moreRes.id)).date, setHour(expectedDate, '17:00'));
-        // success 17:00
-        moreRes = new Reservation('pippo', rr.restId, 'pippo', 4, tomorrow.toLocaleDateString(), '17:00');
-        await repo.reservationCreated(moreRes);
-        assertStrictEqualHour((await reservationMgr.acceptReservation(rr.restId, moreRes.id)).date, setHour(expectedDate, '17:00'));
-        // success 17:00
-        moreRes = new Reservation('pippo', rr.restId, 'pippo', 4, tomorrow.toLocaleDateString(), '16:45');
-        await repo.reservationCreated(moreRes);
-        assertStrictEqualHour((await reservationMgr.acceptReservation(rr.restId, moreRes.id)).date, setHour(expectedDate, '16:45'));
-        // success 16:45
-
-
-        moreRes = new Reservation('pippo', rr.restId, 'pippo', 4, tomorrow.toLocaleDateString(), '15:45');
-        await repo.reservationCreated(moreRes);
-        assertStrictEqualHour((await reservationMgr.acceptReservation(rr.restId, moreRes.id)).date, setHour(expectedDate, '16:00'));
-        // success 16:00
-        moreRes = new Reservation('pippo', rr.restId, 'pippo', 4, tomorrow.toLocaleDateString(), '16:15');
-        await repo.reservationCreated(moreRes);
-        assertStrictEqualHour((await reservationMgr.acceptReservation(rr.restId, moreRes.id)).date, setHour(expectedDate, '16:00'));
-        // success 16:00
-        moreRes = new Reservation('pippo', rr.restId, 'pippo', 4, tomorrow.toLocaleDateString(), '16:00');
-        await repo.reservationCreated(moreRes);
-        assert.strictEqual((await reservationMgr.acceptReservation(rr.restId, moreRes.id)).status, 'rejected');
-        // failure
-    });
-
-    it('check if reservationRemoved works', async function () {
-        await reservationMgr.reservationRemoved(rr.restId, res.id); // success
-        res = new Reservation('pippo', rr.restId, 'pippo', 6, tomorrow.toLocaleDateString(), '15:00');
-        await repo.reservationCreated(res);
-        assertStrictEqualHour((await reservationMgr.acceptReservation(rr.restId, res.id)).date, setHour(expectedDate, '15:00'));
-        // success 15:00
+        assertDeepStrictEqual(result, res);
+        await assertRestaurantDoesNotContainsRes(res);
+        
+        const res2 = new Reservation('pippo', rr2.restId, 'pippo', 2, tomorrow.toLocaleDateString(), '15:00');
+        const t2 = repo.startTransaction();
+        let rr2FromRepo = await repo.getReservations(res2.restId);
+        t2.reservationCreated(res2);
+        rr2FromRepo.acceptReservation(res2);
+        t2.reservationConfirmed(res2);
+        t2.reservationAdded(rr2FromRepo, res2);
+        await t2.commit();
+        
+        res2.cancelled();
+        assertDeepStrictEqual(await reservationMgr.reservationCancelled(res2.id), res2);
+        const result2 = await repo.getReservation(res2.id);
+        assertDeepStrictEqual(result2, res2);
+        await assertRestaurantDoesNotContainsRes(res2);
     });
 });

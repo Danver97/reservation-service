@@ -1,5 +1,7 @@
 const Promisify = require('promisify-cb');
 const Utils = require('../../lib/utils');
+const RestaurantReservations = require('../models/restaurantReservations');
+const RestaurantReservationsError = require('../errors/restaurantReservations_error');
 const ReservationError = require('../errors/reservation_error');
 const ReservationManagerError = require('../errors/reservationManager_error');
 const RepositoryError = require('../../infrastructure/repository/errors/RepositoryError');
@@ -39,26 +41,48 @@ class ReservationManager {
             const rr = await this.repo.getReservations(reservation.restId);
             const t = this.repo.startTransaction();
             t.reservationCreated(reservation);
-            // t.reservationCreated(reservation);
+
+            if (rr.acceptationMode === RestaurantReservations.acceptationModes.MANUAL) {
+                await t.commit();
+                return reservation;
+            }
+
+            try {
+                rr.acceptReservation(reservation);
+                t.reservationConfirmed(reservation);
+                t.reservationAdded(rr, reservation);
+            } catch (err) {
+                if (err instanceof RestaurantReservationsError) {
+                    if (err.code === RestaurantReservationsError.reservationNotAcceptableErrorCode) {
+                        t.reservationRejected(reservation);
+                    } else if (err.code === RestaurantReservationsError.resTooBigForAutoAcceptErrorCode) {
+                        // Can't be accepted, does nothing and leaves the reservation to be accepted manually
+                    } else throw err;
+                } else throw err;
+            }
+
             await t.commit();
             return reservation;
-        }, cb);
-    }
-    
-    reservationConfirmed(resId, table, effectiveDate, cb) {
-        return this._optimisticLocking(async () => {
-            const r = await this.repo.getReservation(resId);
-            r.accepted(table, effectiveDate);
-            await this.repo.reservationConfirmed(r);
-            return r;
         }, cb);
     }
     
     reservationCancelled(resId, cb) {
         return this._optimisticLocking(async () => {
             const r = await this.repo.getReservation(resId);
+            const rr = await this.repo.getReservations(r.restId);
+
+            
+            const t = this.repo.startTransaction();
+            const wasConfirmed = r.isConfirmed;
             r.cancelled();
-            await this.repo.reservationCancelled(r);
+            t.reservationCancelled(r);
+            if (wasConfirmed) {
+                rr.removeReservation(r.id);
+                t.reservationRemoved(rr, r.id);
+            }
+            await t.commit();
+
+            // await this.repo.reservationCancelled(r);
             return r;
         }, cb);
     }
@@ -69,7 +93,8 @@ class ReservationManager {
             return rr;
         }, cb);
     }
-    
+
+    // @deprecated
     getReservationWithin3Hours(tableReservations, reservation) {
         const within3Hours = [];
         for (let i = 0; i < tableReservations.length; i++) {
@@ -79,7 +104,8 @@ class ReservationManager {
         }
         return within3Hours;
     }
-    
+
+    // @deprecated
     computeTable(tables, reservation) {
         let table = null;
         let effectiveDate = null;
@@ -135,6 +161,7 @@ class ReservationManager {
         };
     }
 
+    // @deprecated
     async _acceptReservation(rr, r) {
         const tables = rr.getTables(r.people);
         const result = this.computeTable(tables, r);
@@ -145,22 +172,38 @@ class ReservationManager {
             r.rejected();
         return r;
     }
+
+    /* async _acceptResByNumber(rr, r) {
+        try {
+            const t = this.repo.startTransaction();
+            r.confirmed();
+            t.reservationConfirmed(r);
+            rr.reservationAdded(r);
+            await t.commit();
+        } catch (err) {
+            
+        }
+    } */
     
     acceptReservation(restId, resId) {
         return Promisify(async () => {
-            // let r = reservation;
             const rr = await this.repo.getReservations(restId);
             const r = await this.repo.getReservation(resId);
-            return await this._acceptReservation(rr, r);
-        });
-    }
-    
-    reservationRemoved(restId, resId) {
-        return Promisify(async () => {
-            const rr = await this.repo.getReservations(restId);
-            rr.reservationRemoved(resId);
-            await this.repo.reservationRemoved(rr, resId);
-            return resId;
+
+            const t = this.repo.startTransaction();
+            t.reservationConfirmed(r);
+
+            if (rr.acceptationMode === RestaurantReservations.acceptationModes.MANUAL) {
+                rr.acceptReservation(r);
+                t.reservationAdded(rr, r);
+            } else {
+                rr.acceptReservationManually(r);
+                t.reservationAdded(rr, r, true);
+            }
+
+            await t.commit();
+            // return await this._acceptReservation(rr, r);
+            return r;
         });
     }
 }
