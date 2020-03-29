@@ -15,7 +15,7 @@ const appFunc = require('../../infrastructure/api/api');
 const testApiUtils = require('./api.test.utils');
 const Utils = require('../../lib/utils');
 
-Utils.defineArrayFlatMap();
+// Utils.defineArrayFlatMap();
 
 const mongod = new MongoMemoryServer();
 let mongodb;
@@ -44,9 +44,9 @@ const tables = [
     new Table('5', 1, 4),
     new Table('6', 1, 6),
 ];
-
-const rr1 = new RestaurantReservations('1', timeTable, tables);
-const rr2 = new RestaurantReservations('2', timeTable, tables);
+const threshold = 20;
+const rr1 = new RestaurantReservations({ restId: '1', timeTable, tables, threshold });
+const rr2 = new RestaurantReservations({ restId: '2', timeTable, tables, threshold });
 
 async function writeRes(reservation) {
     reservation._id = reservation.id;
@@ -136,7 +136,7 @@ describe('API unit test', function() {+56
         }
     };
 
-    let rr3 = new RestaurantReservations('3', timeTable, tables);
+    let rr3 = new RestaurantReservations({ restId: '3', timeTable, tables, threshold });
     let res1 = new Reservation('pippo', rr3.restId, 'pippo', 4, '2018-07-15', '15:00');
 
     before(async () => {
@@ -147,7 +147,7 @@ describe('API unit test', function() {+56
     });
 
     beforeEach(async () => {
-        rr3 = new RestaurantReservations('3', timeTable, tables);
+        rr3 = new RestaurantReservations({ restId: '3', timeTable, tables, threshold });
         res1 = new Reservation('pippo', rr3.restId, 'pippo', 4, '2018-07-15', '15:00');
         await setUpData(rr3, res1);
         await testApiUtils.processEvents();
@@ -219,24 +219,30 @@ describe('API unit test', function() {+56
             .expect(200);
     });
 
-    it.skip(`GET\t/reservation-service/reservations?restId=${rr3.restId}`, async function() {
-        /* await writeRR(rr1);
-        await addResToRR(rr1, resrv, tables[0]); */
+    it(`GET\t/reservation-service/reservations?restId=${rr3.restId}`, async function() {
 
         await req.get('/reservation-service/reservations')
             .expect(400);
-        await req.get('/reservation-service/reservations?restId=10')
-            .expect(404);
+        /* await req.get('/reservation-service/reservations?restId=10')
+            .expect(404); */
 
         await req.get(`/reservation-service/reservations?restId=${rr3.restId}`)
             .expect(res => {
                 assert.strictEqual(Array.isArray(res.body), true);
                 assert.strictEqual(res.body.length, 1);
-                const response = res.body[0];
-                response.date = new Date(response.date);
-                response.people = parseInt(response.people, 10);
-                const expected = resToBeAdded(resrv, tables[0]);
-                assert.deepStrictEqual(response, expected);
+
+                const actual = res.body.map(r => {
+                    r.date = new Date(r.date);
+                    if (!r.table) r.table = undefined;
+                    r.id = r._id;
+                    delete r._id;
+                    delete r._type;
+                    return r;
+                });
+
+                const expected = [Object.assign({}, res1)];
+
+                assert.deepStrictEqual(actual, expected);
             })
             .expect(200);
     });
@@ -256,16 +262,19 @@ describe('API unit test', function() {+56
             .expect(res => {
                 assert.strictEqual(Array.isArray(res.body), true);
                 assert.strictEqual(res.body.length, 1);
-                const response = res.body[0];
-                response.date = new Date(response.date);
-                response.people = parseInt(response.people, 10);
-                const expected = JSON.parse(JSON.stringify(res1));
-                expected.date = new Date(expected.date);
-                delete response._id;
-                delete response._revisionId;
-                delete response.resId;
-                delete expected.resId;
-                assert.deepStrictEqual(response, expected);
+                
+                const actual = res.body.map(r => {
+                    r.date = new Date(r.date);
+                    if (!r.table) r.table = undefined;
+                    r.id = r._id;
+                    delete r._id;
+                    delete r._type;
+                    return r;
+                });
+                
+                const expected = [Object.assign({}, res1)];
+
+                assert.deepStrictEqual(actual, expected);
             })
             .expect(200);
     });

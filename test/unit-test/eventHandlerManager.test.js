@@ -97,8 +97,8 @@ describe('eventHandlerManager unit test', function () {
     });
 
     context('A restaurant reservation is already created', function () {
-
-        const rr = new RestaurantReservations(uuid(), timeTable, tables);
+        const threshold = 20;
+        const rr = new RestaurantReservations({ restId: uuid(), timeTable, tables, threshold });
 
         beforeEach(async () => {
             await repo.reset();

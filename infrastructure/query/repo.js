@@ -28,10 +28,11 @@ function getReservations(restId, cb) {
     if (!restId)
         throw QueryError.paramError(`Missing the following parameters:${restId ? '' : ' restId'}`);
     return Promisify(async () => {
-        const docs = await mongoCollection.findOne({ _id: restId, restId }, { projection: { reservations: 1 } });
+        // const docs = await mongoCollection.findOne({ _id: restId, restId }, { projection: { reservations: 1 } });
+        const docs = await mongoCollection.find({ restId, _type: 'reservation' }).toArray();
         if (!docs)
             throw QueryError.reservationsNotFoundError('reservations not found');
-        return docs.reservations;
+        return docs;
     }, cb);
 }
 

@@ -33,7 +33,8 @@ const tables = [
     new Table('5', 1, 4),
     new Table('6', 1, 6),
 ];
-const rr = new RestaurantReservations('aaaaaa', timeTable, tables);
+const threshold = 20;
+const rr = new RestaurantReservations({ restId: 'aaaaaa', timeTable, tables, threshold});
 const tomorrow = new Date();
 tomorrow.setHours(tomorrow.getHours() + 24);
 const res = new Reservation('aef2ae', 'aaaaaa', 'Pippo', 4, tomorrow, '15:00');
