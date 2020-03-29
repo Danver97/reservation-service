@@ -135,7 +135,8 @@ class RepositoryManager {
             throw RepositoryError.paramError(`Missing the following parameters:${rr ? '' : ' rr'}${reservation ? '' : ' reservation'}`);
         const payload = Object.assign({}, reservation);
         payload.resId = reservation.id;
-        payload.enforced = enforced;
+        if (enforced)
+            payload.enforced = enforced;
         return this.save(rr.restId, rr._revisionId, ReservationEvents.reservationAdded, payload, cb);
     }
 
