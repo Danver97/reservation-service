@@ -59,7 +59,7 @@ class RestaurantReservations {
     }
 
     _checkConstrParams(options) {
-        const { restId, timeTable, acceptationMode, tables, threshold, reservationLength } = options;
+        const { restId, timeTable, acceptationMode, tables, threshold, maxReservationSize, reservationLength } = options;
         if (!restId || !timeTable || !threshold) {
             throw RestaurantReservationError.paramError(`Invalid Reservation object constructor parameters. Missing the following parameters:
                 ${restId ? '' : ' restId'}
@@ -74,8 +74,10 @@ class RestaurantReservations {
         this._checkTables(tables);
         if (typeof threshold !== 'number')
             throw RestaurantReservationError.paramError(`'threshold' must be a number`);
+        if (typeof maxReservationSize !== 'number')
+            throw RestaurantReservationError.paramError(`'maxReservationSize' must be a number`);
         if (typeof reservationLength !== 'number' || reservationLength % slotLength !== 0)
-            throw RestaurantReservationError.paramError(`'threshold' must be a number multiple of 15`);
+            throw RestaurantReservationError.paramError(`'reservationLength' must be a number multiple of 15`);
     }
 
     _checkTimeTable(timeTable) {
