@@ -48,7 +48,7 @@ describe('handler unit test', function () {
         await handler(e);
         
         // Assertions
-        const doc = await collection.findOne({ _id: rr.restId });
+        const doc = await collection.findOne({ _id: rr.restId, _type: 'restaurantReservations' });
         assert.deepStrictEqual(doc, rr);
     });
 
@@ -60,13 +60,13 @@ describe('handler unit test', function () {
         await handler(e);
 
         // Assertions
-        const doc = await collection.findOne({ _id: res.resId });
+        const doc = await collection.findOne({ _id: res.resId, _type: 'reservation' });
         assert.deepStrictEqual(doc, res);
     });
 
     it('check if reservationConfirmed event is handled properly', async function () {
         // Preset
-        const newDoc = Object.assign({ _id: res.resId, _revisionId: 1 }, res);
+        const newDoc = Object.assign({ _id: res.resId, _type: 'reservation' }, res);
         await collection.insertOne(newDoc);
         await orderControl.updateLastProcessedEvent(res.resId, 0, 1);
         
@@ -80,13 +80,14 @@ describe('handler unit test', function () {
         await handler(e);
 
         // Assertions
-        const doc = await collection.findOne({ _id: res.resId });
+        const doc = await collection.findOne({ _id: res.resId, _type: 'reservation' });
+        delete doc._type;
         assert.deepStrictEqual(doc, res);
     });
 
     it('check if reservationRejected event is handled properly', async function () {
         // Preset
-        const newDoc = Object.assign({ _id: res.resId, _revisionId: 1 }, res);
+        const newDoc = Object.assign({ _id: res.resId, _type: 'reservation' }, res);
         await collection.insertOne(newDoc);
         await orderControl.updateLastProcessedEvent(res.resId, 0, 1);
 
@@ -99,7 +100,8 @@ describe('handler unit test', function () {
         await handler(e);
 
         // Assertions
-        const doc = await collection.findOne({ _id: res.resId });
+        const doc = await collection.findOne({ _id: res.resId, _type: 'reservation' });
+        delete doc._type;
         assert.deepStrictEqual(doc, res);
     });
 
@@ -107,7 +109,7 @@ describe('handler unit test', function () {
         // Preset
         res.table = { id: 15, people: 4 };
         res.status = 'confirmed';
-        const newDoc = Object.assign({ _id: res.resId }, res);
+        const newDoc = Object.assign({ _id: res.resId, _type: 'reservation' }, res);
         await collection.insertOne(newDoc);
         await orderControl.updateLastProcessedEvent(res.resId, 0, 2);
 
@@ -120,7 +122,8 @@ describe('handler unit test', function () {
         await handler(e);
 
         // Assertions
-        const doc = await collection.findOne({ _id: res.resId });
+        const doc = await collection.findOne({ _id: res.resId, _type: 'reservation' });
+        delete doc._type;
         assert.deepStrictEqual(doc, res);
     });
 

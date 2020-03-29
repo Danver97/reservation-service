@@ -4,6 +4,11 @@ const writerFunc = require('./writer');
 
 let writer = null;
 
+const types = {
+    restaurantReservations: 'restaurantReservations',
+    reservation: 'reservation',
+}
+
 class Writer {
     constructor(url, dbName, collectionName) {
         if (!url || !dbName || !collectionName) {
@@ -61,6 +66,7 @@ class Writer {
     reservationCreated(e, cb) {
         const reservation = e.payload;
         reservation._id = reservation.resId;
+        reservation._type = types.reservation;
         return Promisify(async () => {
             await this.collection.insertOne(reservation);
         }, cb);
@@ -75,7 +81,7 @@ class Writer {
             const update = { $set: { status } };
             if (table)
                 update.$set.table = { id: table.id, people: table.people };
-            await this.collection.updateOne({ _id: resId }, update);
+            await this.collection.updateOne({ _id: resId, _type: types.reservation }, update);
         }, cb);
     }
 
@@ -83,7 +89,7 @@ class Writer {
         const resId = e.payload.resId;
         const status = e.payload.status;
         return Promisify(async () => {
-            await this.collection.updateOne({ _id: resId }, { $set: { status } });
+            await this.collection.updateOne({ _id: resId, _type: types.reservation }, { $set: { status } });
         }, cb);
     }
 
@@ -91,14 +97,14 @@ class Writer {
         const resId = e.payload.resId;
         const status = e.payload.status;
         return Promisify(async () => {
-            await this.collection.updateOne({ _id: resId }, { $set: { status } });
+            await this.collection.updateOne({ _id: resId, _type: types.reservation }, { $set: { status } });
         }, cb);
     }
 
     restaurantReservationsCreated(e, cb) {
         const restaurantReservations = e.payload;
         restaurantReservations._id = restaurantReservations.restId;
-        restaurantReservations._revisionId = 1;
+        restaurantReservations._type = types.restaurantReservations;
         restaurantReservations.reservations = [];
         return Promisify(() => this.collection.insertOne(restaurantReservations), cb);
     }

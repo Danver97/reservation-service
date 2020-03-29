@@ -39,7 +39,7 @@ describe('writer unit test', function () {
     it('check if restarantReservationCreated works', async function () {
         const e = new Event(rr.restId, 1, 'restaurantCreated', rr);
         await writer.restaurantReservationsCreated(e);
-        const doc = await collection.findOne({ _id: rr.restId });
+        const doc = await collection.findOne({ _id: rr.restId, _type: 'restaurantReservations' });
         assert.deepStrictEqual(doc, rr);
     });
 
@@ -51,13 +51,13 @@ describe('writer unit test', function () {
         await writer.reservationCreated(e);
 
         // Assertions
-        const doc = await collection.findOne({ _id: res.resId });
+        const doc = await collection.findOne({ _id: res.resId, _type: 'reservation' });
         assert.deepStrictEqual(doc, res);
     });
 
     it('check if reservationConfirmed works', async function () {
         // Preset
-        const newDoc = Object.assign({ _id: res.resId }, res);
+        const newDoc = Object.assign({ _id: res.resId, _type: 'reservation' }, res);
         await collection.insertOne(newDoc);
         
         // Update to do
@@ -69,13 +69,14 @@ describe('writer unit test', function () {
         await writer.reservationConfirmed(e);
 
         // Assertions
-        const doc = await collection.findOne({ _id: res.resId });
+        const doc = await collection.findOne({ _id: res.resId, _type: 'reservation' });
+        delete doc._type;
         assert.deepStrictEqual(doc, res);
     });
 
     it('check if reservationRejected works', async function () {
         // Preset
-        const newDoc = Object.assign({ _id: res.resId }, res);
+        const newDoc = Object.assign({ _id: res.resId, _type: 'reservation' }, res);
         await collection.insertOne(newDoc);
 
         // Update to do
@@ -86,7 +87,8 @@ describe('writer unit test', function () {
         await writer.reservationRejected(e);
 
         // Assertions
-        const doc = await collection.findOne({ _id: res.resId });
+        const doc = await collection.findOne({ _id: res.resId, _type: 'reservation' });
+        delete doc._type;
         assert.deepStrictEqual(doc, res);
     });
 
@@ -94,7 +96,7 @@ describe('writer unit test', function () {
         // Preset
         res.table = { id: 15, people: 4 };
         res.status = 'confirmed';
-        const newDoc = Object.assign({ _id: res.resId }, res);
+        const newDoc = Object.assign({ _id: res.resId, _type: 'reservation' }, res);
         await collection.insertOne(newDoc);
 
         // Update to do
@@ -105,7 +107,8 @@ describe('writer unit test', function () {
         await writer.reservationCancelled(e);
 
         // Assertions
-        const doc = await collection.findOne({ _id: res.resId });
+        const doc = await collection.findOne({ _id: res.resId, _type: 'reservation' });
+        delete doc._type;
         assert.deepStrictEqual(doc, res);
     });
 
