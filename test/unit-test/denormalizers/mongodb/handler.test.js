@@ -52,7 +52,7 @@ describe('handler unit test', function () {
         assert.deepStrictEqual(doc, rr);
     });
 
-    it('check if reservationAdded event is handled properly', async function () {
+    it.skip('check if reservationAdded event is handled properly', async function () {
         // Preset
         await collection.insertOne(rr);
         await orderControl.updateLastProcessedEvent(rr.restId, 0, 1);
@@ -70,7 +70,7 @@ describe('handler unit test', function () {
         assert.deepStrictEqual(doc, rr);
     });
 
-    it('check if reservationRemoved event is handled properly', async function () {
+    it.skip('check if reservationRemoved event is handled properly', async function () {
         // Preset
         rr.reservations.push(resToAdd);
         rr._revisionId++;
@@ -112,7 +112,6 @@ describe('handler unit test', function () {
         // Update to do
         res.status = 'confirmed';
         res.table = { id: 15, people: 4 };
-        res._revisionId++;
 
         // Update done
         const payload = { resId: res.resId, restId: res.restId, table: res.table, status: res.status };
@@ -132,7 +131,6 @@ describe('handler unit test', function () {
 
         // Update to do
         res.status = 'rejected'; // changes
-        res._revisionId++;
 
         // Update done
         const payload = { resId: res.resId, restId: res.restId, status: res.status };
@@ -149,14 +147,12 @@ describe('handler unit test', function () {
         // Preset
         res.table = { id: 15, people: 4 };
         res.status = 'confirmed';
-        res._revisionId++;
-        const newDoc = Object.assign({ _id: res.resId, _revisionId: 2 }, res);
+        const newDoc = Object.assign({ _id: res.resId }, res);
         await collection.insertOne(newDoc);
         await orderControl.updateLastProcessedEvent(res.resId, 0, 2);
 
         // Update to do
         res.status = 'cancelled' // changes
-        res._revisionId++;
         const payload = { resId: res.resId, restId: res.restId, status: res.status };
 
         // Update done

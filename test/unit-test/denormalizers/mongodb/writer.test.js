@@ -43,7 +43,7 @@ describe('writer unit test', function () {
         assert.deepStrictEqual(doc, rr);
     });
 
-    it('check if reservationAdded works', async function () {
+    it.skip('check if reservationAdded works', async function () {
         // Preset
         await collection.insertOne(rr);
         
@@ -60,7 +60,7 @@ describe('writer unit test', function () {
         assert.deepStrictEqual(doc, rr);
     });
 
-    it('check if reservationRemoved works', async function () {
+    it.skip('check if reservationRemoved works', async function () {
         // Preset
         rr.reservations.push(resToAdd);
         rr._revisionId++;
@@ -94,13 +94,12 @@ describe('writer unit test', function () {
 
     it('check if reservationConfirmed works', async function () {
         // Preset
-        const newDoc = Object.assign({ _id: res.resId, _revisionId: 1 }, res);
+        const newDoc = Object.assign({ _id: res.resId }, res);
         await collection.insertOne(newDoc);
         
         // Update to do
         res.table = { id: 15, people: 4 };
         res.status = 'confirmed';
-        res._revisionId++;
 
         // Update done
         const e = new Event(res.resId, 2, 'reservationConfirmed', { table: res.table, status: res.status });
@@ -113,12 +112,11 @@ describe('writer unit test', function () {
 
     it('check if reservationRejected works', async function () {
         // Preset
-        const newDoc = Object.assign({ _id: res.resId, _revisionId: 1 }, res);
+        const newDoc = Object.assign({ _id: res.resId }, res);
         await collection.insertOne(newDoc);
 
         // Update to do
         res.status = 'rejected';
-        res._revisionId++;
 
         // Update done
         const e = new Event(res.resId, 2, 'reservationRejected', { status: res.status });
@@ -133,13 +131,11 @@ describe('writer unit test', function () {
         // Preset
         res.table = { id: 15, people: 4 };
         res.status = 'confirmed';
-        res._revisionId++;
-        const newDoc = Object.assign({ _id: res.resId, _revisionId: 2 }, res);
+        const newDoc = Object.assign({ _id: res.resId }, res);
         await collection.insertOne(newDoc);
 
         // Update to do
         res.status = 'cancelled';
-        res._revisionId++;
 
         // Update done
         const e = new Event(res.resId, 3, 'reservationCancelled', { status: res.status });

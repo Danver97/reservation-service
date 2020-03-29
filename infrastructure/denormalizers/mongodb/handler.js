@@ -41,7 +41,7 @@ function restaurantReservationsCreated(e, cb) {
     }, cb);
 }
 
-function reservationAdded(e, cb) {
+/* function reservationAdded(e, cb) {
     return Promisify(async () => {
         const restId = e.streamId;
         const reservation = e.payload;
@@ -55,7 +55,7 @@ function reservationRemoved(e, cb) {
         const resId = e.payload.resId;
         await dependencies.projector.reservationRemoved(restId, e.eventId - 1, resId);
     }, cb);
-}
+} */
 
 const handlersMap = {
     reservationCreated,
@@ -63,8 +63,8 @@ const handlersMap = {
     reservationRejected,
     reservationCancelled,
     restaurantReservationsCreated,
-    reservationAdded,
-    reservationRemoved,
+    // reservationAdded,
+    // reservationRemoved,
 };
 
 async function acknoledgeUtil(ackFunc, ack) {
@@ -96,7 +96,9 @@ function log(obj) {
 async function handler(e, ack) {
     if (!e)
         return;
-    if (typeof handlersMap[e.message] === 'function') {
+    if (typeof handlersMap[e.message] !== 'function')
+        acknoledge(e);
+    else if (typeof handlersMap[e.message] === 'function') {
         let lastEventId = (await dependencies.orderCtrl.getLastProcessedEvent(e.streamId)).eventId;
         lastEventId = (lastEventId === undefined || lastEventId === null) ? 0 : lastEventId;
 
