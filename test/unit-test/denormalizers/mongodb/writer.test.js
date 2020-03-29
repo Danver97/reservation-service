@@ -43,43 +43,6 @@ describe('writer unit test', function () {
         assert.deepStrictEqual(doc, rr);
     });
 
-    it.skip('check if reservationAdded works', async function () {
-        // Preset
-        await collection.insertOne(rr);
-        
-        // Update to do
-        rr.reservations.push(resToAdd);
-        rr._revisionId++;
-
-        // Update done
-        const e = new Event(rr.restId, 2, 'reservationAdded', resToAdd);
-        await writer.reservationAdded(rr.restId, e.eventId - 1, resToAdd);
-
-        // Assertions
-        const doc = await collection.findOne({ _id: rr.restId });
-        assert.deepStrictEqual(doc, rr);
-    });
-
-    it.skip('check if reservationRemoved works', async function () {
-        // Preset
-        rr.reservations.push(resToAdd);
-        rr._revisionId++;
-        const newDoc = Object.assign({ _id: rr.restId, _revisionId: 2 }, rr);
-        await collection.insertOne(newDoc);
-        
-        // Update to do
-        rr.reservations = rr.reservations.filter(r => r.resId != resToAdd.resId);
-        rr._revisionId++;
-
-        // Update done
-        const e = new Event(rr.restId, 3, 'reservationRemoved', { restId: rr.restId, resId: resToAdd.resId });
-        await writer.reservationRemoved(rr.restId, e.eventId - 1, e.payload.resId);
-
-        // Assertions
-        const doc = await collection.findOne({ _id: rr.restId });
-        assert.deepStrictEqual(doc, rr);
-    });
-
     it('check if reservationCreated works', async function () {
         // Preset
 

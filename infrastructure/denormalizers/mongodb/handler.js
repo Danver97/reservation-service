@@ -41,30 +41,12 @@ function restaurantReservationsCreated(e, cb) {
     }, cb);
 }
 
-/* function reservationAdded(e, cb) {
-    return Promisify(async () => {
-        const restId = e.streamId;
-        const reservation = e.payload;
-        await dependencies.projector.reservationAdded(restId, e.eventId - 1, reservation);
-    }, cb);
-}
-
-function reservationRemoved(e, cb) {
-    return Promisify(async () => {
-        const restId = e.payload.restId;
-        const resId = e.payload.resId;
-        await dependencies.projector.reservationRemoved(restId, e.eventId - 1, resId);
-    }, cb);
-} */
-
 const handlersMap = {
     reservationCreated,
     reservationConfirmed,
     reservationRejected,
     reservationCancelled,
     restaurantReservationsCreated,
-    // reservationAdded,
-    // reservationRemoved,
 };
 
 async function acknoledgeUtil(ackFunc, ack) {

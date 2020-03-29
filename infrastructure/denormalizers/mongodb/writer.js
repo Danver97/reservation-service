@@ -94,20 +94,6 @@ class Writer {
         restaurantReservations.reservations = [];
         return Promisify(() => this.collection.insertOne(restaurantReservations), cb);
     }
-
-    /* reservationAdded(restId, _revisionId, reservation, cb) {
-        return Promisify(() => this.collection.updateOne(
-            { _id: restId },
-            { $push: { reservations: { $each: [reservation], $sort: { date: 1 } } } },
-        ), cb);
-    }
-
-    reservationRemoved(restId, _revisionId, resId, cb) {
-        return Promisify(() => this.collection.updateOne(
-            { _id: restId },
-            { $pull: { reservations: { resId } } }
-        ), cb);
-    } */
 }
 
 /**
