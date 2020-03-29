@@ -130,11 +130,12 @@ class RepositoryManager {
             payload, cb);
     }
 
-    reservationAdded(rr, reservation, cb) {
+    reservationAdded(rr, reservation, enforced, cb) {
         if (!rr || !reservation)
             throw RepositoryError.paramError(`Missing the following parameters:${rr ? '' : ' rr'}${reservation ? '' : ' reservation'}`);
         const payload = Object.assign({}, reservation);
         payload.resId = reservation.id;
+        payload.enforced = enforced;
         return this.save(rr.restId, rr._revisionId, ReservationEvents.reservationAdded, payload, cb);
     }
 
@@ -206,7 +207,12 @@ class RepositoryManager {
                         break;
                     case ReservationEvents.reservationAdded:
                         payload.status = Reservation.statuses.pending;
-                        rr.acceptReservation(Reservation.fromObject(payload));
+                        const enforced = payload.enforced;
+                        delete payload.enforced;
+                        if (enforced)
+                            rr.acceptReservationManually(Reservation.fromObject(payload));
+                        else
+                            rr.acceptReservation(Reservation.fromObject(payload));
                         break;
                     case ReservationEvents.reservationRemoved:
                         rr.removeReservation(payload.resId);
