@@ -140,29 +140,59 @@ describe('RepositoryManager unit test', function () {
     });
 
     it('check if reservationAdded works', async function () {
+        // throw new Error('test enforced');
         assert.throws(() => repo.reservationAdded(), RepositoryError);
 
-        // Presets
-        const rr = new RestaurantReservations({ restId: uuid(), timeTable, tables, threshold });
-        const e1 = new Event(rr.restId, 1, reservationEvents.restaurantReservationsCreated, toJSON(rr));
-        await repo.db.saveEvent(e1);
-        rr._revisionId = 1;
+        // Test 1
 
-        const res = new Reservation('pippo', rr.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
+        // Presets
+        const rr1 = new RestaurantReservations({ restId: uuid(), timeTable, tables, threshold });
+        const e11 = new Event(rr1.restId, 1, reservationEvents.restaurantReservationsCreated, toJSON(rr1));
+        await repo.db.saveEvent(e11);
+        rr1._revisionId = 1;
+
+        const res1 = new Reservation('pippo', rr1.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
 
         // Update
-        rr.acceptReservation(res);
-        await repo.reservationAdded(rr, res);
+        rr1.acceptReservation(res1);
+        await repo.reservationAdded(rr1, res1);
 
         // Assertions
-        const events = await repo.db.getStream(rr.restId);
-        const lastEvent = events[events.length - 1];
+        let events = await repo.db.getStream(rr1.restId);
+        let lastEvent = events[events.length - 1];
 
-        assert.strictEqual(lastEvent.streamId, rr.restId);
+        assert.strictEqual(lastEvent.streamId, rr1.restId);
         assert.strictEqual(lastEvent.eventId, 2);
         assert.strictEqual(lastEvent.message, reservationEvents.reservationAdded);
-        const payload = toJSON(res);
+        let payload = toJSON(res1);
         assert.deepStrictEqual(lastEvent.payload, payload);
+
+
+        // Test 2
+        
+        // Presets
+        const rr2 = new RestaurantReservations({ restId: uuid(), timeTable, tables, threshold });
+        const e12 = new Event(rr2.restId, 1, reservationEvents.restaurantReservationsCreated, toJSON(rr2));
+        await repo.db.saveEvent(e12);
+        rr2._revisionId = 1;
+
+        const res2 = new Reservation('pippo', rr2.restId, 'pippo', 1, tomorrow.toLocaleDateString(), '15:00');
+
+        // Update
+        rr2.acceptReservation(res2);
+        await repo.reservationAdded(rr2, res2, true);
+
+        // Assertions
+        events = await repo.db.getStream(rr2.restId);
+        lastEvent = events[events.length - 1];
+
+        assert.strictEqual(lastEvent.streamId, rr2.restId);
+        assert.strictEqual(lastEvent.eventId, 2);
+        assert.strictEqual(lastEvent.message, reservationEvents.reservationAdded);
+        payload = toJSON(res2);
+        payload.enforced = true;
+        assert.deepStrictEqual(lastEvent.payload, payload);
+        
     });
 
     it('check if reservationCancelled works', async function () {
@@ -233,7 +263,8 @@ describe('RepositoryManager unit test', function () {
             timeTable,
             acceptationMode: RestaurantReservations.acceptationModes.AUTO_THRESHOLD,
             tables,
-            threshold: 50,
+            threshold: 5,
+            maxReservationSize: 2,
             reservationLength: 90,
         });
         // const payload1 = { restId: rr.restId, timeTable: rr.timeTable, tables: rr.tables, threshold: rr.threshold };
@@ -246,9 +277,23 @@ describe('RepositoryManager unit test', function () {
         await repo.db.saveEvent(new Event(rr.restId, 2, reservationEvents.reservationAdded, toJSON(res)));
         rr._revisionId = 2;
 
-        rr.removeReservation(res.id);
-        await repo.db.saveEvent(new Event(rr.restId, 3, reservationEvents.reservationRemoved, { resId: res.resId, restId: rr.restId }));
+        const res2 = new Reservation('pippo', rr.restId, 'pippo', 3, tomorrow.toLocaleDateString(), '15:00');
+        rr.acceptReservationManually(res2);
+        const payload3 = toJSON(res2);
+        payload3.enforced = true;
+        await repo.db.saveEvent(new Event(rr.restId, 3, reservationEvents.reservationAdded, payload3));
         rr._revisionId = 3;
+
+        const res3 = new Reservation('pippo', rr.restId, 'pippo', 6, tomorrow.toLocaleDateString(), '15:00');
+        rr.acceptReservationManually(res3);
+        const payload4 = toJSON(res3);
+        payload4.enforced = true;
+        await repo.db.saveEvent(new Event(rr.restId, 4, reservationEvents.reservationAdded, payload4));
+        rr._revisionId = 4;
+
+        rr.removeReservation(res.id);
+        await repo.db.saveEvent(new Event(rr.restId, 5, reservationEvents.reservationRemoved, { resId: res.resId, restId: rr.restId }));
+        rr._revisionId = 5;
 
         // "Update"
         const result = await repo.getReservations(rr.restId);
