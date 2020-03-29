@@ -126,6 +126,22 @@ class Reservation {
         }
         this.table = { id: table.id, people: table.people };
     }
+
+    get isPending() {
+        return this.status === statuses.pending;
+    }
+
+    get isConfirmed() {
+        return this.status === statuses.confirmed;
+    }
+
+    get isRejected() {
+        return this.status === statuses.rejected;
+    }
+
+    get isCancelled() {
+        return this.status === statuses.cancelled;
+    }
 }
 
 module.exports = Reservation;
